@@ -1,0 +1,37 @@
+R1-4 3/9/2006
+Fixed double characters when the other user is typing.
+More informational messages: PIDs for everything, when sigchild and sigpipe happen and more
+info at sign-on.
+Put in better detection and reporting in case the startup file is not usable.  Procserve will try
+to print an informational message and die.
+
+R1-3 3/2/2006
+Added the logfile feature - if stdout is a file we leave it open and write messages to it.
+Added better startup handling
+Added start and restart time messages.
+R1-0 9/11/2003
+This is the first real version that works as desired.  I have added since 1.1 several
+features.
+
+The option of running as a daemon controlled by the environment variable "PROCSERV_DEBUG".
+
+Tuned the informational printfs.
+
+Added some interaction with telnet protocol, enough that linemode in the telnet client is
+disabled. The whole telnet state machine is more complex than it needs to be but I think that
+I can use it later.  There is room for adding features here.
+
+
+Known problems:
+I don't have the CR-LF handling from the user just right.  One of the debugging functions in
+the sequencer does something incompatible and the user has to send ^j s instead of cr to get
+the next line.
+
+Users monitoring see characters flowing both ways, double echos.  The fix for this is to
+have SendToAll be a litte smarter.
+
+1.1 9/2/2003
+This works.  Telnet comes up in linemode meaning that characters are echoed and held by telnet
+until it gets a <CR>. The whole line is then sent.  If you type a control character you must type
+<CR> to get it sent. If the control character is ^C then you get hosed.
+

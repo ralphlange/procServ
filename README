@@ -1,0 +1,73 @@
+This is a simple program that runs in the background and creates a run time enviornment for an
+IOC running under Linux.
+
+The process normally forks a daemon but you can set an environment variable "PROCSERV_DEBUG" with
+any value to run the server in the foreground with many message indicating internal activity such
+as the creation and deletion of child processes and connections.
+
+The command line arguments are <port> and <command>, arguments past the second argument are passed
+thru to execv so you should be able to set $1, $2 etc in a spawned shell.
+
+The port argument is your assigned port on the server, see:
+  https://ics-web1.sns.ornl.gov/pvserver_guide.htm
+
+You should start procServ with the current working directory set to /ade/epics/iocCommon/<your_ioc>
+and the command passed to procServ as arg 2 should be startup.cmd.  The startup.cmd must be
+executable.  The starup command file is expected to exec the actual soft ioc or ioc shell application
+but it can be simply a sequencer or a channel access application.
+
+To reach your application simply telnet to localhost <your port>.
+To log all of your messages or just watch use "cat </dev/tcp/localhost/<your port>  ..."
+
+The following enviornment varibles are used:
+
+PROCSERV_PID   = The name of a file to save procServ's PID. Default is pid.txt.
+PROCSERV_DEBUG = Set this to non-null if you want all of procServ's debug messages.  This
+also disables the daemon mode.
+
+Log file.  If stdout is a file when procServ is started in daemon mode then all messages to and
+from the IOC and to telnet will be written to the log file.
+
+When you connect to procServe from telnet you will receive an iformational message like this:
+===================================================================================
+Connected to localhost.localdomain (127.0.0.1).
+Escape character is '^]'.
+Welcome to the epics process server! (procServ $Name: R1-5 $)
+Use ^] to quit telnet, and ^X<CR> to reboot the IOC.
+procServ: my pid is: 7622
+Startup directory: /sns/ADE/home/thompson/sandbox/procServ
+Startup command: xx
+The PID of IOC xx is now: 7623
+Restarts: ProcServ:Mar 09, 2006 06:29:47 PM IOC:Mar 09, 2006 06:29:48 PM
+Connected users=1
+
+===================================================================================
+
+>>>Connected to localhost.localdomain (127.0.0.1).
+>>>Escape character is '^]'.
+These two lines are actually printed by telnet.
+
+>>>Welcome to the epics process server! (procServ $Name: R1-5 $)
+Procserve's welcome.
+
+>>>Use ^] to quit telnet, and ^X<CR> to reboot the IOC.
+Some instructions.
+
+>>>procServ: my pid is: 7622
+The PID of procserve itself.
+
+>>>Startup directory: /sns/ADE/home/thompson/sandbox/procServ
+The current working directory for procserve.
+
+>>>Startup command: xx
+The command that procserve is supposed to keep rinning.
+
+>>>The PID of IOC xx is now: 7623
+The PID of the command that procserve is now supervising.
+
+>>>Restarts: ProcServ:Mar 09, 2006 06:29:47 PM IOC:Mar 09, 2006 06:29:48 PM
+The times when procserve started and when the last IOC reboot was.
+
+>>>Connected users=1
+How many users have open telnets.
+
