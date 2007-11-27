@@ -150,7 +150,7 @@ int main(int argc,char * argv[])
 	if (sigPipeSet>0)
 	{
 	    PRINTF("Got a sigPipe\n");
-	    sprintf(buf,"Got a sigPipe signal: Did the IOC close its tty?",NL);
+	    sprintf(buf,"Got a sigPipe signal: Did the IOC close its tty?" NL);
 	    SendToAll(buf,strlen(buf),NULL);
 	    sigPipeSet--;
 	}
