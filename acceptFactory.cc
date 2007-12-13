@@ -106,11 +106,11 @@ bool acceptItem::OnPoll()
 }
 
 
-// Send Send characters to clients
+// Send characters to clients
 int acceptItem::Send( const char * buf,int count)
 {
     // Makes no sense to send to the listening socket
-    return 0; 
+    return true;
 
 }
 

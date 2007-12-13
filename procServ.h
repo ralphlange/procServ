@@ -40,7 +40,7 @@ void DeleteConnection(connectionItem *ci);
 
 
 // connectionItems are made in class factories so non of the
-// constuctors are public:
+// constructors are public:
 
 // processFactory creates the process that we are managing
 connectionItem * processFactory(int argc,char * argv[]);

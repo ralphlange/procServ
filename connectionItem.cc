@@ -23,8 +23,8 @@ connectionItem::~connectionItem()
 }
 
 // OnPoll is called after a poll returns non-zero in events
-// return -1 if the object should be deleted.
-// return 0 normally
+// return false if the object should be deleted.
+// return true normally
 // may modify pfd-revents as needed
 bool connectionItem::OnPoll()
 {
@@ -54,7 +54,7 @@ bool connectionItem::OnPoll()
     }
     if (_pfd->revents&POLLNVAL)
     {
-       XPRINTF("Got invalid handle %d\n",_ioHandle);
+        XPRINTF("Got invalid handle %d\n",_ioHandle);
 	_ioHandle=-1;
 	_markedForDeletion=true;
     }

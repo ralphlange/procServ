@@ -45,8 +45,8 @@ clientItem::~clientItem()
 }
 
 
-// Accept item constuctor
-// This opens a socket and binds it to the decided port
+// Client item constructor
+// This sets KEEPALIVE on the socket and displays the greeting
 clientItem::clientItem(int socketIn)
 {
     assert(socketIn>=0);
@@ -84,8 +84,8 @@ clientItem::clientItem(int socketIn)
 }
 
 // OnPoll is called after a poll returns non-zero in events
-// return -1 if the object should be deleted.
-// return 0 normally
+// return false if the object should be deleted.
+// return true normally
 // may modify pfd-revents as needed
 bool clientItem::OnPoll()
 {
@@ -148,7 +148,7 @@ bool clientItem::OnPoll()
 }
 
 
-// Send Send characters to clients
+// Send characters to clients
 int clientItem::Send(const char * buf,int count)
 {
     int status;
@@ -160,4 +160,5 @@ int clientItem::Send(const char * buf,int count)
     if (status==-1) _markedForDeletion=true;
     return status;
 }
+
 int clientItem::_users;
