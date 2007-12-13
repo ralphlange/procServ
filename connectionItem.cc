@@ -77,16 +77,6 @@ bool connectionItem::SetPoll(struct pollfd * pfd)
     return true;    // and count this in npoll
 }
 
-
-// Send Send characters to clients
-int connectionItem::Send( const char * buf,int count)
-{
-    int status;
-    if (!_markedForDeletion)
-	while((status==write(_ioHandle,buf,count))==-1 && errno==EINTR);
-    return status;
-}
-
 void connectionItem::OnWait(int pid)
 {
 }

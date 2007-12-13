@@ -96,8 +96,8 @@ public:
     virtual bool OnPoll();
 
     
-    // Send Send characters to clients
-    virtual int Send( const char *,int count);
+    // Send characters to clients
+    virtual int Send(const char *,int count) = 0;
 
  
     virtual void OnWait(int pid); // called if sig child received

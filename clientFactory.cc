@@ -155,7 +155,7 @@ int clientItem::Send(const char * buf,int count)
 
     if (!_markedForDeletion)
     {
-	while ( (status=send(_ioHandle,buf,count,0))==-1 && errno==EINTR);
+	while ( (status=write(_ioHandle,buf,count))==-1 && errno==EINTR);
     }
     if (status==-1) _markedForDeletion=true;
     return status;
