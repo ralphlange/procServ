@@ -18,7 +18,7 @@
 class acceptItem : public connectionItem
 {
 public:
-    acceptItem(int port);
+    acceptItem ( int port, bool local, bool readonly );
     bool OnPoll();
     int Send( const char *,int);
 
@@ -27,10 +27,10 @@ public:
 };
 
 // service and calls clientFactory when clients are accepted
-connectionItem * acceptFactory(char * port)
+connectionItem * acceptFactory ( char * port, bool local, bool readonly )
 {
-    PRINTF("Creating new acceptItem %s\n",port);
-    return new acceptItem(atoi(port));
+    PRINTF("Creating new acceptItem %s\n", port);
+    return new acceptItem(atoi(port), local, readonly);
 }
 
 acceptItem::~acceptItem()
@@ -40,26 +40,30 @@ acceptItem::~acceptItem()
 }
 
 
-// Accept item constuctor
-// This opens a socket and binds it to the decided port
-acceptItem::acceptItem(int port)
+// Accept item constructor
+// This opens a socket, binds it to the decided port,
+// and sets it to listen mode
+acceptItem::acceptItem ( int port, bool local, bool readonly )
 {
-    int optval;
-
-    _ioHandle=socket(PF_INET,SOCK_STREAM,IPPROTO_TCP);
-    assert(_ioHandle>0);
-
-    optval=1;
-    setsockopt(_ioHandle,SOL_SOCKET,SO_REUSEADDR,&optval,sizeof(optval));
-
+    int optval = 1;
     struct sockaddr_in addr;
-    addr.sin_family=AF_INET;
-    addr.sin_port=htons(port);
-    inet_aton("127.0.0.1", &addr.sin_addr);
-
-
     int bindStatus;
-    bindStatus=bind(_ioHandle,(struct sockaddr *) &addr,sizeof addr);
+
+    _readonly = readonly;
+
+    _ioHandle = socket( PF_INET, SOCK_STREAM, IPPROTO_TCP );
+    assert( _ioHandle>0 );
+
+    setsockopt( _ioHandle, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval) );
+
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(port);
+    if ( local )
+        inet_aton( "127.0.0.1", &addr.sin_addr );
+    else 
+        addr.sin_addr.s_addr = htonl( INADDR_ANY );
+
+    bindStatus = bind( _ioHandle, (struct sockaddr *) &addr, sizeof(addr) );
     if (bindStatus<0)
     {
 	PRINTF("Bind: %s\n",strerror(errno));

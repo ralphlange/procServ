@@ -23,12 +23,13 @@ public:
     clientItem(int port);
     bool OnPoll();
     int Send( const char *,int count);
-    static int _users;
 
 public:
     virtual ~clientItem();
 private:
     telnetStateMachine _telnet;
+    static int _users;
+    static int _loggers;
 };
 //
 // service and calls clientFactory when clients are accepted
@@ -41,7 +42,8 @@ clientItem::~clientItem()
 {
     if (_ioHandle>=0) close(_ioHandle);
     PRINTF("~clientItem()\n");
-    _users--;
+    if ( _readonly ) _loggers--;
+    else _users--;
 }
 
 
@@ -50,36 +52,38 @@ clientItem::~clientItem()
 clientItem::clientItem(int socketIn)
 {
     assert(socketIn>=0);
-    int optval=1;
-    //unsigned char opt[]={IAC,WONT,TELOPT_LINEMODE};
-
-    setsockopt(socketIn,SOL_SOCKET,SO_KEEPALIVE,&optval,sizeof(optval));
-
-    _ioHandle=socketIn;
-    char buf[128];
-    char * greeting="Welcome to the epics process server! (procServ $Name: R1-5 $)" NL
-    	"Use ^] to quit telnet, and ^X<CR> to reboot the IOC." NL ;
-
-    struct tm procServStart_tm; // Time when this IOC started
-    char procServStart_buf[32]; // Time when this IOC started
-    struct tm IOCStart_tm; // Time when the current IOC was started
-    char IOCStart_buf[32]; // Time when the current IOC was started
+    int optval = 1;
+    struct tm procServStart_tm; // Time when this procServ started
+    char procServStart_buf[32]; // Time when this procServ started - as string
+    struct tm IOCStart_tm;      // Time when the current IOC was started
+    char IOCStart_buf[32];      // Time when the current IOC was started - as string
+    char buf1[128], buf2[128];
+    char * greeting = "Welcome to the EPICS soft IOC process server! "
+        "(procServ $Name: R1-5 $)" NL
+    	"Use ^] to quit telnet, ^X<CR> to reboot the IOC." NL;
 
     localtime_r(&procServStart,&procServStart_tm);
     strftime(procServStart_buf,sizeof(procServStart_buf)-1,"%b %d, %Y %r",&procServStart_tm);
     localtime_r(&IOCStart,&IOCStart_tm);
     strftime(IOCStart_buf,sizeof(IOCStart_buf)-1,"%b %d, %Y %r",&IOCStart_tm);
 
-    _users++;
+    sprintf( buf1, "Restarted: ProcServ %s  IOC %s" NL, procServStart_buf, IOCStart_buf );
+    sprintf( buf2, "Connected: %d users, %d loggers" NL NL, _users, _loggers );
 
-    //write(_ioHandle,opt,sizeof(opt));
-    write(_ioHandle,greeting,strlen(greeting));
-    write(_ioHandle,infoMessage1,strlen(infoMessage1));
-    write(_ioHandle,infoMessage2,strlen(infoMessage2));
-    sprintf(buf,"Restarts: ProcServ:%s IOC:%s" NL,procServStart_buf, IOCStart_buf);
-    write(_ioHandle,buf,strlen(buf));
-    sprintf(buf,"Connected users=%d" NL NL ,_users);
-    write(_ioHandle,buf,strlen(buf));
+    setsockopt(socketIn,SOL_SOCKET,SO_KEEPALIVE,&optval,sizeof(optval));
+    _ioHandle=socketIn;
+
+    if ( _readonly ) {          // Logging client
+        _loggers++;
+    } else {                    // Regular (user) client
+        _users++;
+        write( _ioHandle, greeting,strlen(greeting));
+    }
+    write( _ioHandle, infoMessage1,strlen(infoMessage1));
+    write( _ioHandle, infoMessage2,strlen(infoMessage2));
+    write( _ioHandle, buf1, strlen(buf1));
+    write( _ioHandle, buf2, strlen(buf2));
+
     _telnet.SetConnectionItem(this);
 }
 
@@ -162,3 +166,4 @@ int clientItem::Send(const char * buf,int count)
 }
 
 int clientItem::_users;
+int clientItem::_loggers;

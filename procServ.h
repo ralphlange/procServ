@@ -51,7 +51,9 @@ void processFactorySendSignal(int signal);
 connectionItem * clientFactory(int ioSocket);
 // acceptFactory opens a socket creating the inital listening
 // service and calls clientFactory when clients are accepted
-connectionItem * acceptFactory(char * port);
+// local: restrict to localhost (127.0.0.1)
+// readonly: discard any input from the client
+connectionItem * acceptFactory( char * port, bool local=true, bool readonly=false );
 
 extern connectionItem * processItem; // Set if it exists
  
@@ -116,6 +118,7 @@ protected:
     struct pollfd * _pfd;
     
     bool _markedForDeletion; // True if this connection is dead
+    bool _readonly;          // True if input has to be ignored
 
 public:
     connectionItem * next,*prev;
