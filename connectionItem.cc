@@ -81,4 +81,3 @@ void connectionItem::OnWait(int pid)
 {
 }
 bool connectionItem::isProcess() const { return false; }
-

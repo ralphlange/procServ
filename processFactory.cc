@@ -165,7 +165,7 @@ bool processClass::OnPoll()
 }
 
 
-// Send Send characters to clients
+// Send characters to clients
 int processClass::Send( const char * buf,int count)
 {
     int status=0;

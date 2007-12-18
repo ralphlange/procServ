@@ -49,6 +49,7 @@ void processFactorySendSignal(int signal);
 
 // clientFactory manages an open socket connected to a user
 connectionItem * clientFactory(int ioSocket);
+
 // acceptFactory opens a socket creating the inital listening
 // service and calls clientFactory when clients are accepted
 // local: restrict to localhost (127.0.0.1)
@@ -68,15 +69,6 @@ class connectionItem
 
     // Always created by a factory function
 public:
-    connectionItem(int fd=-1);
-    private:
-    // This should never happen
-    connectionItem(const connectionItem & item)
-    {
-	assert(0);
-	_ioHandle=item._ioHandle;
-    };
-
 
 public:
     // Virtual functions:
@@ -110,6 +102,8 @@ public:
     virtual bool isProcess() const;
 
 protected:
+    connectionItem ( int fd = -1 );
+
     // These two members fill in the pollfd structure
     int _ioHandle; // my file handle
     short _events;
@@ -124,6 +118,10 @@ public:
     connectionItem * next,*prev;
     static connectionItem *head;
 
+private:
+    // This should never happen
+    connectionItem(const connectionItem & item)
+    {
+        assert(0);
+    };
 };
-
-

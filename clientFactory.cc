@@ -21,17 +21,17 @@ class clientItem : public connectionItem
 {
 public:
     clientItem(int port);
+    ~clientItem();
+
     bool OnPoll();
     int Send( const char *,int count);
 
-public:
-    virtual ~clientItem();
 private:
     telnetStateMachine _telnet;
     static int _users;
     static int _loggers;
 };
-//
+
 // service and calls clientFactory when clients are accepted
 connectionItem * clientFactory(int socketIn)
 {
@@ -40,7 +40,7 @@ connectionItem * clientFactory(int socketIn)
 
 clientItem::~clientItem()
 {
-    if (_ioHandle>=0) close(_ioHandle);
+    if ( _ioHandle >= 0 ) close( _ioHandle );
     PRINTF("~clientItem()\n");
     if ( _readonly ) _loggers--;
     else _users--;
@@ -132,7 +132,7 @@ bool clientItem::OnPoll()
 }
 
 
-// Send characters to clients
+// Send characters to client
 int clientItem::Send(const char * buf,int count)
 {
     int status;

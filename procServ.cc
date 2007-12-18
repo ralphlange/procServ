@@ -18,14 +18,13 @@
 #include <sys/ioctl.h>
 #include <string.h>
 
+#include "procServ.h"
 
 bool inDebugMode; // This enables a lot of printfs
 char infoMessage1[512]; // This is sent to the user at sign on
 char infoMessage2[512]; // This is sent to the user at sign on
 int logfileFD=-1;
 pid_t daemon_pid;
-
-#include "procServ.h"
 
 #define MAX_CONNECTIONS 64
 
@@ -35,8 +34,8 @@ void mLoop();
 void OnPollError();
 // Handles houskeeping
 void OnPollTimeout();
-// Demonizes the program
-void  forkAndGo();
+// Daemonizes the program
+void forkAndGo();
 int checkCommandFile(const char * command);
 
 void OnSigChild(int);
@@ -74,15 +73,14 @@ int main(int argc,char * argv[])
     time(&procServStart); // What time is it now
     struct pollfd * pollList=NULL,* ppoll; // Allocate as much space as needed
     char cwd[512];
-   
-    if (argc<3 || atoi(argv[1]) <1024 ) 
+
+    if ( argc<3 || atoi(argv[1]) <1024 ) 
     {
 	printf("Usage: %s <port> <command arguments ... >\n",argv[0]);
 	exit(0);
     }
 
     if (checkCommandFile(argv[2])) exit(errno);
-
 
     sig.sa_handler=&OnSigChild;
     sigaction(SIGCHLD,&sig,NULL);

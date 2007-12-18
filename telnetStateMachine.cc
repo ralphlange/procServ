@@ -6,6 +6,7 @@
 
 
 // This interprets telnet commands 
+
 // Constructor, clear the data and then set the options for
 // ourselves and the peer
 telnetStateMachine::telnetStateMachine()
@@ -27,6 +28,7 @@ telnetStateMachine::telnetStateMachine()
     _myOpts[TELOPT_NAOCRD]=WILL;
     _myState=ON_START;
 }
+
 // Returns new length of the buffer, assumes the buffer may be 
 // longer than given
 int telnetStateMachine::OnReceive(char * buf,int len,bool priority)
@@ -237,4 +239,3 @@ void telnetStateMachine::sendInitialRequests()
 
 	}
 }
-    
