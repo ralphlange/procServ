@@ -88,23 +88,21 @@ clientItem::clientItem(int socketIn)
 }
 
 // OnPoll is called after a poll returns non-zero in events
-// return false if the object should be deleted.
+// return false if there are no events to be serviced
 // return true normally
 // may modify pfd-revents as needed
 bool clientItem::OnPoll()
 {
+    char buf[1600];
+    int  len;
+
     if (_pfd==NULL || _pfd->revents==0 ) return false;
+
     // Otherwise process the revents and return true;
-    
-    int newSocket;
-    struct sockaddr addr;
-    socklen_t len=sizeof addr;
-    struct sockaddr_in  * inaddr  =(sockaddr_in *) & addr;
-    char  buf[1600];
 
-    if (_pfd->revents&(POLLPRI))
+    if (_pfd->revents&(POLLPRI|POLLIN))
     {
-	int len=recv(_ioHandle,buf,sizeof( buf)-1,0);
+	len = read( _ioHandle, buf, sizeof(buf)-1 );
 	if (len<1)
 	{
 	    _markedForDeletion=true;
@@ -119,24 +117,6 @@ bool clientItem::OnPoll()
 	    buf[len]='\0';
 	    SendToAll(&buf[0],len,this);
 	}
-    }
-    else if (_pfd->revents&(POLLIN))
-    {
-	int len=recv(_ioHandle,buf,sizeof( buf)-1,0);
-	if (len<1)
-	{
-	    _markedForDeletion=true;
-	}
-	else
-	{
-	    len=_telnet.OnReceive(buf,len);
-	}
-	if (len>0)
-	{
-	    buf[len]='\0';
-	    SendToAll(&buf[0],len,this);
-	}
-
     }
     if (_pfd->revents&(POLLHUP|POLLERR))
     {
