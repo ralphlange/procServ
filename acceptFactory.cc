@@ -27,10 +27,10 @@ public:
 };
 
 // service and calls clientFactory when clients are accepted
-connectionItem * acceptFactory ( char * port, bool local, bool readonly )
+connectionItem * acceptFactory ( int port, bool local, bool readonly )
 {
-    PRINTF("Creating new acceptItem %s\n", port);
-    return new acceptItem(atoi(port), local, readonly);
+    PRINTF("Creating new acceptItem %d\n", port);
+    return new acceptItem(port, local, readonly);
 }
 
 acceptItem::~acceptItem()
