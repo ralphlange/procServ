@@ -89,7 +89,7 @@ public:
     // return true if the item accepted an event, false otherwise
     // OnPoll will be called regardless of how SetPoll responded and must return true
     // only if _pfd is not null and _pfd->revents!=0
-    virtual bool OnPoll();
+    virtual bool OnPoll() = 0;
 
     
     // Send characters to clients
