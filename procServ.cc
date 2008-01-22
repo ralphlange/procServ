@@ -10,6 +10,7 @@
 #include <sys/types.h> 
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <getopt.h>
 
 #include <sys/wait.h> 
 #include <signal.h>
@@ -20,7 +21,9 @@
 
 #include "procServ.h"
 
-bool inDebugMode; // This enables a lot of printfs
+bool inDebugMode;       // This enables a lot of printfs
+bool logPortLocal;      // This restricts log port access to localhost
+char *iocName;          // The name of this beast
 char infoMessage1[512]; // This is sent to the user at sign on
 char infoMessage2[512]; // This is sent to the user at sign on
 int logfileFD=-1;
@@ -73,14 +76,70 @@ int main(int argc,char * argv[])
     time(&procServStart); // What time is it now
     struct pollfd * pollList=NULL,* ppoll; // Allocate as much space as needed
     char cwd[512];
+    int c;
+    int ctlPort, logPort=0;
+    char *command;
 
-    if ( argc<3 || atoi(argv[1]) <1024 ) 
+    while (1) {
+        static struct option long_options[] = {
+            {"debug",         no_argument,       0, 'd'},
+            {"logrestricted", no_argument,       0, 'r'},
+            {"logport",       required_argument, 0, 'l'},
+            {"name",          required_argument, 0, 'n'},
+            {0, 0, 0, 0}
+        };
+        /* getopt_long stores the option index here. */
+        int option_index = 0;
+     
+        c = getopt_long (argc, argv, "drl:n:",
+                         long_options, &option_index);
+
+        /* Detect the end of the options. */
+        if (c == -1) break;
+
+        switch (c)
+        {
+        case 'd':
+            inDebugMode = true;
+            break;
+
+        case 'r':
+            logPortLocal = true;
+            break;
+
+        case 'l':
+            logPort = atoi( optarg );
+            if ( logPort < 1024 ) {
+                fprintf( stderr,
+                         "Invalid log port %d - disabling log port feature.\n", logPort );
+                logPort = 0;
+            }
+            break;
+
+        case 'n':
+            iocName = strdup( optarg );
+            break;
+
+        case '?':
+            /* getopt_long already printed an error message. */
+            break;
+
+        default:
+            abort ();
+        }
+    }
+
+    ctlPort = atoi(argv[optind]);
+    command = argv[optind+1];
+    if ( iocName == NULL ) iocName = command;
+
+    if ( (argc-optind) < 2 || ctlPort < 1024 ) 
     {
-	printf("Usage: %s <port> <command arguments ... >\n",argv[0]);
+	printf("Usage: %s [options] <port> <command arguments ... >\n", argv[0]);
 	exit(0);
     }
 
-    if (checkCommandFile(argv[2])) exit(errno);
+    if ( checkCommandFile( command ) ) exit( errno );
 
     sig.sa_handler=&OnSigChild;
     sigaction(SIGCHLD,&sig,NULL);
@@ -92,27 +151,28 @@ int main(int argc,char * argv[])
     // Make an accept item to listen for connections 
     try
     {
-	connectionItem * acceptItem=acceptFactory(argv[1]);
+	connectionItem *acceptItem = acceptFactory( ctlPort );
 	AddConnection(acceptItem);
     }
     catch (int error)
     {
-	perror("Caught an exception creating the initial telnet port");
+	perror("Caught an exception creating the initial control telnet port");
 	fprintf(stderr,"Exiting with error code: %d\n",error);
 	exit(error);
     }
     int i;
 
     daemon_pid=getpid();
-    if (getenv("PROCSERV_DEBUG")==NULL)
+
+    if ( getenv("PROCSERV_DEBUG") != NULL ) inDebugMode = true;
+    if ( inDebugMode == false )
     {
 	forkAndGo();
 	writePidFile();
     }
     else
     {
-	inDebugMode=true; // Enables PRINTF
-	logfileFD=1; // Enables messages 
+	logfileFD = 1;          // Enables messages 
     }
 
     // Record some useful data for managers 
@@ -121,7 +181,7 @@ int main(int argc,char * argv[])
 	    "Startup command: %s " NL,
 	    getpid(),
 	    getcwd(cwd,sizeof(cwd)),
-	    argv[2]);
+	    command);
 
     // Create and add the stdio item 
     // AddConnection(new  connectionItem(0)); // Connects stdin
@@ -140,7 +200,7 @@ int main(int argc,char * argv[])
 
 	if (sigUsr1Set)
 	{
-	    printf("Failed to exec %s: Either the file does not exist or I have no execute permission\n",argv[2] );
+	    printf("Failed to exec %s: Either the file does not exist or I have no execute permission\n", command );
 	    printf("Exiting procServ!\n");
 	    exit(0);
 	}
@@ -189,7 +249,7 @@ int main(int argc,char * argv[])
 	    // This call returns NULL if the process item lives
 	    if (processFactoryNeedsRestart())
 	    {
-	    	npi= processFactory(argc-2,argv+2);
+	    	npi= processFactory(argc-optind-2,argv+optind+1);
 	    	if (npi) AddConnection(npi);
 	    }
 	}
