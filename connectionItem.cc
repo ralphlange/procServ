@@ -38,7 +38,4 @@ bool connectionItem::SetPoll(struct pollfd * pfd)
     return true;    // and count this in npoll
 }
 
-void connectionItem::OnWait(int pid)
-{
-}
-bool connectionItem::isProcess() const { return false; }
+void connectionItem::OnWait(int pid) {}

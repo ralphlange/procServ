@@ -100,8 +100,9 @@ public:
 
     int GetHandle() const { return _ioHandle;}
     bool IsDead() const { return _markedForDeletion; }
-    // Return false unless you are the process item
-    virtual bool isProcess() const;
+
+    // Return false unless you are the process item (processClass overloads)
+    virtual bool isProcess() const { return false; }
 
 protected:
     connectionItem ( int fd = -1, bool readonly = false );

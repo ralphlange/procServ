@@ -33,7 +33,7 @@ public:
     void OnWait(int pid);
     char factoryName[100];
     void SetupTio(struct termios *);
-    virtual bool isProcess() const ; // This returns true 
+    virtual bool isProcess() const { return true; }
 public:
     virtual ~processClass();
 protected:
