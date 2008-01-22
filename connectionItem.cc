@@ -8,11 +8,12 @@
 #include <errno.h>
 // This does I/O to stdio stdin and stdout
 
-connectionItem::connectionItem(int fd)
+connectionItem::connectionItem(int fd, bool readonly)
 {
-    _ioHandle=fd;
-    _markedForDeletion=false;
-    _events=POLLIN|POLLPRI;
+    _ioHandle = fd;
+    _readonly = readonly;
+    _markedForDeletion = false;
+    _events = POLLIN|POLLPRI;
 }
 
 connectionItem::~connectionItem()

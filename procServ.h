@@ -50,7 +50,7 @@ bool processFactoryNeedsRestart(); // Call to test status of the server process
 void processFactorySendSignal(int signal);
 
 // clientFactory manages an open socket connected to a user
-connectionItem * clientFactory(int ioSocket);
+connectionItem * clientFactory(int ioSocket, bool readonly=false);
 
 // acceptFactory opens a socket creating the inital listening
 // service and calls clientFactory when clients are accepted
@@ -104,7 +104,7 @@ public:
     virtual bool isProcess() const;
 
 protected:
-    connectionItem ( int fd = -1 );
+    connectionItem ( int fd = -1, bool readonly = false );
 
     // These two members fill in the pollfd structure
     int _ioHandle; // my file handle

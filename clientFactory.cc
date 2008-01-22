@@ -21,7 +21,7 @@
 class clientItem : public connectionItem
 {
 public:
-    clientItem(int port);
+    clientItem(int port, bool readonly);
     ~clientItem();
 
     bool OnPoll();
@@ -34,9 +34,9 @@ private:
 };
 
 // service and calls clientFactory when clients are accepted
-connectionItem * clientFactory(int socketIn)
+connectionItem * clientFactory(int socketIn, bool readonly)
 {
-    return new clientItem(socketIn);
+    return new clientItem(socketIn, readonly);
 }
 
 clientItem::~clientItem()
@@ -50,7 +50,7 @@ clientItem::~clientItem()
 
 // Client item constructor
 // This sets KEEPALIVE on the socket and displays the greeting
-clientItem::clientItem(int socketIn)
+clientItem::clientItem(int socketIn, bool readonly)
 {
     assert(socketIn>=0);
     int optval = 1;
@@ -72,7 +72,8 @@ clientItem::clientItem(int socketIn)
     sprintf( buf2, "Connected: %d users, %d loggers" NL NL, _users, _loggers );
 
     setsockopt(socketIn,SOL_SOCKET,SO_KEEPALIVE,&optval,sizeof(optval));
-    _ioHandle=socketIn;
+    _ioHandle = socketIn;
+    _readonly = readonly;
 
     if ( _readonly ) {          // Logging client
         _loggers++;
@@ -113,7 +114,7 @@ bool clientItem::OnPoll()
 	    len=_telnet.OnReceive(buf,len);
 	}
 
-	if (len>0)
+	if (len>0 && _readonly==false )
 	{
 	    buf[len]='\0';
 	    SendToAll(&buf[0],len,this);

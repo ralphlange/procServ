@@ -94,7 +94,7 @@ bool acceptItem::OnPoll()
     {
 	newSocket = accept( _ioHandle, &addr, &len );
 	PRINTF( "acceptItem: Accepted connection on handle %d\n", newSocket );
-	AddConnection( clientFactory(newSocket) );
+	AddConnection( clientFactory(newSocket, _readonly) );
     }
     if ( _pfd->revents & (POLLHUP|POLLERR) )
     {

@@ -148,7 +148,7 @@ int main(int argc,char * argv[])
     sig.sa_handler=&OnSigUsr1;
     sigaction(SIGUSR1,&sig,NULL);
 
-    // Make an accept item to listen for connections 
+    // Make an accept item to listen for control connections
     try
     {
 	connectionItem *acceptItem = acceptFactory( ctlPort );
@@ -159,6 +159,21 @@ int main(int argc,char * argv[])
 	perror("Caught an exception creating the initial control telnet port");
 	fprintf(stderr,"Exiting with error code: %d\n",error);
 	exit(error);
+    }
+
+    if ( logPort ) {
+        // Make an accept item to listen for log connections
+        try
+        {
+            connectionItem *acceptItem = acceptFactory( logPort, logPortLocal, true );
+            AddConnection(acceptItem);
+        }
+        catch (int error)
+        {
+            perror("Caught an exception creating the initial log telnet port");
+            fprintf(stderr,"Exiting with error code: %d\n",error);
+            exit(error);
+        }
     }
 
     daemon_pid=getpid();
