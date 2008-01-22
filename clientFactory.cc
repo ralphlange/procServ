@@ -2,7 +2,6 @@
 // David H. Thompson 8/29/2003
 // GNU Public License applies - see www.gnu.org
 
-#include "procServ.h"
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,6 +13,8 @@
 #include <arpa/inet.h>
 #include <string.h>
 #include <signal.h>
+
+#include "procServ.h"
 #include "telnetStateMachine.h"
 
 

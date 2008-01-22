@@ -28,12 +28,13 @@ connectionItem::~connectionItem()
 // may modify pfd-revents as needed
 bool connectionItem::OnPoll()
 {
-    if (_pfd==NULL || _pfd->revents==0 ) return false;
-    // Otherwise process the revents and return true;
-    
     char buf[1600];
     int len;
-    
+
+    if (_pfd==NULL || _pfd->revents==0 ) return false;
+
+    // Otherwise process the revents and return true;
+
     if (_pfd->revents&(POLLIN|POLLPRI))
     {
 	len=read(_ioHandle,&buf,sizeof(buf)-1);

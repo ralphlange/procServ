@@ -160,7 +160,6 @@ int main(int argc,char * argv[])
 	fprintf(stderr,"Exiting with error code: %d\n",error);
 	exit(error);
     }
-    int i;
 
     daemon_pid=getpid();
 
@@ -195,8 +194,6 @@ int main(int argc,char * argv[])
 	int pollStatus; // What poll returns
 
 	connectionItem * p ;
-
-	int i=0;
 
 	if (sigUsr1Set)
 	{
@@ -278,7 +275,8 @@ void SendToAll(const char * message,int count,const connectionItem * sender)
     connectionItem * p = connectionItem::head;
 
     // Log the traffic 
-    if (logfileFD>0 && (sender==NULL  || sender->isProcess() )) write(logfileFD,message,count);
+    if (logfileFD>0 && (sender==NULL  || sender->isProcess() ))
+        write( logfileFD, message, count );
 
     while(p)
     {
@@ -480,7 +478,7 @@ int checkCommandFile(const char * command)
     if (min_permissions==(s.st_mode & min_permissions)) return 0; // This is great!
     // else
     fprintf(stderr, "Warning- Please change permissions on %s to at least -r-xr-xr-x\n"
-    	"procServe may not be able to continue without execute permission!\n",command);
+    	"procServ may not be able to continue without execute permission!\n",command);
     return 0;
 }
 

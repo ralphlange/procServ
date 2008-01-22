@@ -2,7 +2,7 @@
 // David H. Thompson 8/29/2003
 // GNU Public License applies - see www.gnu.org
 //
-#include "procServ.h"
+
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -17,6 +17,8 @@
 #include <utmp.h> /* for login_tty */ 
 #include <time.h>
 #include <string.h>
+
+#include "procServ.h"
 
 
 class processClass : public connectionItem
