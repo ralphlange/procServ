@@ -71,6 +71,25 @@ void writePidFile()
     fclose(fp);
 }
 
+void printUsage()
+{
+    printf("Usage: %s [options] <port> <command args ... >    (-h for help)\n",
+           procservName);
+}
+
+void printHelp()
+{
+    printUsage();
+    printf("<port>              use telnet <port> for command connections\n"
+           "<command args ...>  command line to start child process\n"
+           "Options:\n"
+           " -h --help          print this message\n"
+           " -d --debug         enable debug mode (keeps child in foreground)\n"
+           " -l --logport <n>   allow log connections through telnet port <n>\n"
+           " -r --restrict      restrict log connections to localhost\n"
+           " -n --name <str>    set child's name (defaults to command line)\n"
+        );
+}
 
 int main(int argc,char * argv[])
 {
@@ -86,16 +105,17 @@ int main(int argc,char * argv[])
 
     while (1) {
         static struct option long_options[] = {
-            {"debug",         no_argument,       0, 'd'},
-            {"logrestricted", no_argument,       0, 'r'},
-            {"logport",       required_argument, 0, 'l'},
-            {"name",          required_argument, 0, 'n'},
+            {"debug",    no_argument,       0, 'd'},
+            {"restrict", no_argument,       0, 'r'},
+            {"help",     no_argument,       0, 'h'},
+            {"logport",  required_argument, 0, 'l'},
+            {"name",     required_argument, 0, 'n'},
             {0, 0, 0, 0}
         };
         /* getopt_long stores the option index here. */
         int option_index = 0;
      
-        c = getopt_long (argc, argv, "drl:n:",
+        c = getopt_long (argc, argv, "+drhl:n:",
                          long_options, &option_index);
 
         /* Detect the end of the options. */
@@ -111,11 +131,16 @@ int main(int argc,char * argv[])
             logPortLocal = true;
             break;
 
+        case 'h':
+            printHelp();
+            exit(0);
+
         case 'l':
             logPort = atoi( optarg );
             if ( logPort < 1024 ) {
                 fprintf( stderr,
-                         "Invalid log port %d - disabling log port feature.\n", logPort );
+                         "%s: invalid log port %d (<1024) - disabling log port\n",
+                         procservName, logPort );
                 logPort = 0;
             }
             break;
@@ -125,7 +150,8 @@ int main(int argc,char * argv[])
             break;
 
         case '?':
-            /* getopt_long already printed an error message. */
+            /* getopt_long already printed an error message */
+            wrongOption = true;
             break;
 
         default:
@@ -133,14 +159,30 @@ int main(int argc,char * argv[])
         }
     }
 
+    if ( (argc-optind) < 2 )
+    {
+        fprintf( stderr,
+                 "%s: missing argument\n",
+                 procservName, ctlPort );
+    }
+    
+
+    if ( wrongOption || (argc-optind) < 2 ) 
+    {
+	printUsage();
+	exit(1);
+    }
+
     ctlPort = atoi(argv[optind]);
     command = argv[optind+1];
     if ( childName == NULL ) childName = command;
 
-    if ( (argc-optind) < 2 || ctlPort < 1024 ) 
+    if ( ctlPort < 1024 ) 
     {
-	printf("Usage: %s [options] <port> <command arguments ... >\n", argv[0]);
-	exit(0);
+        fprintf( stderr,
+                 "%s: invalid control port %d (<1024)\n",
+                 procservName, ctlPort );
+	exit(1);
     }
 
     if ( checkCommandFile( command ) ) exit( errno );
@@ -161,7 +203,8 @@ int main(int argc,char * argv[])
     catch (int error)
     {
 	perror("Caught an exception creating the initial control telnet port");
-	fprintf(stderr,"Exiting with error code: %d\n",error);
+	fprintf(stderr, "%s: Exiting with error code: %d\n",
+                procservName, error);
 	exit(error);
     }
 
@@ -175,7 +218,8 @@ int main(int argc,char * argv[])
         catch (int error)
         {
             perror("Caught an exception creating the initial log telnet port");
-            fprintf(stderr,"Exiting with error code: %d\n",error);
+            fprintf(stderr, "%s: Exiting with error code: %d\n",
+                    procservName, error);
             exit(error);
         }
     }
@@ -491,13 +535,14 @@ int checkCommandFile(const char * command)
     }
     if (!S_ISREG(s.st_mode))
     {
-	fprintf(stderr,"The command file: %s is not a regular file\n",command);
+	fprintf(stderr,"%s: %s is not a regular file\n", procservName, command);
 	return -1;
     }
     if (min_permissions==(s.st_mode & min_permissions)) return 0; // This is great!
     // else
-    fprintf(stderr, "Warning- Please change permissions on %s to at least -r-xr-xr-x\n"
-    	"procServ may not be able to continue without execute permission!\n",command);
+    fprintf(stderr, "%s: Warning - Please change permissions on %s to at least -r-xr-xr-x\n"
+            "procServ may not be able to continue without execute permission!\n",
+            procservName, command);
     return 0;
 }
 
