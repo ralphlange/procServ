@@ -64,14 +64,8 @@ extern connectionItem * processItem; // Set if it exists
 // connectionItem class definition
 // This is an abstract class that all of the other classes use
 // 
-class connectionItemPointer;
 class connectionItem
 {
-    friend class connectionItemPointer;
-
-    // Always created by a factory function
-public:
-
 public:
     // Virtual functions:
     virtual ~connectionItem();
@@ -90,15 +84,13 @@ public:
     // OnPoll will be called regardless of how SetPoll responded and must return true
     // only if _pfd is not null and _pfd->revents!=0
     virtual bool OnPoll() = 0;
-
     
     // Send characters to clients
-    virtual int Send(const char *,int count) = 0;
-
+    virtual int Send(const char *, int count) = 0;
  
     virtual void OnWait(int pid); // called if sig child received
 
-    int GetHandle() const { return _ioHandle;}
+    int GetHandle() const { return _ioHandle; }
     bool IsDead() const { return _markedForDeletion; }
 
     // Return false unless you are the process item (processClass overloads)

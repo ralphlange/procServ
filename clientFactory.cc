@@ -69,7 +69,7 @@ clientItem::clientItem(int socketIn, bool readonly)
     strftime(IOCStart_buf,sizeof(IOCStart_buf)-1,"%b %d, %Y %r",&IOCStart_tm);
 
     sprintf( buf1, "Restarted: ProcServ %s  IOC %s" NL, procServStart_buf, IOCStart_buf );
-    sprintf( buf2, "Connected: %d users, %d loggers" NL NL, _users, _loggers );
+    sprintf( buf2, "Connected: %d user(s), %d logger(s)" NL NL, _users, _loggers );
 
     setsockopt(socketIn,SOL_SOCKET,SO_KEEPALIVE,&optval,sizeof(optval));
     _ioHandle = socketIn;
@@ -81,6 +81,7 @@ clientItem::clientItem(int socketIn, bool readonly)
         _users++;
         write( _ioHandle, greeting,strlen(greeting));
     }
+
     write( _ioHandle, infoMessage1,strlen(infoMessage1));
     write( _ioHandle, infoMessage2,strlen(infoMessage2));
     write( _ioHandle, buf1, strlen(buf1));

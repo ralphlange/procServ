@@ -238,5 +238,3 @@ void processClass::SetupTio(struct termios *tio)
      tio->c_ispeed=B38400;
     tio->c_ospeed=B38400;
 }
-
-bool processClass::isProcess() const  { return true; };
