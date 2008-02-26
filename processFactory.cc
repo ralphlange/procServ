@@ -61,10 +61,10 @@ connectionItem * processFactory(int argc, char *argv[])
     
     if (processFactoryNeedsRestart())
     {
-	sprintf( buf, "Restarting IOC %s" NL, iocName );
+	sprintf( buf, "Restarting IOC %s" NL, childName );
 	SendToAll(buf,strlen(buf),0);
 
-        if ( strcmp( iocName, argv[0] ) != 0 ) {
+        if ( strcmp( childName, argv[0] ) != 0 ) {
             sprintf( buf, "   (as %s)" NL, argv[0] );
             SendToAll(buf,strlen(buf),0);
         }
@@ -112,9 +112,9 @@ processClass::processClass(int argc,char * argv[])
 	PRINTF("Created process %d on %s\n",_pid,factoryName);
 	// Don't start a new one before this time:
 	_restartTime=15+time(0);
-	sprintf(infoMessage2,"The PID of IOC %s is now: %d" NL, iocName, _pid);
+	sprintf(infoMessage2,"The PID of IOC %s is now: %d" NL, childName, _pid);
 
-	sprintf(buf,"The new PID of IOC %s is now: %d" NL, iocName, _pid);
+	sprintf(buf,"The new PID of IOC %s is now: %d" NL, childName, _pid);
 
 	strcat(buf,"@@@@@@@@@@@@@" NL);
 	SendToAll(buf,strlen(buf),this);

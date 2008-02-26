@@ -18,7 +18,7 @@
 #endif 
 extern bool inDebugMode;
 extern bool logPortLocal;
-extern char *iocName;
+extern char *childName;
 extern char infoMessage1[];
 extern char infoMessage2[];
 extern pid_t daemon_pid;

@@ -23,7 +23,8 @@
 
 bool inDebugMode;       // This enables a lot of printfs
 bool logPortLocal;      // This restricts log port access to localhost
-char *iocName;          // The name of this beast
+char *procservName;     // The name of this beast
+char *childName;        // The name of that beast
 char infoMessage1[512]; // This is sent to the user at sign on
 char infoMessage2[512]; // This is sent to the user at sign on
 int logfileFD=-1;
@@ -79,6 +80,9 @@ int main(int argc,char * argv[])
     int c;
     int ctlPort, logPort=0;
     char *command;
+    bool wrongOption = false;
+
+    procservName = argv[0];
 
     while (1) {
         static struct option long_options[] = {
@@ -117,7 +121,7 @@ int main(int argc,char * argv[])
             break;
 
         case 'n':
-            iocName = strdup( optarg );
+            childName = strdup( optarg );
             break;
 
         case '?':
@@ -131,7 +135,7 @@ int main(int argc,char * argv[])
 
     ctlPort = atoi(argv[optind]);
     command = argv[optind+1];
-    if ( iocName == NULL ) iocName = command;
+    if ( childName == NULL ) childName = command;
 
     if ( (argc-optind) < 2 || ctlPort < 1024 ) 
     {
