@@ -23,12 +23,16 @@
 
 bool inDebugMode;       // This enables a lot of printfs
 bool logPortLocal;      // This restricts log port access to localhost
-char *procservName;     // The name of this beast
-char *childName;        // The name of that beast
+char *procservName;     // The name of this beast (server)
+char *childName;        // The name of that beast (child)
+
+pid_t procservPid;      // PID od server (daemon if not in debug mode)
+char *pidFile;          // File name for server PID
+char defaultpidFile[] = "pid.txt";  // default
+
 char infoMessage1[512]; // This is sent to the user at sign on
 char infoMessage2[512]; // This is sent to the user at sign on
 int logfileFD=-1;
-pid_t procservPid;
 
 #define MAX_CONNECTIONS 64
 
@@ -55,20 +59,21 @@ struct sigaction sig;
 
 // this is the number of present connections
 int ni;
-char defaultpidFile[]="pid.txt";
 void writePidFile()
 {
     int pid=getpid();
     FILE * fp=NULL;
-    char * pidFile=getenv("PROCSERV_PID");
-    if (pidFile==NULL) pidFile=defaultpidFile;
 
-    
-    fp=fopen(pidFile,"w");
-    // Dont stop here - just go without 
-    if (fp==NULL) return;
-    fprintf(fp,"%d\n",pid);
-    fclose(fp);
+    fp = fopen( pidFile, "w" );
+    // Don't stop here - just go without
+    if ( fp==NULL ) {
+        fprintf( stderr,
+                 "%s: unable to open PID file %s\n",
+                 pidFile );
+        return;
+    }
+    fprintf( fp, "%d\n", pid );
+    fclose( fp );
 }
 
 void printUsage()
@@ -80,14 +85,15 @@ void printUsage()
 void printHelp()
 {
     printUsage();
-    printf("<port>              use telnet <port> for command connections\n"
-           "<command args ...>  command line to start child process\n"
+    printf("<port>               use telnet <port> for command connections\n"
+           "<command args ...>   command line to start child process\n"
            "Options:\n"
-           " -h --help          print this message\n"
-           " -d --debug         enable debug mode (keeps child in foreground)\n"
-           " -l --logport <n>   allow log connections through telnet port <n>\n"
-           " -r --restrict      restrict log connections to localhost\n"
-           " -n --name <str>    set child's name (defaults to command line)\n"
+           " -d --debug          enable debug mode (keeps child in foreground)\n"
+           " -h --help           print this message\n"
+           " -l --logport <n>    allow log connections through telnet port <n>\n"
+           " -n --name <str>     set child's name (defaults to command line)\n"
+           " -r --restrict       restrict log connections to localhost\n"
+           " -p --pidfile <str>  name of PID file (for server PID)\n"
         );
 }
 
@@ -103,19 +109,23 @@ int main(int argc,char * argv[])
 
     procservName = argv[0];
 
+    pidFile = getenv( "PROCSERV_PID" );
+    if ( pidFile==NULL ) pidFile = defaultpidFile;
+
     while (1) {
         static struct option long_options[] = {
             {"debug",    no_argument,       0, 'd'},
-            {"restrict", no_argument,       0, 'r'},
             {"help",     no_argument,       0, 'h'},
             {"logport",  required_argument, 0, 'l'},
             {"name",     required_argument, 0, 'n'},
+            {"restrict", no_argument,       0, 'r'},
+            {"pidfile",  required_argument, 0, 'p'},
             {0, 0, 0, 0}
         };
         /* getopt_long stores the option index here. */
         int option_index = 0;
      
-        c = getopt_long (argc, argv, "+drhl:n:",
+        c = getopt_long (argc, argv, "+drhl:n:p:",
                          long_options, &option_index);
 
         /* Detect the end of the options. */
@@ -123,19 +133,15 @@ int main(int argc,char * argv[])
 
         switch (c)
         {
-        case 'd':
+        case 'd':                                 // Debug mode
             inDebugMode = true;
             break;
 
-        case 'r':
-            logPortLocal = true;
-            break;
-
-        case 'h':
+        case 'h':                                 // Help
             printHelp();
             exit(0);
 
-        case 'l':
+        case 'l':                                 // Log port
             logPort = atoi( optarg );
             if ( logPort < 1024 ) {
                 fprintf( stderr,
@@ -145,11 +151,19 @@ int main(int argc,char * argv[])
             }
             break;
 
-        case 'n':
+        case 'n':                                 // Name
             childName = strdup( optarg );
             break;
 
-        case '?':
+        case 'r':                                 // Restrict log
+            logPortLocal = true;
+            break;
+
+        case 'p':                                 // PID file
+            pidFile = strdup( optarg );
+            break;
+
+        case '?':                                 // Error
             /* getopt_long already printed an error message */
             wrongOption = true;
             break;
