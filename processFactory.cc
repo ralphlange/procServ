@@ -125,7 +125,7 @@ processClass::processClass(int argc,char * argv[])
 	int status=execv(*argv,argv); // This wont return
 	// It did...
 	printf("Could not execute: %s, %s\n",*argv,strerror(errno));
-	kill(daemon_pid,SIGUSR1); // Let someone know
+	kill(procservPid,SIGUSR1); // Let someone know
 	sleep(10); // Dont do anything harmful
 	exit(-1);
     }

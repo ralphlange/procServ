@@ -28,7 +28,7 @@ char *childName;        // The name of that beast
 char infoMessage1[512]; // This is sent to the user at sign on
 char infoMessage2[512]; // This is sent to the user at sign on
 int logfileFD=-1;
-pid_t daemon_pid;
+pid_t procservPid;
 
 #define MAX_CONNECTIONS 64
 
@@ -165,9 +165,8 @@ int main(int argc,char * argv[])
                  "%s: missing argument\n",
                  procservName, ctlPort );
     }
-    
 
-    if ( wrongOption || (argc-optind) < 2 ) 
+    if ( wrongOption || (argc-optind) < 2 )
     {
 	printUsage();
 	exit(1);
@@ -177,7 +176,7 @@ int main(int argc,char * argv[])
     command = argv[optind+1];
     if ( childName == NULL ) childName = command;
 
-    if ( ctlPort < 1024 ) 
+    if ( ctlPort < 1024 )
     {
         fprintf( stderr,
                  "%s: invalid control port %d (<1024)\n",
@@ -224,7 +223,7 @@ int main(int argc,char * argv[])
         }
     }
 
-    daemon_pid=getpid();
+    procservPid=getpid();
 
     if ( getenv("PROCSERV_DEBUG") != NULL ) inDebugMode = true;
     if ( inDebugMode == false )
@@ -234,7 +233,7 @@ int main(int argc,char * argv[])
     }
     else
     {
-	logfileFD = 1;          // Enables messages 
+	logfileFD = 1;          // Enable messages
     }
 
     // Record some useful data for managers 
@@ -248,7 +247,7 @@ int main(int argc,char * argv[])
     // Create and add the stdio item 
     // AddConnection(new  connectionItem(0)); // Connects stdin
 
-    // Run here until somthing makes it die
+    // Run here until something makes it die
     while(1)
     {
 	char buf[100];
@@ -471,7 +470,6 @@ void OnSigUsr1(int)
 }
 
 
-
 // Fork the daemon and exit the parent
 void forkAndGo()
 {
@@ -492,7 +490,7 @@ void forkAndGo()
 
 	exit(0);
     }
-    daemon_pid=getpid();
+    procservPid=getpid();
     // p==0
     // The daemon starts up here
 
@@ -515,6 +513,8 @@ void forkAndGo()
     ioctl(fh,TIOCNOTTY); // Detatch from /dev/tty
     close(fh);
 }
+
+
 // Check to see if the command is really executable:
 // Return 0 if the file is executable
 int checkCommandFile(const char * command)

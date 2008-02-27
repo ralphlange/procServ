@@ -21,7 +21,7 @@ extern bool logPortLocal;
 extern char *childName;
 extern char infoMessage1[];
 extern char infoMessage2[];
-extern pid_t daemon_pid;
+extern pid_t procservPid;
 
 
 #define NL "\r\n"
