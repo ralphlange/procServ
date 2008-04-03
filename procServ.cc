@@ -11,7 +11,6 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <getopt.h>
-
 #include <sys/wait.h> 
 #include <signal.h>
 #include <unistd.h> 
@@ -25,10 +24,11 @@ bool inDebugMode;       // This enables a lot of printfs
 bool logPortLocal;      // This restricts log port access to localhost
 char *procservName;     // The name of this beast (server)
 char *childName;        // The name of that beast (child)
+int  connectionNo;      // Total number of connections
 
 pid_t procservPid;      // PID od server (daemon if not in debug mode)
 char *pidFile;          // File name for server PID
-char defaultpidFile[] = "pid.txt";  // default
+char  defaultpidFile[] = "pid.txt";  // default
 
 char infoMessage1[512]; // This is sent to the user at sign on
 char infoMessage2[512]; // This is sent to the user at sign on
@@ -47,6 +47,7 @@ void OnPollError();
 void OnPollTimeout();
 // Daemonizes the program
 void forkAndGo();
+// Checks the command file (existence and access rights)
 int checkCommandFile(const char * command);
 
 void OnSigChild(int);
@@ -59,9 +60,6 @@ int sigUsr1Set;
 
 struct sigaction sig;
 
-
-// this is the number of present connections
-int ni;
 void writePidFile()
 {
     int pid=getpid();
@@ -72,7 +70,7 @@ void writePidFile()
     if ( fp==NULL ) {
         fprintf( stderr,
                  "%s: unable to open PID file %s\n",
-                 pidFile );
+                 procservName, pidFile );
         return;
     }
     fprintf( fp, "%d\n", pid );
@@ -249,6 +247,7 @@ int main(int argc,char * argv[])
     procservPid=getpid();
 
     if ( getenv("PROCSERV_DEBUG") != NULL ) inDebugMode = true;
+
     if ( inDebugMode == false )
     {
 	forkAndGo();
@@ -307,11 +306,11 @@ int main(int argc,char * argv[])
 	    sigPipeSet--;
 	}
 	// Adjust the poll data array
-	if (nPollAlloc != ni)
+	if (nPollAlloc != connectionNo)
 	{
 	    if (pollList) free(pollList);
-	    pollList=(pollfd *) malloc(ni*sizeof(struct pollfd));
-	    nPollAlloc=ni;
+	    pollList=(pollfd *) malloc(connectionNo*sizeof(struct pollfd));
+	    nPollAlloc=connectionNo;
 	}
 
 	// Load the socket number and flags
@@ -410,7 +409,8 @@ void OnPollError()
 	}
 	
 }
-// Handles houskeeping
+
+// Handles housekeeping
 void OnPollTimeout()
 {
     pid_t pid;
@@ -471,7 +471,7 @@ void AddConnection(connectionItem * ci)
 	
 	ci->prev=NULL;
 	connectionItem::head=ci;
-	ni++;
+	connectionNo++;
 	PRINTF("Adding connection\n");
 }
 
@@ -488,8 +488,8 @@ void DeleteConnection(connectionItem *ci)
 	}
 	if (ci->next) ci->next->prev=ci->prev;
 	delete ci;
-	ni--;
-	assert(ni>=0);
+	connectionNo--;
+	assert(connectionNo>=0);
 	PRINTF("Deleting connection\n");
 }
 
@@ -515,9 +515,9 @@ void forkAndGo()
     int fh;
     struct stat statBuf;
 
-    fstat(1,&statBuf); // Find out what stdout is:
+    fstat( 1, &statBuf ); // Find out what stdout is
 
-    if (p) // I am the parent
+    if ( p ) // I am the parent
     {
 	fprintf( stderr, "procServ spawning daemon process: %d\n", p );
         if ( logFile == NULL ) {
@@ -530,12 +530,13 @@ void forkAndGo()
 	exit(0);
     }
     procservPid=getpid();
+
     // p==0
     // The daemon starts up here
 
     // Redirect all of the I/O away from /dev/tty
-    fh=open(buf,O_RDWR);
-    if (fh<0) { perror(buf);exit(-1);}
+    fh = open( buf, O_RDWR );
+    if ( fh<0 ) { perror( buf ); exit( -1 ); }
 
     if ( logFileFD == -1 && S_ISREG(statBuf.st_mode) )
     {
@@ -547,10 +548,10 @@ void forkAndGo()
     close(fh);
 
     // Now, make sure we are not attached to a terminal
-    fh=open("/dev/tty",O_RDWR);
-    if (fh<0) return; // No terminal
-    ioctl(fh,TIOCNOTTY); // Detatch from /dev/tty
-    close(fh);
+    fh = open( "/dev/tty", O_RDWR );
+    if ( fh<0 ) return;         // Not a terminal
+    ioctl( fh, TIOCNOTTY );     // Detatch from /dev/tty
+    close( fh );
 }
 
 

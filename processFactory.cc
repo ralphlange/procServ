@@ -235,6 +235,6 @@ void processClass::SetupTio(struct termios *tio)
     tio->c_cc[VWERASE ]=CC('W');
     tio->c_cc[VLNEXT ]=CC('V');
     tio->c_cc[VEOL2 ]=0;
-     tio->c_ispeed=B38400;
+    tio->c_ispeed=B38400;
     tio->c_ospeed=B38400;
 }
