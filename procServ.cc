@@ -32,7 +32,10 @@ char defaultpidFile[] = "pid.txt";  // default
 
 char infoMessage1[512]; // This is sent to the user at sign on
 char infoMessage2[512]; // This is sent to the user at sign on
-int logfileFD=-1;
+
+char *logFile = NULL;   // File name for log
+int  logFileFD=-1;;     // FD for log file
+int  debugFD=-1;        // FD for debug output
 
 #define MAX_CONNECTIONS 64
 
@@ -85,15 +88,16 @@ void printUsage()
 void printHelp()
 {
     printUsage();
-    printf("<port>               use telnet <port> for command connections\n"
-           "<command args ...>   command line to start child process\n"
+    printf("<port>                use telnet <port> for command connections\n"
+           "<command args ...>    command line to start child process\n"
            "Options:\n"
-           " -d --debug          enable debug mode (keeps child in foreground)\n"
-           " -h --help           print this message\n"
-           " -l --logport <n>    allow log connections through telnet port <n>\n"
-           " -n --name <str>     set child's name (defaults to command line)\n"
-           " -r --restrict       restrict log connections to localhost\n"
-           " -p --pidfile <str>  name of PID file (for server PID)\n"
+           " -d --debug           enable debug mode (keeps child in foreground)\n"
+           " -h --help            print this message\n"
+           " -l --logport <n>     allow log connections through telnet port <n>\n"
+           " -L --logfile <file>  write log to <file>\n"
+           " -n --name <str>      set child's name (defaults to command line)\n"
+           " -r --restrict        restrict log connections to localhost\n"
+           " -p --pidfile <str>   name of PID file (for server PID)\n"
         );
 }
 
@@ -117,6 +121,7 @@ int main(int argc,char * argv[])
             {"debug",    no_argument,       0, 'd'},
             {"help",     no_argument,       0, 'h'},
             {"logport",  required_argument, 0, 'l'},
+            {"logfile",  required_argument, 0, 'L'},
             {"name",     required_argument, 0, 'n'},
             {"restrict", no_argument,       0, 'r'},
             {"pidfile",  required_argument, 0, 'p'},
@@ -125,7 +130,7 @@ int main(int argc,char * argv[])
         /* getopt_long stores the option index here. */
         int option_index = 0;
      
-        c = getopt_long (argc, argv, "+drhl:n:p:",
+        c = getopt_long (argc, argv, "+drhl:L:n:p:",
                          long_options, &option_index);
 
         /* Detect the end of the options. */
@@ -149,6 +154,10 @@ int main(int argc,char * argv[])
                          procservName, logPort );
                 logPort = 0;
             }
+            break;
+
+        case 'L':                                 // Log file
+            logFile = strdup( optarg );
             break;
 
         case 'n':                                 // Name
@@ -247,7 +256,19 @@ int main(int argc,char * argv[])
     }
     else
     {
-	logfileFD = 1;          // Enable messages
+	debugFD = 1;          // Enable debug messages
+    }
+
+    // Open log file
+    if ( logFile ) {
+       logFileFD = creat( logFile, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH );
+        if ( logFileFD == -1 ) {         // Don't stop here - just go without
+            fprintf( stderr,
+                     "%s: unable to open log file %s\n",
+                     procservName, logFile );
+        } else {
+            PRINTF( "Opened file %s for logging\n", logFile );
+        }
     }
 
     // Record some useful data for managers 
@@ -350,13 +371,15 @@ void SendToAll(const char * message,int count,const connectionItem * sender)
 {
     connectionItem * p = connectionItem::head;
 
-    // Log the traffic 
-    if (logfileFD>0 && (sender==NULL  || sender->isProcess() ))
-        write( logfileFD, message, count );
-
-    while(p)
+    // Log the traffic to file / stdout (debug)
+    if ( sender==NULL  || sender->isProcess() )
     {
-	if (p->isProcess()) 
+        if ( logFileFD > 0 ) write( logFileFD, message, count );
+        if ( debugFD > 0 ) write( debugFD, message, count );
+    }
+
+    while ( p ) {
+	if ( p->isProcess() ) 
 	{
 	    // Non-null senders that are not processes can send to processes
 	    if (sender && !sender->isProcess()) p->Send(message,count);
@@ -496,12 +519,14 @@ void forkAndGo()
 
     if (p) // I am the parent
     {
-	fprintf(stderr,"procServ spawining daemon process: %d\n",p);
-	if (S_ISREG(statBuf.st_mode))
-	    fprintf(stderr,"The open file on stdout will be used as a log file.\n");
-	else
-	    fprintf(stderr,"Stdout is not a file - no log will be kept.\n");
-
+	fprintf( stderr, "procServ spawning daemon process: %d\n", p );
+        if ( logFile == NULL ) {
+            if ( S_ISREG(statBuf.st_mode) )
+                fprintf( stderr, "The open file on stdout will be used as a log file.\n" );
+            else
+                fprintf( stderr, "No log file specified and stdout is not a file "
+                         "- no log will be kept.\n" );
+        }
 	exit(0);
     }
     procservPid=getpid();
@@ -512,13 +537,13 @@ void forkAndGo()
     fh=open(buf,O_RDWR);
     if (fh<0) { perror(buf);exit(-1);}
 
-    if (S_ISREG(statBuf.st_mode))
+    if ( logFileFD == -1 && S_ISREG(statBuf.st_mode) )
     {
-	logfileFD=dup(1);
+	logFileFD = dup(1);
     }
-    close(0);close(1); close(2);
+    close(0); close(1); close(2);
     
-    dup(fh);dup(fh);dup(fh);
+    dup(fh); dup(fh); dup(fh);
     close(fh);
 
     // Now, make sure we are not attached to a terminal
