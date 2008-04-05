@@ -20,6 +20,7 @@
 
 #include "procServ.h"
 
+#define LINEBUF_LENGTH 1024
 
 class processClass : public connectionItem
 {
@@ -173,17 +174,39 @@ bool processClass::OnPoll()
 
 
 // Send characters to clients
-int processClass::Send( const char * buf,int count)
+int processClass::Send( const char * buf, int count )
 {
-    int status=0;
+    int status = 0;
+    int i, j, ign = 0;
+    char buf3[LINEBUF_LENGTH+1];
+    char *buf2 = buf3;
 
-    int i;
-    for (i=0;i<count;i++) if (buf[i]==('X'&0x1f)) processFactorySendSignal(SIGKILL);
-    if (count>0)
-    {
-	status=write(_ioHandle,buf,count);
-	if (status<0) _markedForDeletion=true;
+                                // Reboot on CONTROL-X (= 24 = 0x18)
+    for ( i = 0; i < count; i++ )
+        if (buf[i]==(0x18)) processFactorySendSignal(SIGKILL);
+
+                                // Create working copy of buffer
+    if ( count > LINEBUF_LENGTH ) buf2 = (char*) calloc (count + 1, 1);
+    buf2[0] = '\0';
+
+    if ( ignChars ) {           // Throw out ignored chars
+        for ( i = j = 0; i < count; i++ ) {
+            if ( index( ignChars, (int) buf[i] ) == NULL ) {
+                buf2[j++] = buf[i];
+            } else ign++;
+        }
+    } else {                    // Plain buffer copy
+        strncpy (buf2, buf, count);
     }
+        buf2[count - ign] = '\0';
+
+    if ( count > 0 )
+    {
+	status = write( _ioHandle, buf2, count - ign );
+	if ( status < 0 ) _markedForDeletion = true;
+    }
+
+    if ( count > LINEBUF_LENGTH ) free( buf2 );
     return status;
 }
 

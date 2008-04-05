@@ -25,6 +25,7 @@ bool logPortLocal;      // This restricts log port access to localhost
 char *procservName;     // The name of this beast (server)
 char *childName;        // The name of that beast (child)
 int  connectionNo;      // Total number of connections
+char *ignChars = NULL;  // Characters to ignore
 
 pid_t procservPid;      // PID od server (daemon if not in debug mode)
 char *pidFile;          // File name for server PID
@@ -48,7 +49,7 @@ void OnPollTimeout();
 // Daemonizes the program
 void forkAndGo();
 // Checks the command file (existence and access rights)
-int checkCommandFile(const char * command);
+int checkCommandFile(const char *command);
 
 void OnSigChild(int);
 int sigChildSet;
@@ -91,6 +92,7 @@ void printHelp()
            "Options:\n"
            " -d --debug           enable debug mode (keeps child in foreground)\n"
            " -h --help            print this message\n"
+           " -i --ignore <str>    ignore all chars in <str> (^ for ctrl)\n"
            " -l --logport <n>     allow log connections through telnet port <n>\n"
            " -L --logfile <file>  write log to <file>\n"
            " -n --name <str>      set child's name (defaults to command line)\n"
@@ -104,7 +106,7 @@ int main(int argc,char * argv[])
     time(&procServStart); // What time is it now
     struct pollfd * pollList=NULL,* ppoll; // Allocate as much space as needed
     char cwd[512];
-    int c;
+    int c, i, j;
     int ctlPort, logPort=0;
     char *command;
     bool wrongOption = false;
@@ -118,6 +120,7 @@ int main(int argc,char * argv[])
         static struct option long_options[] = {
             {"debug",    no_argument,       0, 'd'},
             {"help",     no_argument,       0, 'h'},
+            {"ignore",   required_argument, 0, 'i'},
             {"logport",  required_argument, 0, 'l'},
             {"logfile",  required_argument, 0, 'L'},
             {"name",     required_argument, 0, 'n'},
@@ -128,7 +131,7 @@ int main(int argc,char * argv[])
         /* getopt_long stores the option index here. */
         int option_index = 0;
      
-        c = getopt_long (argc, argv, "+drhl:L:n:p:",
+        c = getopt_long (argc, argv, "+drhi:l:L:n:p:",
                          long_options, &option_index);
 
         /* Detect the end of the options. */
@@ -143,6 +146,22 @@ int main(int argc,char * argv[])
         case 'h':                                 // Help
             printHelp();
             exit(0);
+
+        case 'i':                                 // Ignore characters
+            ignChars = (char*) calloc( strlen(optarg) + 1, 1);
+            i = j = 0;          // ^ escapes (CTRL)
+            while ( i <= strlen(optarg) ) {
+                if ( optarg[i] == '^' && optarg[i+1] == '^' ) {
+                    ignChars[j++] = '^';
+                    i += 2 ;
+                } else if ( optarg[i] == '^' && optarg[i+1] >= 'A' && optarg[i+1] <= 'Z' ) {
+                    ignChars[j++] = optarg[i+1] - 64;
+                    i += 2;
+                } else {
+                    ignChars[j++] = optarg[i++];
+                }
+            }
+            break;
 
         case 'l':                                 // Log port
             logPort = atoi( optarg );
