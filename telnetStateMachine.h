@@ -1,3 +1,9 @@
+// Process server for soft ioc
+// David H. Thompson 8/29/2003
+// Ralph Lange 04/07/2008
+// GNU Public License applies - see www.gnu.org
+
+
 #include <arpa/telnet.h>
 int TelnetStateMachine(char * buf,int len); // Returns new length
 #define OPT_STRING_LEN 32
