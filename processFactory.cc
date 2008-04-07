@@ -53,7 +53,7 @@ bool processFactoryNeedsRestart()
     return true;
     
 }
-// service and calls clientFactory when clients are accepted
+
 connectionItem * processFactory(int argc, char *argv[])
 {
     char buf[100];
@@ -62,15 +62,15 @@ connectionItem * processFactory(int argc, char *argv[])
     
     if (processFactoryNeedsRestart())
     {
-	sprintf( buf, "Restarting IOC %s" NL, childName );
-	SendToAll(buf,strlen(buf),0);
+	sprintf( buf, "@@@ Restarting child \"%s\"" NL, childName );
+	SendToAll( buf, strlen(buf), 0 );
 
         if ( strcmp( childName, argv[0] ) != 0 ) {
-            sprintf( buf, "   (as %s)" NL, argv[0] );
-            SendToAll(buf,strlen(buf),0);
+            sprintf( buf, "@@@    (as %s)" NL, argv[0] );
+            SendToAll( buf, strlen(buf), 0 );
         }
 
-	return new processClass(argc,argv);
+	return new processClass( argc, argv );
     }
     else
 	return NULL;
@@ -82,21 +82,25 @@ processClass::~processClass()
     struct tm now_tm;
     time_t now;
     char now_buf[128];
+    char *goodbye = "@@@ Child process is shutting down, "
+        "a new one will be restarted shortly" NL;
 
-    time(&now);
-    localtime_r(&now,&now_tm);
-    strftime(now_buf,sizeof(now_buf)-1,"It is now:%b %d, %Y %r" NL,&now_tm);
-    
-    char * goodbye="Closing the IOC, a new one will be restarted shortly" NL;
-    SendToAll(goodbye,strlen(goodbye),this);    
-    SendToAll(now_buf,strlen(now_buf),this);    
-    if (_pid>0) kill(-_pid,SIGKILL); // Negative PID sends signal to all members of process group
-    if (_ioHandle>0) close(_ioHandle);
-    _runningItem=NULL;
+    time( &now );
+    localtime_r( &now, &now_tm );
+    strftime( now_buf, sizeof(now_buf) - 1, 
+              "@@@ Current time: " STRFTIME_FORMAT NL, &now_tm );
+
+    SendToAll( now_buf, strlen(now_buf), this );
+    SendToAll( goodbye, strlen(goodbye), this );    
+
+                                // Negative PID sends signal to all members of process group
+    if ( _pid > 0 ) kill( -_pid, SIGKILL );
+    if ( _ioHandle > 0 ) close( _ioHandle );
+    _runningItem = NULL;
 }
 
 
-// Accept item constuctor
+// Process class constuctor
 // This opens a socket and binds it to the decided port
 processClass::processClass(int argc,char * argv[])
 {
@@ -104,31 +108,32 @@ processClass::processClass(int argc,char * argv[])
     _runningItem=this;
     struct termios tio;
     SetupTio(&tio);
-    _pid=forkpty(&_ioHandle,factoryName,&tio,NULL);
-    char buf[100];
+    _pid = forkpty( &_ioHandle, factoryName, &tio, NULL );
+    char buf[128];
 
     _markedForDeletion=_pid<=0;
     if (_pid) // I am the parent
     {
-	PRINTF("Created process %d on %s\n",_pid,factoryName);
+	PRINTF("Created process %d on %s\n", _pid, factoryName);
 	// Don't start a new one before this time:
-	_restartTime=15+time(0);
-	sprintf(infoMessage2,"The PID of IOC %s is now: %d" NL, childName, _pid);
+	_restartTime = 15 + time(0);
 
-	sprintf(buf,"The new PID of IOC %s is now: %d" NL, childName, _pid);
+	sprintf( infoMessage2, "@@@ Child \"%s\" PID: %d" NL, childName, _pid );
 
-	strcat(buf,"@@@@@@@@@@@@@" NL);
-	SendToAll(buf,strlen(buf),this);
+	sprintf( buf, "@@@ The PID of new child %s is: %d" NL, childName, _pid );
+	strcat( buf, "@@@ @@@ @@@ @@@ @@@" NL );
+	SendToAll( buf, strlen(buf), this );
     }
     else // I am the child 
     {
 	setpgrp(); // The child is head of its own process group
-	int status=execv(*argv,argv); // This wont return
+	int status = execv(*argv,argv); // This wont return
 	// It did...
-	printf("Could not execute: %s, %s\n",*argv,strerror(errno));
-	kill(procservPid,SIGUSR1); // Let someone know
-	sleep(10); // Dont do anything harmful
-	exit(-1);
+	printf( "%s: child could not execute: %s, %s\n",
+                procservName, *argv, strerror(errno) );
+	kill( procservPid, SIGUSR1 ); // Let someone know
+	sleep( 10 ); // Dont do anything harmful
+	exit( -1 );
     }
 }
 

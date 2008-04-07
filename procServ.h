@@ -16,20 +16,31 @@
 #ifndef XPRINTF
 #define XPRINTF
 #endif 
+
+#define PROCSERV_VERSION       2
+#define PROCSERV_REVISION      0
+#define PROCSERV_MODIFICATION  0
+#define PROCSERV_VERSION_STRING "procServ Version 2.0.0"
+
 extern bool inDebugMode;
 extern bool logPortLocal;
+extern char *procservName;
 extern char *childName;
 extern char *ignChars;
 extern char infoMessage1[];
 extern char infoMessage2[];
 extern pid_t procservPid;
 
-
 #define NL "\r\n"
+
+#ifndef STRFTIME_FORMAT
+#define STRFTIME_FORMAT "%c"
+#endif
+
 class connectionItem;
 
 extern time_t procServStart; // Time when this IOC started
-extern time_t IOCStart; // Time when the current IOC was started
+extern time_t IOCStart;      // Time when the current IOC was started
 
 // Connection items call this to send messages to others
 // This is a party line system, messages go to everyone
@@ -42,7 +53,7 @@ void AddConnection(connectionItem *);
 void DeleteConnection(connectionItem *ci);
 
 
-// connectionItems are made in class factories so non of the
+// connectionItems are made in class factories so none of the
 // constructors are public:
 
 // processFactory creates the process that we are managing

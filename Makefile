@@ -5,6 +5,9 @@
 CXXFLAGS+= -g
 LDLIBS += -lutil
 
+# If you don't like the time format (on console, in log files), change it here
+#CXXFLAGS+= -DSTRFTIME_FORMAT='"%b %d, %Y %r"'
+
 procServ_OBS=procServ.o connectionItem.o acceptFactory.o clientFactory.o processFactory.o telnetStateMachine.o logBuffer.o
 
 all: procServ

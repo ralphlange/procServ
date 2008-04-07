@@ -59,19 +59,25 @@ clientItem::clientItem(int socketIn, bool readonly)
     struct tm IOCStart_tm;      // Time when the current IOC was started
     char IOCStart_buf[32];      // Time when the current IOC was started - as string
     char buf1[128], buf2[128];
-    char * greeting = "Welcome to the EPICS soft IOC process server! "
-        "(procServ $Name: R1-5 $)" NL
-    	"Use ^] to quit telnet, ^X<CR> to reboot the IOC." NL;
+    char * greeting = "@@@ Welcome to the procServ process server ("
+        PROCSERV_VERSION_STRING ")" NL
+    	"@@@ Use ^X to kill (and restart) the child." NL;
 
-    localtime_r(&procServStart,&procServStart_tm);
-    strftime(procServStart_buf,sizeof(procServStart_buf)-1,"%b %d, %Y %r",&procServStart_tm);
-    localtime_r(&IOCStart,&IOCStart_tm);
-    strftime(IOCStart_buf,sizeof(IOCStart_buf)-1,"%b %d, %Y %r",&IOCStart_tm);
+    localtime_r( &procServStart, &procServStart_tm );
+    strftime( procServStart_buf, sizeof(procServStart_buf)-1,
+              STRFTIME_FORMAT, &procServStart_tm );
 
-    sprintf( buf1, "Restarted: ProcServ %s  IOC %s" NL, procServStart_buf, IOCStart_buf );
-    sprintf( buf2, "Connected: %d user(s), %d logger(s)" NL NL, _users, _loggers );
+    localtime_r( &IOCStart, &IOCStart_tm );
+    strftime( IOCStart_buf, sizeof(IOCStart_buf)-1,
+              STRFTIME_FORMAT, &IOCStart_tm );
 
-    setsockopt(socketIn,SOL_SOCKET,SO_KEEPALIVE,&optval,sizeof(optval));
+    sprintf( buf1, "@@@ procServ server started at: %s" NL
+             "@@@ Child \"%s\" started at: %s" NL,
+             procServStart_buf, childName, IOCStart_buf );
+    sprintf( buf2, "@@@ %d user(s) and %d logger(s) connected (plus you)" NL,
+             _users, _loggers );
+
+    setsockopt( socketIn, SOL_SOCKET, SO_KEEPALIVE, &optval, sizeof(optval) );
     _ioHandle = socketIn;
     _readonly = readonly;
 
@@ -79,15 +85,16 @@ clientItem::clientItem(int socketIn, bool readonly)
         _loggers++;
     } else {                    // Regular (user) client
         _users++;
-        write( _ioHandle, greeting,strlen(greeting));
+        write( _ioHandle, greeting, strlen(greeting) );
     }
 
-    write( _ioHandle, infoMessage1,strlen(infoMessage1));
-    write( _ioHandle, infoMessage2,strlen(infoMessage2));
-    write( _ioHandle, buf1, strlen(buf1));
-    write( _ioHandle, buf2, strlen(buf2));
+    write( _ioHandle, infoMessage1, strlen(infoMessage1) );
+    write( _ioHandle, infoMessage2, strlen(infoMessage2) );
+    write( _ioHandle, buf1, strlen(buf1) );
+    if ( ! _readonly )
+        write( _ioHandle, buf2, strlen(buf2) );
 
-    _telnet.SetConnectionItem(this);
+    _telnet.SetConnectionItem( this );
 }
 
 // OnPoll is called after a poll returns non-zero in events

@@ -105,7 +105,7 @@ int main(int argc,char * argv[])
 {
     time(&procServStart); // What time is it now
     struct pollfd * pollList=NULL,* ppoll; // Allocate as much space as needed
-    char cwd[512];
+    char cwd[1024];
     int c, i, j;
     int ctlPort, logPort=0;
     char *command;
@@ -290,15 +290,20 @@ int main(int argc,char * argv[])
     }
 
     // Record some useful data for managers 
-    sprintf(infoMessage1, "procServ: my pid is: %d" NL
-	    "Startup directory: %s " NL 
-	    "Startup command: %s " NL,
-	    getpid(),
-	    getcwd(cwd,sizeof(cwd)),
-	    command);
-
-    // Create and add the stdio item 
-    // AddConnection(new  connectionItem(0)); // Connects stdin
+    if ( strcmp( childName, command ) )
+        sprintf( infoMessage1, "@@@ procServ server PID: %d" NL
+                 "@@@ Startup directory: %s" NL 
+                 "@@@ Child \"%s\" started as: %s" NL,
+                 getpid(),
+                 getcwd(cwd,sizeof(cwd)),
+                 childName, command );
+    else
+        sprintf( infoMessage1, "@@@ procServ server PID: %d" NL
+                 "@@@ Startup directory: %s" NL 
+                 "@@@ Child started as: %s" NL,
+                 getpid(),
+                 getcwd(cwd,sizeof(cwd)),
+                 command );
 
     // Run here until something makes it die
     while(1)
@@ -312,24 +317,26 @@ int main(int argc,char * argv[])
 
 	if (sigUsr1Set)
 	{
-	    printf("Failed to exec %s: Either the file does not exist or I have no execute permission\n", command );
-	    printf("Exiting procServ!\n");
+	    printf( "%s: Failed to exec %s:\n"
+                    "File does not exist or no execute permission\n",
+                    procservName, command );
+	    printf( "Exiting procServ!\n" );
 	    exit(0);
 	}
 
 	if (sigPipeSet>0)
 	{
 	    PRINTF("Got a sigPipe\n");
-	    sprintf(buf,"Got a sigPipe signal: Did the IOC close its tty?" NL);
-	    SendToAll(buf,strlen(buf),NULL);
+	    sprintf( buf, "@@@ Got a sigPipe signal: Did the IOC close its tty?" NL);
+	    SendToAll( buf, strlen(buf), NULL );
 	    sigPipeSet--;
 	}
 	// Adjust the poll data array
 	if (nPollAlloc != connectionNo)
 	{
 	    if (pollList) free(pollList);
-	    pollList=(pollfd *) malloc(connectionNo*sizeof(struct pollfd));
-	    nPollAlloc=connectionNo;
+	    pollList = (pollfd*) malloc( connectionNo * sizeof(struct pollfd) );
+	    nPollAlloc = connectionNo;
 	}
 
 	// Load the socket number and flags
@@ -447,18 +454,22 @@ void OnPollTimeout()
 	}
 	sigChildSet--;
 
-	sprintf(buf,NL "@@@@@@@@@@@@@" NL "Received a sigchild for process: %d." , pid);
+	sprintf( buf, NL "@@@ @@@ @@@ @@@ @@@" NL
+                 "@@@ Received a sigChild for process %d." , pid );
 
 	if (WIFEXITED(wstatus))
 	{
-	    sprintf(buf+strlen(buf)," Normal exit status=%d",WEXITSTATUS(wstatus));
+	    sprintf( buf + strlen(buf), " Normal exit status = %d",
+                     WEXITSTATUS(wstatus) );
 	}
+
 	if (WIFSIGNALED(wstatus))
 	{
-	    sprintf(buf+strlen(buf)," The process was killed by signal=%d",WTERMSIG(wstatus));
+	    sprintf( buf + strlen(buf), " The process was killed by signal %d",
+                     WTERMSIG(wstatus) );
 	}
-	strcat(buf,NL "@@@@@@@@@@@@@" NL );
-	SendToAll(buf,strlen(buf),NULL);
+	strcat( buf, NL );
+	SendToAll( buf, strlen(buf), NULL );
     }
 
     p = connectionItem::head;
@@ -475,7 +486,6 @@ void OnPollTimeout()
 	}
 	p=p->next;
     }
-
 }
 
 // Call this to add the item to the list of connections
@@ -538,7 +548,7 @@ void forkAndGo()
 
     if ( p ) // I am the parent
     {
-	fprintf( stderr, "procServ spawning daemon process: %d\n", p );
+	fprintf( stderr, "%s: spawning daemon process: %d\n", procservName, p );
         if ( logFile == NULL ) {
             if ( S_ISREG(statBuf.st_mode) )
                 fprintf( stderr, "The open file on stdout will be used as a log file.\n" );
@@ -548,7 +558,7 @@ void forkAndGo()
         }
 	exit(0);
     }
-    procservPid=getpid();
+    procservPid = getpid();
 
     // p==0
     // The daemon starts up here
@@ -597,11 +607,11 @@ int checkCommandFile(const char * command)
 	fprintf(stderr,"%s: %s is not a regular file\n", procservName, command);
 	return -1;
     }
-    if (min_permissions==(s.st_mode & min_permissions)) return 0; // This is great!
+    if ( min_permissions == (s.st_mode & min_permissions) ) return 0; // This is great!
     // else
-    fprintf(stderr, "%s: Warning - Please change permissions on %s to at least -r-xr-xr-x\n"
-            "procServ may not be able to continue without execute permission!\n",
-            procservName, command);
+    fprintf( stderr, "%s: Warning - Please change permissions on %s to at least -r-xr-xr-x\n"
+             "procServ may not be able to continue without execute permission!\n",
+             procservName, command);
     return 0;
 }
 
