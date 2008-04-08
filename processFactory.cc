@@ -126,7 +126,7 @@ processClass::processClass(int argc,char * argv[])
 
 	sprintf( infoMessage2, "@@@ Child \"%s\" PID: %d" NL, childName, _pid );
 
-	sprintf( buf, "@@@ The PID of new child %s is: %d" NL, childName, _pid );
+	sprintf( buf, "@@@ The PID of new child \"%s\" is: %d" NL, childName, _pid );
 	strcat( buf, "@@@ @@@ @@@ @@@ @@@" NL );
 	SendToAll( buf, strlen(buf), this );
     }
