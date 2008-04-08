@@ -23,6 +23,10 @@
 
 #define LINEBUF_LENGTH 1024
 
+#ifndef MIN_TIME_BETWEEN_RESTARTS
+#define MIN_TIME_BETWEEN_RESTARTS 15
+#endif
+
 class processClass : public connectionItem
 {
 friend connectionItem * processFactory(int argc, char *argv[]);
@@ -101,7 +105,7 @@ processClass::~processClass()
 }
 
 
-// Process class constuctor
+// Process class constructor
 // This opens a socket and binds it to the decided port
 processClass::processClass(int argc,char * argv[])
 {
@@ -116,8 +120,9 @@ processClass::processClass(int argc,char * argv[])
     if (_pid) // I am the parent
     {
 	PRINTF("Created process %d on %s\n", _pid, factoryName);
+
 	// Don't start a new one before this time:
-	_restartTime = 15 + time(0);
+	_restartTime = MIN_TIME_BETWEEN_RESTARTS + time(0);
 
 	sprintf( infoMessage2, "@@@ Child \"%s\" PID: %d" NL, childName, _pid );
 

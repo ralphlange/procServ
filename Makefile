@@ -6,8 +6,11 @@
 CXXFLAGS+= -g
 LDLIBS += -lutil
 
-# If you don't like the time format (on console, in log files), change it here
+# Change the time format ["%c"] (on console, in log files)
 #CXXFLAGS+= -DSTRFTIME_FORMAT='"%b %d, %Y %r"'
+
+# Change the minimum time between child restarts (in sec) [15]
+#CXXFLAGS+= -DMIN_TIME_BETWEEN_RESTARTS=30
 
 procServ_OBS=procServ.o connectionItem.o acceptFactory.o clientFactory.o processFactory.o telnetStateMachine.o logBuffer.o
 
@@ -23,7 +26,6 @@ clientFactory.o: clientFactory.cc procServ.h telnetStateMachine.h
 processFactory.o: processFactory.cc procServ.h
 telnetStateMachine.o: telnetStateMachine.cc procServ.h telnetStateMachine.h
 logBuffer.o: logBuffer.cc logBuffer.h
-
 
 
 procServ: $(procServ_OBS)
