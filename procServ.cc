@@ -27,6 +27,7 @@ char *procservName;     // The name of this beast (server)
 char *childName;        // The name of that beast (child)
 int  connectionNo;      // Total number of connections
 char *ignChars = NULL;  // Characters to ignore
+char killChar = 0x18;   // Kill command character (default: ^X)
 
 pid_t procservPid;      // PID od server (daemon if not in debug mode)
 char *pidFile;          // File name for server PID
@@ -94,6 +95,7 @@ void printHelp()
            " -d --debug           enable debug mode (keeps child in foreground)\n"
            " -h --help            print this message\n"
            " -i --ignore <str>    ignore all chars in <str> (^ for ctrl)\n"
+           " -k --kill <str>      command to kill (reboot) the child (^ for ctrl)\n"
            " -l --logport <n>     allow log connections through telnet port <n>\n"
            " -L --logfile <file>  write log to <file>\n"
            " -n --name <str>      set child's name (defaults to command line)\n"
@@ -122,6 +124,7 @@ int main(int argc,char * argv[])
             {"debug",    no_argument,       0, 'd'},
             {"help",     no_argument,       0, 'h'},
             {"ignore",   required_argument, 0, 'i'},
+            {"kill",     required_argument, 0, 'k'},
             {"logport",  required_argument, 0, 'l'},
             {"logfile",  required_argument, 0, 'L'},
             {"name",     required_argument, 0, 'n'},
@@ -132,7 +135,7 @@ int main(int argc,char * argv[])
         /* getopt_long stores the option index here. */
         int option_index = 0;
      
-        c = getopt_long (argc, argv, "+drhi:l:L:n:p:",
+        c = getopt_long (argc, argv, "+drhi:k:l:L:n:p:",
                          long_options, &option_index);
 
         /* Detect the end of the options. */
@@ -161,6 +164,16 @@ int main(int argc,char * argv[])
                 } else {
                     ignChars[j++] = optarg[i++];
                 }
+            }
+            break;
+
+        case 'k':                                 // Kill command
+            if ( optarg[0] == '^' && optarg[1] == '^' ) {
+                killChar = '^';
+            } else if ( optarg[0] == '^' && optarg[1] >= 'A' && optarg[1] <= 'Z' ) {
+                killChar = optarg[1] - 64;
+            } else {
+                killChar = optarg[0];
             }
             break;
 

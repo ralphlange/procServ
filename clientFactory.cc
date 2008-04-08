@@ -60,9 +60,13 @@ clientItem::clientItem(int socketIn, bool readonly)
     struct tm IOCStart_tm;      // Time when the current IOC was started
     char IOCStart_buf[32];      // Time when the current IOC was started - as string
     char buf1[128], buf2[128];
-    char * greeting = "@@@ Welcome to the procServ process server ("
-        PROCSERV_VERSION_STRING ")" NL
-    	"@@@ Use ^X to kill (and restart) the child." NL;
+    char greeting1[] = "@@@ Welcome to the procServ process server ("
+        PROCSERV_VERSION_STRING ")" NL;
+    char greeting2[128];
+
+    sprintf( greeting2, "@@@ Use %s%c to kill (and restart) the child." NL,
+             killChar < 32 ? "^" : "",
+             killChar < 32 ? killChar + 64 : killChar );
 
     localtime_r( &procServStart, &procServStart_tm );
     strftime( procServStart_buf, sizeof(procServStart_buf)-1,
@@ -86,7 +90,8 @@ clientItem::clientItem(int socketIn, bool readonly)
         _loggers++;
     } else {                    // Regular (user) client
         _users++;
-        write( _ioHandle, greeting, strlen(greeting) );
+        write( _ioHandle, greeting1, strlen(greeting1) );
+        if ( killChar ) write( _ioHandle, greeting2, strlen(greeting2) );
     }
 
     write( _ioHandle, infoMessage1, strlen(infoMessage1) );
