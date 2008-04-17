@@ -48,7 +48,6 @@
 \.(obj|a|exe|so|lo|la)$
 ^\.darcs-temp-mail$
 
-procServ
-PID\.txt
-pid\.txt
-
+^procServ$
+^PID\.txt$
+^pid\.txt$
