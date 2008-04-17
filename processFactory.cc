@@ -106,12 +106,15 @@ processClass::~processClass()
 
 
 // Process class constructor
-// This opens a socket and binds it to the decided port
+// This forks and
+//    parent: sets the minimum time for the next restart
+//    child:  sets the coresize, becomes a process group leader,
+//            and does an execv() with the command
 processClass::processClass(int argc,char * argv[])
 {
-
     _runningItem=this;
     struct termios tio;
+    struct rlimit corelimit;
     SetupTio(&tio);
     _pid = forkpty( &_ioHandle, factoryName, &tio, NULL );
     char buf[128];
@@ -132,13 +135,18 @@ processClass::processClass(int argc,char * argv[])
     }
     else // I am the child 
     {
-	setpgrp(); // The child is head of its own process group
-	int status = execv(*argv,argv); // This wont return
-	// It did...
+	setpgrp();                                 // Become process group leader
+        if ( coreSize >= 0 ) {                     // Set core size limit
+            setrlimit( RLIMIT_CORE, &corelimit );
+            corelimit.rlim_cur = coreSize;
+            setrlimit( RLIMIT_CORE, &corelimit );
+        }
+	int status = execv(*argv,argv);            // execv()
+	// This shouldn't return, but did...
 	printf( "%s: child could not execute: %s, %s\n",
                 procservName, *argv, strerror(errno) );
-	kill( procservPid, SIGUSR1 ); // Let someone know
-	sleep( 10 ); // Dont do anything harmful
+	kill( procservPid, SIGUSR1 );  // Let someone know
+	sleep( 10 );                   // Dont do anything harmful
 	exit( -1 );
     }
 }

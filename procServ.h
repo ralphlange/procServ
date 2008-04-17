@@ -6,6 +6,8 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/time.h>
+#include <sys/resource.h>
 #include <poll.h>
 
 #include <assert.h>
@@ -24,15 +26,16 @@
 #define PROCSERV_MODIFICATION  0
 #define PROCSERV_VERSION_STRING "procServ Version 2.0.0"
 
-extern bool inDebugMode;
-extern bool logPortLocal;
-extern char *procservName;
-extern char *childName;
-extern char *ignChars;
-extern char killChar;
-extern char infoMessage1[];
-extern char infoMessage2[];
-extern pid_t procservPid;
+extern bool   inDebugMode;
+extern bool   logPortLocal;
+extern char   *procservName;
+extern char   *childName;
+extern char   *ignChars;
+extern char   killChar;
+extern char   infoMessage1[];
+extern char   infoMessage2[];
+extern pid_t  procservPid;
+extern rlim_t coreSize;
 
 #define NL "\r\n"
 

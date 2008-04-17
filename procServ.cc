@@ -21,24 +21,25 @@
 
 #include "procServ.h"
 
-bool inDebugMode;       // This enables a lot of printfs
-bool logPortLocal;      // This restricts log port access to localhost
-char *procservName;     // The name of this beast (server)
-char *childName;        // The name of that beast (child)
-int  connectionNo;      // Total number of connections
-char *ignChars = NULL;  // Characters to ignore
-char killChar = 0x18;   // Kill command character (default: ^X)
+bool   inDebugMode;       // This enables a lot of printfs
+bool   logPortLocal;      // This restricts log port access to localhost
+char   *procservName;     // The name of this beast (server)
+char   *childName;        // The name of that beast (child)
+int    connectionNo;      // Total number of connections
+char   *ignChars = NULL;  // Characters to ignore
+char   killChar = 0x18;   // Kill command character (default: ^X)
+rlim_t coreSize = -1;     // Max core size for child
 
-pid_t procservPid;      // PID od server (daemon if not in debug mode)
-char *pidFile;          // File name for server PID
-char  defaultpidFile[] = "pid.txt";  // default
+pid_t  procservPid;       // PID of server (daemon if not in debug mode)
+char   *pidFile;          // File name for server PID
+char   defaultpidFile[] = "pid.txt";  // default
 
-char infoMessage1[512]; // This is sent to the user at sign on
-char infoMessage2[512]; // This is sent to the user at sign on
+char   infoMessage1[512]; // This is sent to the user at sign on
+char   infoMessage2[512]; // This is sent to the user at sign on
 
-char *logFile = NULL;   // File name for log
-int  logFileFD=-1;;     // FD for log file
-int  debugFD=-1;        // FD for debug output
+char   *logFile = NULL;   // File name for log
+int    logFileFD=-1;;     // FD for log file
+int    debugFD=-1;        // FD for debug output
 
 #define MAX_CONNECTIONS 64
 
@@ -92,6 +93,7 @@ void printHelp()
     printf("<port>                use telnet <port> for command connections\n"
            "<command args ...>    command line to start child process\n"
            "Options:\n"
+           "    --coresize <n>    sets maximum core size for child to <n>\n"
            " -d --debug           enable debug mode (keeps child in foreground)\n"
            " -h --help            print this message\n"
            " -i --ignore <str>    ignore all chars in <str> (^ for ctrl)\n"
@@ -99,8 +101,8 @@ void printHelp()
            " -l --logport <n>     allow log connections through telnet port <n>\n"
            " -L --logfile <file>  write log to <file>\n"
            " -n --name <str>      set child's name (defaults to command line)\n"
-           " -r --restrict        restrict log connections to localhost\n"
            " -p --pidfile <str>   name of PID file (for server PID)\n"
+           " -r --restrict        restrict log connections to localhost\n"
         );
 }
 
@@ -121,6 +123,7 @@ int main(int argc,char * argv[])
 
     while (1) {
         static struct option long_options[] = {
+            {"coresize", required_argument, 0, 'C'},
             {"debug",    no_argument,       0, 'd'},
             {"help",     no_argument,       0, 'h'},
             {"ignore",   required_argument, 0, 'i'},
@@ -143,6 +146,11 @@ int main(int argc,char * argv[])
 
         switch (c)
         {
+        case 'C':                                 // Core size
+            i = atoi( optarg );
+            if ( i >= 0 ) coreSize = i;
+            break;
+
         case 'd':                                 // Debug mode
             inDebugMode = true;
             break;
