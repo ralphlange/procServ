@@ -28,6 +28,7 @@ char   *childName;        // The name of that beast (child)
 int    connectionNo;      // Total number of connections
 char   *ignChars = NULL;  // Characters to ignore
 char   killChar = 0x18;   // Kill command character (default: ^X)
+int    killSig = SIGKILL; // Kill signal (default: SIGKILL)
 rlim_t coreSize = -1;     // Max core size for child
 
 pid_t  procservPid;       // PID of server (daemon if not in debug mode)
@@ -97,7 +98,8 @@ void printHelp()
            " -d --debug           enable debug mode (keeps child in foreground)\n"
            " -h --help            print this message\n"
            " -i --ignore <str>    ignore all chars in <str> (^ for ctrl)\n"
-           " -k --kill <str>      command to kill (reboot) the child (^ for ctrl)\n"
+           " -k --killchar <str>  command to kill (reboot) the child (^ for ctrl)\n"
+           "    --killsig <n>     signal to send to child when killing\n"
            " -l --logport <n>     allow log connections through telnet port <n>\n"
            " -L --logfile <file>  write log to <file>\n"
            " -n --name <str>      set child's name (defaults to command line)\n"
@@ -127,7 +129,8 @@ int main(int argc,char * argv[])
             {"debug",    no_argument,       0, 'd'},
             {"help",     no_argument,       0, 'h'},
             {"ignore",   required_argument, 0, 'i'},
-            {"kill",     required_argument, 0, 'k'},
+            {"killchar", required_argument, 0, 'k'},
+            {"killsig",  required_argument, 0, 'K'},
             {"logport",  required_argument, 0, 'l'},
             {"logfile",  required_argument, 0, 'L'},
             {"name",     required_argument, 0, 'n'},
@@ -182,6 +185,17 @@ int main(int argc,char * argv[])
                 killChar = optarg[1] - 64;
             } else {
                 killChar = optarg[0];
+            }
+            break;
+
+        case 'K':                                 // Kill signal
+            i = abs( atoi( optarg ) );
+            if ( i < 32 ) {
+                killSig = i;
+            } else {
+                fprintf( stderr,
+                         "%s: invalid kill signal %d (>31) - using default (%d)\n",
+                         procservName, i, killSig );
             }
             break;
 

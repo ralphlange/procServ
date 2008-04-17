@@ -32,6 +32,7 @@ extern char   *procservName;
 extern char   *childName;
 extern char   *ignChars;
 extern char   killChar;
+extern int    killSig;
 extern char   infoMessage1[];
 extern char   infoMessage2[];
 extern pid_t  procservPid;

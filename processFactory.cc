@@ -203,7 +203,7 @@ int processClass::Send( const char * buf, int count )
                                 // Kill = reboot on killChar
     if ( killChar )
         for ( i = 0; i < count; i++ )
-            if ( buf[i] == killChar ) processFactorySendSignal( SIGKILL );
+            if ( buf[i] == killChar ) processFactorySendSignal( killSig );
 
                                 // Create working copy of buffer
     if ( count > LINEBUF_LENGTH ) buf2 = (char*) calloc (count + 1, 1);
