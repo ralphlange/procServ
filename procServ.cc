@@ -104,7 +104,7 @@ void printHelp()
            " -L --logfile <file>  write log to <file>\n"
            " -n --name <str>      set child's name (defaults to command line)\n"
            " -p --pidfile <str>   name of PID file (for server PID)\n"
-           " -r --restrict        restrict log connections to localhost\n"
+           "    --restrict        restrict log connections to localhost\n"
         );
 }
 
@@ -134,14 +134,14 @@ int main(int argc,char * argv[])
             {"logport",  required_argument, 0, 'l'},
             {"logfile",  required_argument, 0, 'L'},
             {"name",     required_argument, 0, 'n'},
-            {"restrict", no_argument,       0, 'r'},
+            {"restrict", no_argument,       0, 'R'},
             {"pidfile",  required_argument, 0, 'p'},
             {0, 0, 0, 0}
         };
         /* getopt_long stores the option index here. */
         int option_index = 0;
      
-        c = getopt_long (argc, argv, "+drhi:k:l:L:n:p:",
+        c = getopt_long (argc, argv, "+dhi:k:l:L:n:p:",
                          long_options, &option_index);
 
         /* Detect the end of the options. */
@@ -217,7 +217,7 @@ int main(int argc,char * argv[])
             childName = strdup( optarg );
             break;
 
-        case 'r':                                 // Restrict log
+        case 'R':                                 // Restrict log
             logPortLocal = true;
             break;
 
