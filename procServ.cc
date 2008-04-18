@@ -315,7 +315,7 @@ int main(int argc,char * argv[])
 
     // Open log file
     if ( logFile ) {
-       logFileFD = creat( logFile, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH );
+        logFileFD = open( logFile, O_CREAT|O_WRONLY|O_APPEND, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH );
         if ( logFileFD == -1 ) {         // Don't stop here - just go without
             fprintf( stderr,
                      "%s: unable to open log file %s\n",
