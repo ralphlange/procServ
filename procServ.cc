@@ -121,7 +121,7 @@ int main(int argc,char * argv[])
     procservName = argv[0];
 
     pidFile = getenv( "PROCSERV_PID" );
-    if ( pidFile==NULL ) pidFile = defaultpidFile;
+    if ( pidFile && ! strcmp( pidFile, "" ) ) pidFile = defaultpidFile;
 
     while (1) {
         static struct option long_options[] = {
