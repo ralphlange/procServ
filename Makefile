@@ -12,7 +12,7 @@ LDLIBS += -lutil
 # Change the minimum time between child restarts (in sec) [15]
 #CXXFLAGS+= -DMIN_TIME_BETWEEN_RESTARTS=30
 
-procServ_OBS=procServ.o connectionItem.o acceptFactory.o clientFactory.o processFactory.o telnetStateMachine.o logBuffer.o
+procServ_OBS=procServ.o connectionItem.o acceptFactory.o clientFactory.o processFactory.o telnetStateMachine.o
 
 all: procServ
 clean:
@@ -25,7 +25,6 @@ acceptFactory.o: acceptFactory.cc procServ.h
 clientFactory.o: clientFactory.cc procServ.h telnetStateMachine.h
 processFactory.o: processFactory.cc procServ.h
 telnetStateMachine.o: telnetStateMachine.cc procServ.h telnetStateMachine.h
-logBuffer.o: logBuffer.cc logBuffer.h
 
 
 procServ: $(procServ_OBS)
