@@ -1,3 +1,12 @@
+V 2.0.0 04/22/2008 Ralph Lange <Ralph.Lange@bessy.de>
+Fixed CR/LF problem (appearing with seq debugging).
+Added html doc (man page style).
+Added many commandline options for fine tuning:
+    pid file name, log port, command to kill the child, signal to use for killing,
+    limit child's core size, ignore dangerous characters, define a short name
+Added second port (default: public) for read-only log connections.
+Redid the server messages (start with "@@@ " to be distiguished from child messages).
+
 R1-4 3/9/2006
 Fixed double characters when the other user is typing.
 More informational messages: PIDs for everything, when sigchild and sigpipe happen and more
@@ -34,4 +43,3 @@ have SendToAll be a litte smarter.
 This works.  Telnet comes up in linemode meaning that characters are echoed and held by telnet
 until it gets a <CR>. The whole line is then sent.  If you type a control character you must type
 <CR> to get it sent. If the control character is ^C then you get hosed.
-
