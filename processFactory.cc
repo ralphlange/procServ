@@ -256,7 +256,7 @@ void processFactorySendSignal(int signal)
 
 void processClass::SetupTio(struct termios *tio)
 {
-    tio->c_iflag=   IXON ; 
+    tio->c_iflag=   IXON|ICRNL ; 
     tio->c_oflag=OPOST|ONLCR|NL0|CR0|TAB0|BS0|FF0|VT0 ;
     tio->c_cflag=   B38400|CS8|CREAD   ;        
     tio->c_lflag= ISIG|ICANON|IEXTEN |ECHO|ECHONL;
