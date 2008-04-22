@@ -98,7 +98,7 @@ void printHelp()
            " -d --debug           enable debug mode (keeps child in foreground)\n"
            " -h --help            print this message\n"
            " -i --ignore <str>    ignore all chars in <str> (^ for ctrl)\n"
-           " -k --killchar <str>  command to kill (reboot) the child (^ for ctrl)\n"
+           " -k --killcmd <str>   command to kill (reboot) the child (^ for ctrl)\n"
            "    --killsig <n>     signal to send to child when killing\n"
            " -l --logport <n>     allow log connections through telnet port <n>\n"
            " -L --logfile <file>  write log to <file>\n"
@@ -129,7 +129,7 @@ int main(int argc,char * argv[])
             {"debug",    no_argument,       0, 'd'},
             {"help",     no_argument,       0, 'h'},
             {"ignore",   required_argument, 0, 'i'},
-            {"killchar", required_argument, 0, 'k'},
+            {"killcmd",  required_argument, 0, 'k'},
             {"killsig",  required_argument, 0, 'K'},
             {"logport",  required_argument, 0, 'l'},
             {"logfile",  required_argument, 0, 'L'},
