@@ -137,7 +137,7 @@ processClass::processClass(int argc,char * argv[])
     {
 	setpgrp();                                 // Become process group leader
         if ( coreSize >= 0 ) {                     // Set core size limit
-            setrlimit( RLIMIT_CORE, &corelimit );
+            getrlimit( RLIMIT_CORE, &corelimit );
             corelimit.rlim_cur = coreSize;
             setrlimit( RLIMIT_CORE, &corelimit );
         }
