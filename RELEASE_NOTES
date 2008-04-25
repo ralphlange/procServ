@@ -1,3 +1,9 @@
+V 2.1.0 04/25/2008 Ralph Lange <Ralph.Lange@bessy.de>
+Followed Emmanuels Mayssat's suggestion:
+Auto-restart-mode default can be changed by commandline option.
+Auto-restart-mode can be toggled online with configurable command.
+Server mode (child shut down) accepts two commands: restart child or quit server.
+
 V 2.0.0 04/22/2008 Ralph Lange <Ralph.Lange@bessy.de>
 Fixed CR/LF problem (appearing with seq debugging).
 Added html doc (man page style).
