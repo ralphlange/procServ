@@ -20,6 +20,7 @@
 #include <string.h>
 
 #include "procServ.h"
+#include "processClass.h"
 
 #define LINEBUF_LENGTH 1024
 
@@ -27,26 +28,6 @@
 #define MIN_TIME_BETWEEN_RESTARTS 15
 #endif
 
-class processClass : public connectionItem
-{
-friend connectionItem * processFactory(int argc, char *argv[]);
-friend bool processFactoryNeedsRestart();
-friend void processFactorySendSignal(int signal);
-public:
-    processClass(int argc,char * argv[]);
-    bool OnPoll();
-    int Send( const char *,int);
-    void OnWait(int pid);
-    char factoryName[100];
-    void SetupTio(struct termios *);
-    virtual bool isProcess() const { return true; }
-public:
-    virtual ~processClass();
-protected:
-    pid_t _pid;
-    static processClass * _runningItem;
-    static time_t _restartTime;
-};
 
 processClass * processClass::_runningItem=NULL;
 time_t processClass::_restartTime=0;

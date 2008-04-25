@@ -17,6 +17,7 @@
 #include <signal.h>
 
 #include "procServ.h"
+#include "processClass.h"
 #include "telnetStateMachine.h"
 
 
