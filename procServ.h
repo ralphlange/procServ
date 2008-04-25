@@ -32,14 +32,18 @@
 extern bool   inDebugMode;
 extern bool   logPortLocal;
 extern bool   autoRestart;
+extern bool   shutdownServer;
 extern char   *procservName;
 extern char   *childName;
 extern char   *ignChars;
 extern char   killChar;
 extern char   toggleRestartChar;
+extern char   restartChar;
+extern char   quitChar;
 extern int    killSig;
 extern char   infoMessage1[];
 extern char   infoMessage2[];
+extern char   infoMessage3[];
 extern pid_t  procservPid;
 extern rlim_t coreSize;
 

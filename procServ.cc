@@ -24,12 +24,15 @@
 bool   inDebugMode;              // This enables a lot of printfs
 bool   logPortLocal;             // This restricts log port access to localhost
 bool   autoRestart = true;       // Enables instant restart of exiting child
+bool   shutdownServer = false;   // To keep the server from shutting down
 char   *procservName;            // The name of this beast (server)
 char   *childName;               // The name of that beast (child)
 int    connectionNo;             // Total number of connections
 char   *ignChars = NULL;         // Characters to ignore
 char   killChar = 0x18;          // Kill command character (default: ^X)
 char   toggleRestartChar = 0x14; // Toggle autorestart character (default: ^T)
+char   restartChar = 0x12;       // Restart character (default: ^R)
+char   quitChar = 0x11;          // Quit character (default: ^Q)
 int    killSig = SIGKILL;        // Kill signal (default: SIGKILL)
 rlim_t coreSize = -1;            // Max core size for child
 
@@ -37,8 +40,9 @@ pid_t  procservPid;              // PID of server (daemon if not in debug mode)
 char   *pidFile;                 // File name for server PID
 char   defaultpidFile[] = "pid.txt";  // default
 
-char   infoMessage1[512];        // This is sent to the user at sign on
-char   infoMessage2[512];        // This is sent to the user at sign on
+char   infoMessage1[512];        // Sign on message: server PID, child pwd and command line
+char   infoMessage2[128];        // Sign on message: child PID
+char   infoMessage3[128];        // Sign on message: available server commands
 
 char   *logFile = NULL;          // File name for log
 int    logFileFD=-1;;            // FD for log file
@@ -279,6 +283,13 @@ int main(int argc,char * argv[])
     if ( toggleRestartChar )
         strcat ( ignChars, &toggleRestartChar );
 
+    // set up available server commands message
+    sprintf( infoMessage3, "@@@ Use %s%c to restart the child, %s%c to quit the server" NL,
+             restartChar < 32 ? "^" : "",
+             restartChar < 32 ? restartChar + 64 : restartChar,
+             quitChar < 32 ? "^" : "",
+             quitChar < 32 ? quitChar + 64 : quitChar);
+
     ctlPort = atoi(argv[optind]);
     command = argv[optind+1];
     if ( childName == NULL ) childName = command;
@@ -373,7 +384,7 @@ int main(int argc,char * argv[])
                  command );
 
     // Run here until something makes it die
-    while(1)
+    while ( ! shutdownServer )
     {
 	char buf[100];
 	int nPoll=0; // local copy of the # items to poll

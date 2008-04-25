@@ -92,9 +92,15 @@ clientItem::clientItem(int socketIn, bool readonly)
     strftime( IOCStart_buf, sizeof(IOCStart_buf)-1,
               STRFTIME_FORMAT, &IOCStart_tm );
 
-    sprintf( buf1, "@@@ procServ server started at: %s" NL
-             "@@@ Child \"%s\" started at: %s" NL,
-             procServStart_buf, childName, IOCStart_buf );
+    sprintf( buf1, "@@@ procServ server started at: %s" NL,
+             procServStart_buf);
+    
+    if ( processClass::exists() ) {
+        sprintf( buf2, "@@@ Child \"%s\" started at: %s" NL,
+                 childName, IOCStart_buf );
+        strcat( buf1, buf2 );
+    }
+
     sprintf( buf2, "@@@ %d user(s) and %d logger(s) connected (plus you)" NL,
              _users, _loggers );
 
@@ -115,6 +121,8 @@ clientItem::clientItem(int socketIn, bool readonly)
     write( _ioHandle, buf1, strlen(buf1) );
     if ( ! _readonly )
         write( _ioHandle, buf2, strlen(buf2) );
+    if ( ! processClass::exists() )
+        write( _ioHandle, infoMessage3, strlen(infoMessage3) );
 
     _telnet.SetConnectionItem( this );
 }
@@ -146,7 +154,23 @@ bool clientItem::OnPoll()
 
 	if (len>0 && _readonly==false )
 	{
-	    buf[len]='\0';
+            if ( ! processClass::exists() )
+            {
+                buf[len]='\0';
+                int i;
+
+                // Scan input for commands
+                for ( i = 0; i < len; i++ ) {
+                    if ( restartChar && buf[i] == restartChar ) {
+                        PRINTF ("Got a restart command\n");
+                        processClass::restartOnce();
+                    }
+                    if ( quitChar && buf[i] == quitChar ) {
+                        PRINTF ("Got a shutdown command\n");
+                        shutdownServer = true;
+                    }
+                }
+            }
 	    SendToAll(&buf[0],len,this);
 	}
     }

@@ -80,8 +80,13 @@ processClass::~processClass()
               autoRestart ? "a new one will be restarted shortly" :
               "auto restart is disabled" );
 
+    // Update client connect message
+    sprintf( infoMessage2, "@@@ Child \"%s\" is SHUT DOWN" NL, childName, _pid );
+
     SendToAll( now_buf, strlen(now_buf), this );
-    SendToAll( goodbye, strlen(goodbye), this );    
+    SendToAll( goodbye, strlen(goodbye), this );
+    if ( ! autoRestart )
+        SendToAll( infoMessage3, strlen(infoMessage3), this );
 
                                 // Negative PID sends signal to all members of process group
     if ( _pid > 0 ) kill( -_pid, SIGKILL );
@@ -104,7 +109,7 @@ processClass::processClass(int argc,char * argv[])
     _pid = forkpty( &_ioHandle, factoryName, &tio, NULL );
     char buf[128];
 
-    _markedForDeletion=_pid<=0;
+    _markedForDeletion = _pid <= 0;
     if (_pid) // I am the parent
     {
 	PRINTF("Created process %d on %s\n", _pid, factoryName);
@@ -112,6 +117,7 @@ processClass::processClass(int argc,char * argv[])
 	// Don't start a new one before this time:
 	_restartTime = MIN_TIME_BETWEEN_RESTARTS + time(0);
 
+        // Update client connect message
 	sprintf( infoMessage2, "@@@ Child \"%s\" PID: %d" NL, childName, _pid );
 
 	sprintf( buf, "@@@ The PID of new child \"%s\" is: %d" NL, childName, _pid );
@@ -274,4 +280,10 @@ void processClass::SetupTio(struct termios *tio)
     tio->c_cc[VEOL2 ]=0;
     tio->c_ispeed=B38400;
     tio->c_ospeed=B38400;
+}
+
+
+void processClass::restartOnce ()
+{
+    _restartTime = 0;
 }
