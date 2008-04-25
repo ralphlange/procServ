@@ -1,8 +1,11 @@
 // Process server for soft ioc
 // David H. Thompson 8/29/2003
-// Ralph Lange 04/22/2008
+// Ralph Lange 04/25/2008
 // GNU Public License applies - see www.gnu.org
 
+
+#ifndef procServH
+#define procServH
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -22,7 +25,7 @@
 #endif 
 
 #define PROCSERV_VERSION       2
-#define PROCSERV_REVISION      0
+#define PROCSERV_REVISION      1
 #define PROCSERV_MODIFICATION  0
 #define PROCSERV_VERSION_STRING "procServ Version 2.1.0"
 
@@ -141,3 +144,5 @@ private:
         assert(0);
     };
 };
+
+#endif /* #ifndef procServH */

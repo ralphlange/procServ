@@ -108,6 +108,7 @@ void printHelp()
     printf("<port>              use telnet <port> for command connections\n"
            "<command args ...>  command line to start child process\n"
            "Options:\n"
+           "    --autorestartcmd  command to toggle auto restart flag (^ for ctrl)\n"
            "    --coresize <n>    sets maximum core size for child to <n>\n"
            " -d --debug           enable debug mode (keeps child in foreground)\n"
            " -h --help            print this message\n"
@@ -120,7 +121,6 @@ void printHelp()
            "    --noautorestart   do not restart child on exit by default\n"
            " -p --pidfile <str>   name of PID file (for server PID)\n"
            "    --restrict        restrict log connections to localhost\n"
-           "    --autorestartcmd  command to toggle auto restart flag (^ for ctrl)\n"
         );
 }
 
@@ -143,6 +143,7 @@ int main(int argc,char * argv[])
 
     while (1) {
         static struct option long_options[] = {
+            {"autorestartcmd", required_argument, 0, 'T'},
             {"coresize",       required_argument, 0, 'C'},
             {"debug",          no_argument,       0, 'd'},
             {"help",           no_argument,       0, 'h'},
@@ -155,7 +156,6 @@ int main(int argc,char * argv[])
             {"noautorestart",  no_argument,       0, 'N'},
             {"pidfile",        required_argument, 0, 'p'},
             {"restrict",       no_argument,       0, 'R'},
-            {"autorestartcmd", required_argument, 0, 'T'},
             {0, 0, 0, 0}
         };
 

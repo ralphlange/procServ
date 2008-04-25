@@ -1,8 +1,10 @@
 // Process server for soft ioc
 // David H. Thompson 8/29/2003
-// Ralph Lange 04/22/2008
+// Ralph Lange 04/25/2008
 // GNU Public License applies - see www.gnu.org
 
+#ifndef telnetStateMachineH
+#define telnetStateMachineH
 
 #include <arpa/telnet.h>
 int TelnetStateMachine(char * buf,int len); // Returns new length
@@ -64,3 +66,4 @@ private: // Methods
     unsigned char _workingOpt; // Used in state ON_OPT
 };
 
+#endif /*#ifndef telnetStateMachineH */
