@@ -53,8 +53,10 @@ time_t processClass::_restartTime=0;
 
 bool processFactoryNeedsRestart()
 {
-    time_t now=time(0);
-    if (processClass::_runningItem || now<processClass::_restartTime ) return false;
+    time_t now = time(0);
+    if ( ( autoRestart == false && processClass::_restartTime ) || 
+         processClass::_runningItem ||
+         now < processClass::_restartTime ) return false;
     return true;
     
 }
@@ -87,13 +89,15 @@ processClass::~processClass()
     struct tm now_tm;
     time_t now;
     char now_buf[128];
-    char *goodbye = "@@@ Child process is shutting down, "
-        "a new one will be restarted shortly" NL;
+    char goodbye[128];
 
     time( &now );
     localtime_r( &now, &now_tm );
     strftime( now_buf, sizeof(now_buf) - 1, 
               "@@@ Current time: " STRFTIME_FORMAT NL, &now_tm );
+    sprintf ( goodbye, "@@@ Child process is shutting down, %s" NL,
+              autoRestart ? "a new one will be restarted shortly" :
+              "auto restart is disabled" );
 
     SendToAll( now_buf, strlen(now_buf), this );
     SendToAll( goodbye, strlen(goodbye), this );    
@@ -200,11 +204,20 @@ int processClass::Send( const char * buf, int count )
     char buf3[LINEBUF_LENGTH+1];
     char *buf2 = buf3;
 
-                                // Kill = reboot on killChar
-    if ( killChar )
-        for ( i = 0; i < count; i++ )
-            if ( buf[i] == killChar ) processFactorySendSignal( killSig );
-
+    // Scan input for commands
+    for ( i = 0; i < count; i++ ) {
+        if ( toggleRestartChar && buf[i] == toggleRestartChar ) {
+            autoRestart = ! autoRestart;
+            char msg[128];
+            sprintf ( msg, NL "@@@ Toggled auto restart to %s" NL,
+                      ( autoRestart ? "ON" : "OFF" ) );
+            SendToAll ( msg, strlen ( msg ), this );
+        }
+        if ( killChar && buf[i] == killChar ) {
+            PRINTF ("Got a kill command\n");
+            processFactorySendSignal( killSig );
+        }
+    }
                                 // Create working copy of buffer
     if ( count > LINEBUF_LENGTH ) buf2 = (char*) calloc (count + 1, 1);
     buf2[0] = '\0';

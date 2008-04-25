@@ -24,14 +24,16 @@
 #define PROCSERV_VERSION       2
 #define PROCSERV_REVISION      0
 #define PROCSERV_MODIFICATION  0
-#define PROCSERV_VERSION_STRING "procServ Version 2.0.0"
+#define PROCSERV_VERSION_STRING "procServ Version 2.1.0"
 
 extern bool   inDebugMode;
 extern bool   logPortLocal;
+extern bool   autoRestart;
 extern char   *procservName;
 extern char   *childName;
 extern char   *ignChars;
 extern char   killChar;
+extern char   toggleRestartChar;
 extern int    killSig;
 extern char   infoMessage1[];
 extern char   infoMessage2[];

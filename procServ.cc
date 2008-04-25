@@ -21,26 +21,28 @@
 
 #include "procServ.h"
 
-bool   inDebugMode;       // This enables a lot of printfs
-bool   logPortLocal;      // This restricts log port access to localhost
-char   *procservName;     // The name of this beast (server)
-char   *childName;        // The name of that beast (child)
-int    connectionNo;      // Total number of connections
-char   *ignChars = NULL;  // Characters to ignore
-char   killChar = 0x18;   // Kill command character (default: ^X)
-int    killSig = SIGKILL; // Kill signal (default: SIGKILL)
-rlim_t coreSize = -1;     // Max core size for child
+bool   inDebugMode;              // This enables a lot of printfs
+bool   logPortLocal;             // This restricts log port access to localhost
+bool   autoRestart = true;       // Enables instant restart of exiting child
+char   *procservName;            // The name of this beast (server)
+char   *childName;               // The name of that beast (child)
+int    connectionNo;             // Total number of connections
+char   *ignChars = NULL;         // Characters to ignore
+char   killChar = 0x18;          // Kill command character (default: ^X)
+char   toggleRestartChar = 0x14; // Toggle autorestart character (default: ^T)
+int    killSig = SIGKILL;        // Kill signal (default: SIGKILL)
+rlim_t coreSize = -1;            // Max core size for child
 
-pid_t  procservPid;       // PID of server (daemon if not in debug mode)
-char   *pidFile;          // File name for server PID
+pid_t  procservPid;              // PID of server (daemon if not in debug mode)
+char   *pidFile;                 // File name for server PID
 char   defaultpidFile[] = "pid.txt";  // default
 
-char   infoMessage1[512]; // This is sent to the user at sign on
-char   infoMessage2[512]; // This is sent to the user at sign on
+char   infoMessage1[512];        // This is sent to the user at sign on
+char   infoMessage2[512];        // This is sent to the user at sign on
 
-char   *logFile = NULL;   // File name for log
-int    logFileFD=-1;;     // FD for log file
-int    debugFD=-1;        // FD for debug output
+char   *logFile = NULL;          // File name for log
+int    logFileFD=-1;;            // FD for log file
+int    debugFD=-1;               // FD for debug output
 
 #define MAX_CONNECTIONS 64
 
@@ -82,6 +84,18 @@ void writePidFile()
     fclose( fp );
 }
 
+char getOptionChar ( const char* buf ) 
+{
+    if ( buf == NULL || buf[0] == 0 ) return 0;
+    if ( buf[0] == '^' && buf[1] == '^' ) {
+        return '^';
+    } else if ( buf[0] == '^' && buf[1] >= 'A' && buf[1] <= 'Z' ) {
+        return buf[1] - 64;
+    } else {
+        return buf[0];
+    }
+}
+
 void printUsage()
 {
     printf("Usage: %s [options] <port> <command args ... >    (-h for help)\n",
@@ -91,8 +105,8 @@ void printUsage()
 void printHelp()
 {
     printUsage();
-    printf("<port>                use telnet <port> for command connections\n"
-           "<command args ...>    command line to start child process\n"
+    printf("<port>              use telnet <port> for command connections\n"
+           "<command args ...>  command line to start child process\n"
            "Options:\n"
            "    --coresize <n>    sets maximum core size for child to <n>\n"
            " -d --debug           enable debug mode (keeps child in foreground)\n"
@@ -103,8 +117,10 @@ void printHelp()
            " -l --logport <n>     allow log connections through telnet port <n>\n"
            " -L --logfile <file>  write log to <file>\n"
            " -n --name <str>      set child's name (defaults to command line)\n"
+           "    --noautorestart   do not restart child on exit by default\n"
            " -p --pidfile <str>   name of PID file (for server PID)\n"
            "    --restrict        restrict log connections to localhost\n"
+           "    --autorestartcmd  command to toggle auto restart flag (^ for ctrl)\n"
         );
 }
 
@@ -123,21 +139,26 @@ int main(int argc,char * argv[])
     pidFile = getenv( "PROCSERV_PID" );
     if ( pidFile && ! strcmp( pidFile, "" ) ) pidFile = defaultpidFile;
 
+    const int ONE_CHAR_COMMANDS = 2;  // togglerestartcmd, killcmd
+
     while (1) {
         static struct option long_options[] = {
-            {"coresize", required_argument, 0, 'C'},
-            {"debug",    no_argument,       0, 'd'},
-            {"help",     no_argument,       0, 'h'},
-            {"ignore",   required_argument, 0, 'i'},
-            {"killcmd",  required_argument, 0, 'k'},
-            {"killsig",  required_argument, 0, 'K'},
-            {"logport",  required_argument, 0, 'l'},
-            {"logfile",  required_argument, 0, 'L'},
-            {"name",     required_argument, 0, 'n'},
-            {"restrict", no_argument,       0, 'R'},
-            {"pidfile",  required_argument, 0, 'p'},
+            {"coresize",       required_argument, 0, 'C'},
+            {"debug",          no_argument,       0, 'd'},
+            {"help",           no_argument,       0, 'h'},
+            {"ignore",         required_argument, 0, 'i'},
+            {"killcmd",        required_argument, 0, 'k'},
+            {"killsig",        required_argument, 0, 'K'},
+            {"logport",        required_argument, 0, 'l'},
+            {"logfile",        required_argument, 0, 'L'},
+            {"name",           required_argument, 0, 'n'},
+            {"noautorestart",  no_argument,       0, 'N'},
+            {"pidfile",        required_argument, 0, 'p'},
+            {"restrict",       no_argument,       0, 'R'},
+            {"autorestartcmd", required_argument, 0, 'T'},
             {0, 0, 0, 0}
         };
+
         /* getopt_long stores the option index here. */
         int option_index = 0;
      
@@ -163,7 +184,7 @@ int main(int argc,char * argv[])
             exit(0);
 
         case 'i':                                 // Ignore characters
-            ignChars = (char*) calloc( strlen(optarg) + 1, 1);
+            ignChars = (char*) calloc( strlen(optarg) + 1 + ONE_CHAR_COMMANDS, 1);
             i = j = 0;          // ^ escapes (CTRL)
             while ( i <= strlen(optarg) ) {
                 if ( optarg[i] == '^' && optarg[i+1] == '^' ) {
@@ -179,13 +200,7 @@ int main(int argc,char * argv[])
             break;
 
         case 'k':                                 // Kill command
-            if ( optarg[0] == '^' && optarg[1] == '^' ) {
-                killChar = '^';
-            } else if ( optarg[0] == '^' && optarg[1] >= 'A' && optarg[1] <= 'Z' ) {
-                killChar = optarg[1] - 64;
-            } else {
-                killChar = optarg[0];
-            }
+            killChar = getOptionChar ( optarg );
             break;
 
         case 'K':                                 // Kill signal
@@ -200,7 +215,7 @@ int main(int argc,char * argv[])
             break;
 
         case 'l':                                 // Log port
-            logPort = atoi( optarg );
+            logPort = abs ( atoi( optarg ) );
             if ( logPort < 1024 ) {
                 fprintf( stderr,
                          "%s: invalid log port %d (<1024) - disabling log port\n",
@@ -217,12 +232,20 @@ int main(int argc,char * argv[])
             childName = strdup( optarg );
             break;
 
+        case 'N':                                 // No restart of child
+            autoRestart = false;
+            break;
+
         case 'R':                                 // Restrict log
             logPortLocal = true;
             break;
 
         case 'p':                                 // PID file
             pidFile = strdup( optarg );
+            break;
+
+        case 'T':                                 // Toggle auto restart command
+            toggleRestartChar = getOptionChar ( optarg );
             break;
 
         case '?':                                 // Error
@@ -247,6 +270,14 @@ int main(int argc,char * argv[])
 	printUsage();
 	exit(1);
     }
+
+    // Single command characters should be ignored, too
+    if ( ignChars == NULL && ( killChar || toggleRestartChar ) )
+        ignChars = (char*) calloc( 1 + ONE_CHAR_COMMANDS, 1);
+    if ( killChar )
+        strcat ( ignChars, &killChar );
+    if ( toggleRestartChar )
+        strcat ( ignChars, &toggleRestartChar );
 
     ctlPort = atoi(argv[optind]);
     command = argv[optind+1];

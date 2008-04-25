@@ -22,8 +22,9 @@
 [<strong>-l</strong>|<strong>--logport</strong> port]
 [<strong>-L</strong>|<strong>--logfile</strong> file]
 [<strong>-n</strong>|<strong>--name</strong> title]
-[<strong>-p</strong>|<strong>--pidfile</strong> file] port command args
-...</code></p>
+[<strong>--noautorestart</strong>]
+[<strong>-p</strong>|<strong>--pidfile</strong> file]
+[<strong>--autorestartcmd</strong> char] port command args ...</code></p>
 
 <h4>DESCRIPTION</h4>
 
@@ -106,9 +107,10 @@ printing all regular log content plus additional debug messages to stdout.</p>
     <dd></dd>
   <dt><strong><code>-k</code></strong> |
   <strong><code>--killcmd</code></strong> <code>char</code></dt>
-    <dd>Kill the child process (child will be restarted automatically) when
-      <code>char</code> is sent on an access connection. Use <code>^</code>
-      to specify a control character.</dd>
+    <dd>Kill the child process (child will be restarted automatically by
+      default) when <code>char</code> is sent on an access connection. Use
+      <code>^</code> to specify a control character, "" for no kill command.
+      Default is <code>^X</code>.</dd>
     <dd></dd>
   <dt><code><strong>--killsig</strong> signal</code></dt>
     <dd>Kill the child using <code>signal</code> when receiving the kill
@@ -130,6 +132,9 @@ printing all regular log content plus additional debug messages to stdout.</p>
     <dd>In all server messages, use <code>name</code> instead of the full
       <code>command</code> line to increase readability.</dd>
     <dd></dd>
+  <dt><strong><code>--noautorestart</code></strong></dt>
+    <dd>Do not automatically restart child process on exit.</dd>
+    <dd></dd>
   <dt><strong><code>-p</code></strong> |
   <strong><code>--pidfile</code></strong> <code>file</code></dt>
     <dd>Write the PID of the server process into <code>file</code> to
@@ -138,6 +143,12 @@ printing all regular log content plus additional debug messages to stdout.</p>
     <dd></dd>
   <dt><strong><code>--restrict</code></strong></dt>
     <dd>Restrict log connections to localhost.</dd>
+    <dd></dd>
+  <dt><strong><code>--autorestartcmd</code></strong> <code>char</code></dt>
+    <dd>Toggle auto restart flag when <code>char</code> is sent on an access
+      connection. Use <code>^</code> to specify a control character, "" to
+      disable. Default is <code>^T</code>.</dd>
+    <dd></dd>
 </dl>
 
 <h4>USAGE</h4>
@@ -174,6 +185,16 @@ get server messages about this action.</p>
 <p>Type the telnet escape character <kbd>^]</kbd> to get back to a telnet
 prompt and <kbd>quit</kbd> to exit telnet.</p>
 
+<p>While <strong>procServ</strong> was intended to be an environment to run
+soft IOCs, any process might be started as child. It provides an environment
+for any program that requires access to its console and should be run in the
+background as a daemon. By writing a file log directly or through a console
+access and logging facility (such as <strong>conserver</strong>), the log of
+such a program's output can be used to correlate it to other events. E.g., in
+an EPICS environment, running <strong>casw</strong> (the beacon anomaly
+watcher) can provide useful log output to analyse and track down network
+issues.</p>
+
 <h4>KNOWN PROBLEMS</h4>
 
 <p>None so far.</p>
@@ -186,16 +207,6 @@ prompt and <kbd>quit</kbd> to exit telnet.</p>
 
 <p>Written by David H. Thompson <code>&lt;thompsondh@ornl.gov&gt;</code> and
 Ralph Lange <code>&lt;Ralph.Lange@bessy.de&gt;</code>.</p>
-
-<p></p>
-
-<p></p>
-
-<p></p>
-
-<p></p>
-
-<p></p>
 
 <p></p>
 </body>

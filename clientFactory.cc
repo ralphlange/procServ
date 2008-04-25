@@ -62,11 +62,25 @@ clientItem::clientItem(int socketIn, bool readonly)
     char buf1[128], buf2[128];
     char greeting1[] = "@@@ Welcome to the procServ process server ("
         PROCSERV_VERSION_STRING ")" NL;
-    char greeting2[128];
+    char greeting2[256] = "";
 
-    sprintf( greeting2, "@@@ Use %s%c to kill (and restart) the child." NL,
-             killChar < 32 ? "^" : "",
-             killChar < 32 ? killChar + 64 : killChar );
+    if ( killChar ) {
+        sprintf( greeting2, "@@@ Use %s%c to kill the child, ",
+                 killChar < 32 ? "^" : "",
+                 killChar < 32 ? killChar + 64 : killChar );
+    } else {
+        sprintf( greeting2, "@@@ Kill command disabled, " );
+    }
+    sprintf( buf1, "auto restart is %s, ", autoRestart ? "ON" : "OFF" );
+    if ( toggleRestartChar ) {
+        sprintf( buf2, "use %s%c to toggle auto restart" NL,
+                 toggleRestartChar < 32 ? "^" : "",
+                 toggleRestartChar < 32 ? toggleRestartChar + 64 : toggleRestartChar );
+    } else {
+        sprintf( buf2, "auto restart toggle disabled" NL );
+    }
+    strcat ( greeting2, buf1 );
+    strcat ( greeting2, buf2 );
 
     localtime_r( &procServStart, &procServStart_tm );
     strftime( procServStart_buf, sizeof(procServStart_buf)-1,
@@ -91,7 +105,7 @@ clientItem::clientItem(int socketIn, bool readonly)
     } else {                    // Regular (user) client
         _users++;
         write( _ioHandle, greeting1, strlen(greeting1) );
-        if ( killChar ) write( _ioHandle, greeting2, strlen(greeting2) );
+        write( _ioHandle, greeting2, strlen(greeting2) );
     }
 
     write( _ioHandle, infoMessage1, strlen(infoMessage1) );
