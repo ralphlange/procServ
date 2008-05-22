@@ -392,10 +392,10 @@ int main(int argc,char * argv[])
 
 	if (sigUsr1Set)
 	{
-	    printf( "%s: Failed to exec %s:\n"
-                    "File does not exist or no execute permission\n",
-                    procservName, command );
-	    printf( "Exiting procServ!\n" );
+	    fprintf( stderr, "%s: Failed to exec %s:\n"
+                     "File does not exist or no execute permission\n",
+                     procservName, command );
+	    fprintf( stderr, "Exiting procServ!\n" );
 	    exit(0);
 	}
 

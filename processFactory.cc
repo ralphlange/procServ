@@ -134,8 +134,8 @@ processClass::processClass(int argc,char * argv[])
         }
 	execv(*argv,argv);                         // execv()
 	// This shouldn't return, but did...
-	printf( "%s: child could not execute: %s, %s\n",
-                procservName, *argv, strerror(errno) );
+	fprintf( stderr, "%s: child could not execute: %s, %s\n",
+                 procservName, *argv, strerror(errno) );
 	kill( procservPid, SIGUSR1 );  // Let someone know
 	sleep( 10 );                   // Dont do anything harmful
 	exit( -1 );
