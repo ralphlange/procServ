@@ -19,7 +19,7 @@ connectionItem::connectionItem(int fd, bool readonly)
 
 connectionItem::~connectionItem()
 {
-    XPRINTF("~connectionItem()\n");
+    PRINTF("~connectionItem()\n");
 
     if (_ioHandle>=0) close(_ioHandle);
 }

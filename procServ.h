@@ -20,9 +20,6 @@
 #ifndef PRINTF
 #define PRINTF if (inDebugMode) printf
 #endif 
-#ifndef XPRINTF
-#define XPRINTF
-#endif 
 
 #define PROCSERV_VERSION       2
 #define PROCSERV_REVISION      1

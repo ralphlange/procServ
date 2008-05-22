@@ -81,7 +81,7 @@ processClass::~processClass()
               "auto restart is disabled" );
 
     // Update client connect message
-    sprintf( infoMessage2, "@@@ Child \"%s\" is SHUT DOWN" NL, childName, _pid );
+    sprintf( infoMessage2, "@@@ Child \"%s\" is SHUT DOWN" NL, childName );
 
     SendToAll( now_buf, strlen(now_buf), this );
     SendToAll( goodbye, strlen(goodbye), this );
@@ -132,7 +132,7 @@ processClass::processClass(int argc,char * argv[])
             corelimit.rlim_cur = coreSize;
             setrlimit( RLIMIT_CORE, &corelimit );
         }
-	int status = execv(*argv,argv);            // execv()
+	execv(*argv,argv);                         // execv()
 	// This shouldn't return, but did...
 	printf( "%s: child could not execute: %s, %s\n",
                 procservName, *argv, strerror(errno) );

@@ -3,7 +3,7 @@
 # Ralph Lange 04/22/2008
 # GNU Public License applies - see www.gnu.org
 
-CXXFLAGS+= -g
+CXXFLAGS+= -g -Wall
 LDLIBS += -lutil
 
 # Change the time format ["%c"] (on console, in log files)

@@ -52,8 +52,6 @@ int    debugFD=-1;               // FD for debug output
 
 // mLoop runs the program
 void mLoop();
-// Handles fatal errors in poll and also signals
-void OnPollError();
 // Handles houskeeping
 void OnPollTimeout();
 // Daemonizes the program
@@ -133,7 +131,8 @@ int main(int argc,char * argv[])
     time(&procServStart); // What time is it now
     struct pollfd * pollList=NULL,* ppoll; // Allocate as much space as needed
     char cwd[1024];
-    int c, i, j;
+    int c;
+    unsigned int i, j;
     int ctlPort, logPort=0;
     char *command;
     bool wrongOption = false;
@@ -264,9 +263,7 @@ int main(int argc,char * argv[])
 
     if ( (argc-optind) < 2 )
     {
-        fprintf( stderr,
-                 "%s: missing argument\n",
-                 procservName, ctlPort );
+        fprintf( stderr, "%s: missing argument\n", procservName );
     }
 
     if ( wrongOption || (argc-optind) < 2 )
@@ -435,8 +432,7 @@ int main(int argc,char * argv[])
 	pollStatus=poll(pollList,nPoll,500);
 
 	// handle what poll returns
-	if (pollStatus<0) OnPollError();
-	else if (pollStatus==0)
+        if (pollStatus==0)
 	{
 	    // Go clean up dead connections
 	    OnPollTimeout();
@@ -496,23 +492,6 @@ void SendToAll(const char * message,int count,const connectionItem * sender)
     }
 }
 
-
-// Handles fatal errors in poll and also signals
-void OnPollError()
-{
-	int pid;
-	int status;
-
-	switch (errno)
-	{
-	case EINTR:
-		
-		break;
-	default:
-		break;
-	}
-	
-}
 
 // Handles housekeeping
 void OnPollTimeout()
@@ -618,7 +597,7 @@ void OnSigUsr1(int)
 void forkAndGo()
 {
     pid_t p=fork();
-    char * buf="/dev/null";
+    char buf[] = "/dev/null";
     int fh;
     struct stat statBuf;
 
@@ -666,13 +645,10 @@ void forkAndGo()
 // Return 0 if the file is executable
 int checkCommandFile(const char * command)
 {
-    int myeuid=geteuid();
-    int myegid=getegid();
     struct stat s;
     int ngroups_max=1+sysconf(_SC_NGROUPS_MAX);
     gid_t * groups=new gid_t[ngroups_max];
     ngroups_max=getgroups(ngroups_max,groups);
-    int g; // loop iterator 
     mode_t min_permissions=S_IRUSR|S_IXUSR|S_IXGRP|S_IRGRP|S_IROTH|S_IXOTH;
 
     if (stat(command,&s))

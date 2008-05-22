@@ -23,7 +23,7 @@ public:
 
 
 private:
-    unsigned char _buf[128]; // Where to put data after an IAC
+    signed char _buf[128]; // Where to put data after an IAC
     int _count; // This is normally -1, after IAC it is 0 + chars received
     int _expected; // When to process the command
     connectionItem * _item; // This is the client that owns us

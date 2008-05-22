@@ -85,7 +85,6 @@ bool acceptItem::OnPoll()
     int newSocket;
     struct sockaddr addr;
     socklen_t len = sizeof(addr);
-    struct sockaddr_in * inaddr = (sockaddr_in *) &addr;
 
     if ( _pfd==NULL || _pfd->revents==0 ) return false;
 
