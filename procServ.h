@@ -23,8 +23,8 @@
 
 #define PROCSERV_VERSION       2
 #define PROCSERV_REVISION      1
-#define PROCSERV_MODIFICATION  0
-#define PROCSERV_VERSION_STRING "procServ Version 2.1.0"
+#define PROCSERV_MODIFICATION  1
+#define PROCSERV_VERSION_STRING "procServ Version 2.1.1"
 
 extern bool   inDebugMode;
 extern bool   logPortLocal;
