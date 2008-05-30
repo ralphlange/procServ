@@ -24,7 +24,8 @@
 [<strong>-L</strong>|<strong>--logfile</strong> file]
 [<strong>-n</strong>|<strong>--name</strong> title]
 [<strong>--noautorestart</strong>]
-[<strong>-p</strong>|<strong>--pidfile</strong> file] port command args
+[<strong>-p</strong>|<strong>--pidfile</strong> file]
+[<strong>-q</strong>|<strong>--quiet</strong>] port command args
 ...</code></p>
 
 <h4>DESCRIPTION</h4>
@@ -153,6 +154,11 @@ printing all regular log content plus additional debug messages to stdout.</p>
     <dd>Write the PID of the server process into <code>file</code> to
       facilitate integration into regular system service administration
       mechanisms.</dd>
+    <dd></dd>
+  <dt><strong><code>-q</code></strong> |
+  <strong><code>--quiet</code></strong><code></code></dt>
+    <dd>Do not write informational output (server). Avoids cluttering the
+      screen when run as part of a system script.</dd>
     <dd></dd>
   <dt><strong><code>--restrict</code></strong></dt>
     <dd>Restrict log connections to localhost.</dd>

@@ -25,6 +25,7 @@ bool   inDebugMode;              // This enables a lot of printfs
 bool   logPortLocal;             // This restricts log port access to localhost
 bool   autoRestart = true;       // Enables instant restart of exiting child
 bool   shutdownServer = false;   // To keep the server from shutting down
+bool   quiet = false;            // Suppress info output (server)
 char   *procservName;            // The name of this beast (server)
 char   *childName;               // The name of that beast (child)
 int    connectionNo;             // Total number of connections
@@ -122,6 +123,7 @@ void printHelp()
            " -n --name <str>      set child's name (defaults to command line)\n"
            "    --noautorestart   do not restart child on exit by default\n"
            " -p --pidfile <str>   name of PID file (for server PID)\n"
+           " -q --quiet           suppress informational output (server)\n"
            "    --restrict        restrict log connections to localhost\n"
         );
 }
@@ -158,6 +160,7 @@ int main(int argc,char * argv[])
             {"name",           required_argument, 0, 'n'},
             {"noautorestart",  no_argument,       0, 'N'},
             {"pidfile",        required_argument, 0, 'p'},
+            {"quiet",          no_argument,       0, 'q'},
             {"restrict",       no_argument,       0, 'R'},
             {0, 0, 0, 0}
         };
@@ -165,7 +168,7 @@ int main(int argc,char * argv[])
         /* getopt_long stores the option index here. */
         int option_index = 0;
      
-        c = getopt_long (argc, argv, "+dhi:k:l:L:n:p:",
+        c = getopt_long (argc, argv, "+dhi:k:l:L:n:p:q",
                          long_options, &option_index);
 
         /* Detect the end of the options. */
@@ -245,6 +248,10 @@ int main(int argc,char * argv[])
 
         case 'p':                                 // PID file
             pidFile = strdup( optarg );
+            break;
+
+        case 'q':                                 // Quiet
+            quiet = true;
             break;
 
         case 'T':                                 // Toggle auto restart command
@@ -605,13 +612,15 @@ void forkAndGo()
 
     if ( p ) // I am the parent
     {
-	fprintf( stderr, "%s: spawning daemon process: %d\n", procservName, p );
-        if ( logFile == NULL ) {
-            if ( S_ISREG(statBuf.st_mode) )
-                fprintf( stderr, "The open file on stdout will be used as a log file.\n" );
-            else
-                fprintf( stderr, "No log file specified and stdout is not a file "
-                         "- no log will be kept.\n" );
+        if ( !quiet ) {
+            fprintf( stderr, "%s: spawning daemon process: %d\n", procservName, p );
+            if ( logFile == NULL ) {
+                if ( S_ISREG(statBuf.st_mode) )
+                    fprintf( stderr, "The open file on stdout will be used as a log file.\n" );
+                else
+                    fprintf( stderr, "No log file specified and stdout is not a file "
+                             "- no log will be kept.\n" );
+            }
         }
 	exit(0);
     }
