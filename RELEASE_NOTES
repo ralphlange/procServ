@@ -1,5 +1,6 @@
 V 2.2.0 05/30/2008 Ralph Lange <Ralph.Lange@bessy.de>
-New command line option -q (--quiet) suppresses info output (server) to avoid cluttering the output when run as part of a system script.
+New command line option -q (--quiet) suppresses info output (server) to avoid cluttering
+the output when run as part of a system script.
 
 V 2.1.1 05/22/2008 Ralph Lange <Ralph.Lange@bessy.de>
 Enabled -Wall fo compilation.
