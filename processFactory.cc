@@ -142,8 +142,6 @@ processClass::processClass(int argc,char * argv[])
 	// This shouldn't return, but did...
 	fprintf( stderr, "%s: child could not execute: %s, %s\n",
                  procservName, *argv, strerror(errno) );
-	kill( procservPid, SIGUSR1 );  // Let someone know
-	sleep( 10 );                   // Dont do anything harmful
 	exit( -1 );
     }
 }

@@ -67,8 +67,6 @@ int sigChildSet;
 
 void OnSigPipe(int);
 int sigPipeSet;
-void OnSigUsr1(int);
-int sigUsr1Set;
 
 struct sigaction sig;
 
@@ -321,8 +319,6 @@ int main(int argc,char * argv[])
     sigaction(SIGCHLD,&sig,NULL);
     sig.sa_handler=&OnSigPipe;
     sigaction(SIGPIPE,&sig,NULL);
-    sig.sa_handler=&OnSigUsr1;
-    sigaction(SIGUSR1,&sig,NULL);
 
     // Make an accept item to listen for control connections
     try
@@ -405,15 +401,6 @@ int main(int argc,char * argv[])
 	int pollStatus; // What poll returns
 
 	connectionItem * p ;
-
-	if (sigUsr1Set)
-	{
-	    fprintf( stderr, "%s: Failed to exec %s:\n"
-                     "File does not exist or no execute permission\n",
-                     procservName, command );
-	    fprintf( stderr, "Exiting procServ!\n" );
-	    exit(0);
-	}
 
 	if (sigPipeSet>0)
 	{
@@ -603,11 +590,6 @@ void OnSigPipe(int)
 {
 	sigPipeSet++;
 }
-void OnSigUsr1(int)
-{
-    sigUsr1Set++;
-}
-
 
 // Fork the daemon and exit the parent
 void forkAndGo()
