@@ -15,6 +15,7 @@
 
 <p><code><strong>procServ</strong> [<strong>--autorestartcmd</strong> char]
 [<strong>--coresize</strong> size]
+[<strong>-c</strong>|<strong>--chdir</strong>]
 [<strong>-d</strong>|<strong>--debug</strong>]
 [<strong>-h</strong>|<strong>--help</strong>] [<strong>--restrict</strong>]
 [<strong>-i</strong>|<strong>--ignore</strong> chars]
@@ -99,6 +100,13 @@ printing all regular log content plus additional debug messages to stdout.</p>
     <dd>Set the maximum <code>size</code> of core file. See
       <code>getrlimit</code> documentation for details. Setting
       <code>size</code> to 0 will keep child from creating core files.</dd>
+    <dd></dd>
+  <dt><strong><code>-c</code></strong> |
+  <strong><code>--chdir</code></strong><code>
+  dir</code><strong><code></code></strong></dt>
+    <dd>Change directory to <code>dir</code> before starting child. This is
+      done each time the child is started to make sure symbolic links are
+      re-solved on child restart.</dd>
     <dd></dd>
   <dt><strong><code>-d</code></strong> |
   <strong><code>--debug</code></strong></dt>

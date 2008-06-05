@@ -1,3 +1,8 @@
+V 2.3.0 06/05/2008 Ralph Lange <Ralph.Lange@bessy.de>
+New command line option -c (--chdir <dir>) to specify <dir> to change to whenever child
+is restarted. (Important if symbolic link in st.cmd path is used for versioning.)
+Removed killing the server when child fails to exec command.
+
 V 2.2.0 05/30/2008 Ralph Lange <Ralph.Lange@bessy.de>
 New command line option -q (--quiet) suppresses info output (server) to avoid cluttering
 the output when run as part of a system script.
