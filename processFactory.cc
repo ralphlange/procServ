@@ -132,7 +132,13 @@ processClass::processClass(int argc,char * argv[])
             corelimit.rlim_cur = coreSize;
             setrlimit( RLIMIT_CORE, &corelimit );
         }
-	execv(*argv,argv);                         // execv()
+        if ( chDir && chdir( chDir ) ) {
+            fprintf( stderr, "%s: child could not chdir to %s, %s\n",
+                     procservName, chDir, strerror(errno) );
+        } else {
+            execv(*argv,argv);                         // execv()
+        }
+
 	// This shouldn't return, but did...
 	fprintf( stderr, "%s: child could not execute: %s, %s\n",
                  procservName, *argv, strerror(errno) );

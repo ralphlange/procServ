@@ -36,6 +36,8 @@ char   restartChar = 0x12;       // Restart character (default: ^R)
 char   quitChar = 0x11;          // Quit character (default: ^Q)
 int    killSig = SIGKILL;        // Kill signal (default: SIGKILL)
 rlim_t coreSize = -1;            // Max core size for child
+char   *chDir = NULL;            // Directory to change to before starting child
+char   *myDir = NULL;            // Directory where server was started
 
 pid_t  procservPid;              // PID of server (daemon if not in debug mode)
 char   *pidFile;                 // File name for server PID
@@ -113,6 +115,7 @@ void printHelp()
            "Options:\n"
            "    --autorestartcmd  command to toggle auto restart flag (^ for ctrl)\n"
            "    --coresize <n>    sets maximum core size for child to <n>\n"
+           " -c --chdir <dir>     change directory to <dir> before starting child\n"
            " -d --debug           enable debug mode (keeps child in foreground)\n"
            " -h --help            print this message\n"
            " -i --ignore <str>    ignore all chars in <str> (^ for ctrl)\n"
@@ -132,14 +135,15 @@ int main(int argc,char * argv[])
 {
     time(&procServStart); // What time is it now
     struct pollfd * pollList=NULL,* ppoll; // Allocate as much space as needed
-    char cwd[1024];
     int c;
     unsigned int i, j;
     int ctlPort, logPort=0;
     char *command;
     bool wrongOption = false;
+    char buff[512];
 
     procservName = argv[0];
+    myDir = get_current_dir_name();
 
     pidFile = getenv( "PROCSERV_PID" );
     if ( pidFile && ! strcmp( pidFile, "" ) ) pidFile = defaultpidFile;
@@ -150,6 +154,7 @@ int main(int argc,char * argv[])
         static struct option long_options[] = {
             {"autorestartcmd", required_argument, 0, 'T'},
             {"coresize",       required_argument, 0, 'C'},
+            {"chdir",          required_argument, 0, 'c'},
             {"debug",          no_argument,       0, 'd'},
             {"help",           no_argument,       0, 'h'},
             {"ignore",         required_argument, 0, 'i'},
@@ -168,7 +173,7 @@ int main(int argc,char * argv[])
         /* getopt_long stores the option index here. */
         int option_index = 0;
      
-        c = getopt_long (argc, argv, "+dhi:k:l:L:n:p:q",
+        c = getopt_long (argc, argv, "+c:dhi:k:l:L:n:p:q",
                          long_options, &option_index);
 
         /* Detect the end of the options. */
@@ -179,6 +184,10 @@ int main(int argc,char * argv[])
         case 'C':                                 // Core size
             i = atoi( optarg );
             if ( i >= 0 ) coreSize = i;
+            break;
+
+        case 'c':                                 // Dir to change to
+            chDir = strdup( optarg );
             break;
 
         case 'd':                                 // Debug mode
@@ -372,20 +381,20 @@ int main(int argc,char * argv[])
     }
 
     // Record some useful data for managers 
+    sprintf( infoMessage1, "@@@ procServ server PID: %d" NL
+             "@@@ Server startup directory: %s" NL
+             "@@@ Child startup directory: %s" NL,
+             getpid(),
+             myDir,
+             chDir);
     if ( strcmp( childName, command ) )
-        sprintf( infoMessage1, "@@@ procServ server PID: %d" NL
-                 "@@@ Startup directory: %s" NL 
-                 "@@@ Child \"%s\" started as: %s" NL,
-                 getpid(),
-                 getcwd(cwd,sizeof(cwd)),
+        sprintf( buff, "@@@ Child \"%s\" started as: %s" NL,
                  childName, command );
     else
-        sprintf( infoMessage1, "@@@ procServ server PID: %d" NL
-                 "@@@ Startup directory: %s" NL 
-                 "@@@ Child started as: %s" NL,
-                 getpid(),
-                 getcwd(cwd,sizeof(cwd)),
+        sprintf( buff, "@@@ Child started as: %s" NL,
                  command );
+    if ( strlen(infoMessage1) + strlen(buff) + 1 < sizeof(infoMessage1) )
+        strcat( infoMessage1, buff);
 
     // Run here until something makes it die
     while ( ! shutdownServer )
@@ -660,11 +669,18 @@ int checkCommandFile(const char * command)
     ngroups_max=getgroups(ngroups_max,groups);
     mode_t min_permissions=S_IRUSR|S_IXUSR|S_IXGRP|S_IRGRP|S_IROTH|S_IXOTH;
 
+    // chdir if possible (to allow relative command)
+    if ( chDir && chdir( chDir ) ) perror( chDir );
+
     if (stat(command,&s))
     {
 	perror(command);
 	return -1;
     }
+
+    // Back to where we came from
+    if ( chdir( myDir ) ) perror( myDir );
+
     if (!S_ISREG(s.st_mode))
     {
 	fprintf(stderr,"%s: %s is not a regular file\n", procservName, command);
