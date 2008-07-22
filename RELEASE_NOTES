@@ -1,5 +1,12 @@
+V 2.4.0 07/22/2008 Ralph Lange <Ralph.Lange@bessy.de>
+New command line option --allow to allow control connections from any host. (Must be
+explicitly enabled in Makefile.)
+New command line option -w (--wait) to start with child being shut down and wait for
+manual start command on control connection.
+Fix: Make start directory the default for directory to cd to.
+
 V 2.3.0 06/05/2008 Ralph Lange <Ralph.Lange@bessy.de>
-New command line option -c (--chdir <dir>) to specify <dir> to change to whenever child
+New command line option -c (--chdir) <dir> to specify <dir> to change to whenever child
 is restarted. (Important if symbolic link in st.cmd path is used for versioning.)
 Removed killing the server when child fails to exec command.
 
@@ -30,8 +37,8 @@ R1-4 3/9/2006
 Fixed double characters when the other user is typing.
 More informational messages: PIDs for everything, when sigchild and sigpipe happen and more
 info at sign-on.
-Put in better detection and reporting in case the startup file is not usable.  Procserve will try
-to print an informational message and die.
+Put in better detection and reporting in case the startup file is not usable. Procserve will
+try to print an informational message and die.
 
 R1-3 3/2/2006
 Added the logfile feature - if stdout is a file we leave it open and write messages to it.
@@ -60,5 +67,5 @@ have SendToAll be a litte smarter.
 
 1.1 9/2/2003
 This works.  Telnet comes up in linemode meaning that characters are echoed and held by telnet
-until it gets a <CR>. The whole line is then sent.  If you type a control character you must type
-<CR> to get it sent. If the control character is ^C then you get hosed.
+until it gets a <CR>. The whole line is then sent.  If you type a control character you must
+type <CR> to get it sent. If the control character is ^C then you get hosed.
