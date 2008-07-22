@@ -13,8 +13,8 @@
 
 <h4>SYNOPSIS</h4>
 
-<p><code><strong>procServ</strong> [<strong>--autorestartcmd</strong> char]
-[<strong>--coresize</strong> size]
+<p><code><strong>procServ</strong> [<strong>--allow</strong>]
+[<strong>--autorestartcmd</strong> char] [<strong>--coresize</strong> size]
 [<strong>-c</strong>|<strong>--chdir</strong> dir<strong></strong>]
 [<strong>-d</strong>|<strong>--debug</strong>]
 [<strong>-h</strong>|<strong>--help</strong>] [<strong>--restrict</strong>]
@@ -94,6 +94,16 @@ printing all regular log content plus additional debug messages to stdout.</p>
 
 <h4>OPTIONS</h4>
 <dl>
+  <dt><strong><code>--allow</code></strong></dt>
+    <dd>Allow control connections from anywhere. (Default: restrict control
+      access to localhost.)<br />
+      Creates a serious security hole, as telnet clients from anywhere can
+      connect to the child's stdin/stdout and execute arbitrary commands on
+      the host, if the child permits.<br />
+      Needs to be enabled at compile-time (see Makefile).<br />
+      <em><strong>Please do not enable and use this option unless you exactly
+      know why and what you are doing.</strong></em></dd>
+    <dd></dd>
   <dt><strong><code>--autorestartcmd</code></strong> <code>char</code></dt>
     <dd>Toggle auto restart flag when <code>char</code> is sent on an access
       connection. Use <code>^</code> to specify a control character, "" to
@@ -190,6 +200,11 @@ into the IOC's boot directory. A typical command line would be</p>
 connect to port 20000 using</p>
 <pre>    <kbd>telnet localhost 20000</kbd></pre>
 
+<p>To <strong>connect from a remote machine</strong>, ssh to a
+<code>user</code> account on <code>procservhost</code> and connect to port
+20000 using</p>
+<pre>    <kbd>ssh -t user@procservhost telnet localhost 20000</kbd></pre>
+
 <p>You will be connected to the soft IOCs console and receive an informative
 welcome message. All output from the procServ server will start with
 "<code>@@@</code> " to allow telling it apart from messages that your IOC
@@ -211,7 +226,8 @@ sends.</p>
 get server messages about this action.</p>
 
 <p>Type the telnet escape character <kbd>^]</kbd> to get back to a telnet
-prompt and <kbd>quit</kbd> to exit telnet.</p>
+prompt and <kbd>quit</kbd> to exit telnet (and ssh when you were connecting
+remotely).</p>
 
 <p>While <strong>procServ</strong> was intended to be an environment to run
 soft IOCs, any process might be started as child. It provides an environment

@@ -12,6 +12,15 @@ LDLIBS += -lutil
 # Change the minimum time between child restarts (in sec) [15]
 #CXXFLAGS+= -DMIN_TIME_BETWEEN_RESTARTS=30
 
+# Enable "--allow" option to allow access from anywhere
+# !! This opens up a major security hole:
+# !! anyone can access the child's stdin/stdout and - if the
+# !! child permits (e.g. using "system" on iocsh) - execute
+# !! arbitrary commands on the host system.   USE AT YOUR OWN RISK!!
+# !! You should rather ssh to a local user and run "telnet localhost <port>"
+# !! to ensure authentication.
+#CXXFLAGS+= -DALLOW_FROM_ANYWHERE
+
 procServ_OBS=procServ.o connectionItem.o acceptFactory.o clientFactory.o processFactory.o telnetStateMachine.o
 
 all: procServ

@@ -21,8 +21,15 @@
 
 #include "procServ.h"
 
+#ifdef ALLOW_FROM_ANYWHERE
+const bool enableAllow = true;   // Enable --allow option
+#else
+const bool enableAllow = false;  // Default: NO
+#endif
+
 bool   inDebugMode;              // This enables a lot of printfs
 bool   logPortLocal;             // This restricts log port access to localhost
+bool   ctlPortLocal = true;      // Restrict control connections to localhost
 bool   autoRestart = true;       // Enables instant restart of exiting child
 bool   waitForManualStart = false;  // Waits for telnet cmd to manually start child
 bool   shutdownServer = false;   // To keep the server from shutting down
@@ -112,6 +119,7 @@ void printHelp()
     printf("<port>              use telnet <port> for command connections\n"
            "<command args ...>  command line to start child process\n"
            "Options:\n"
+           "    --allow           allow control connections from anywhere\n"
            "    --autorestartcmd  command to toggle auto restart flag (^ for ctrl)\n"
            "    --coresize <n>    sets maximum core size for child to <n>\n"
            " -c --chdir <dir>     change directory to <dir> before starting child\n"
@@ -153,6 +161,7 @@ int main(int argc,char * argv[])
 
     while (1) {
         static struct option long_options[] = {
+            {"allow",          no_argument,       0, 'A'},
             {"autorestartcmd", required_argument, 0, 'T'},
             {"coresize",       required_argument, 0, 'C'},
             {"chdir",          required_argument, 0, 'c'},
@@ -183,6 +192,13 @@ int main(int argc,char * argv[])
 
         switch (c)
         {
+        case 'A':                                 // Allow connecting from anywhere
+            if ( enableAllow )
+                ctlPortLocal = false;
+            else
+                fprintf( stderr, "%s: --allow not supported\n", procservName );
+            break;
+
         case 'C':                                 // Core size
             i = atoi( optarg );
             if ( i >= 0 ) coreSize = i;
@@ -331,7 +347,7 @@ int main(int argc,char * argv[])
     // Make an accept item to listen for control connections
     try
     {
-	connectionItem *acceptItem = acceptFactory( ctlPort );
+	connectionItem *acceptItem = acceptFactory( ctlPort, ctlPortLocal );
 	AddConnection(acceptItem);
     }
     catch (int error)
