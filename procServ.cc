@@ -144,6 +144,7 @@ int main(int argc,char * argv[])
 
     procservName = argv[0];
     myDir = get_current_dir_name();
+    chDir = myDir;
 
     pidFile = getenv( "PROCSERV_PID" );
     if ( pidFile && ! strcmp( pidFile, "" ) ) pidFile = defaultpidFile;
