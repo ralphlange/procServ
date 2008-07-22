@@ -26,8 +26,8 @@
 [<strong>-n</strong>|<strong>--name</strong> title]
 [<strong>--noautorestart</strong>]
 [<strong>-p</strong>|<strong>--pidfile</strong> file]
-[<strong>-q</strong>|<strong>--quiet</strong>] port command args
-...</code></p>
+[<strong>-q</strong>|<strong>--quiet</strong>]
+[<strong>-w</strong>|<strong>--wait</strong>] port command args ...</code></p>
 
 <h4>DESCRIPTION</h4>
 
@@ -71,7 +71,10 @@ manually</strong> by sending a signal to the child process using the kill
 command <code>^X</code>.<br />
 With the child process being shut down, the server accepts two commands:
 <code>^R</code> to <strong>restart the child</strong> and <code>^Q</code> to
-<strong>quit the server</strong>.</p>
+<strong>quit the server</strong>.<br />
+The <code>-w</code> (<code>--wait</code>) option starts the server in this
+shut down mode, waiting for the telnet connection to issue a manual start
+command to create the child.</p>
 
 <p>To <strong>block input characters</strong> that are potentially dangerous
 to the child (e.g. <code>^D</code> and <code>^C</code> on soft IOCs), the
@@ -168,8 +171,13 @@ printing all regular log content plus additional debug messages to stdout.</p>
       screen when run as part of a system script.</dd>
     <dd></dd>
   <dt><strong><code>--restrict</code></strong></dt>
-    <dd>Restrict log connections to localhost.</dd>
-    <dd></dd>
+    <dd>Restrict log connections to localhost.<br />
+    </dd>
+  <dt><strong><code>-w</code></strong> |
+  <strong><code>--wait</code></strong></dt>
+    <dd>Do not start the child. Instead, wait for a telnet connection and a
+      manual start command.<br />
+    </dd>
 </dl>
 
 <h4>USAGE</h4>

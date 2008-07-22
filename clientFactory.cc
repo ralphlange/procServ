@@ -163,6 +163,7 @@ bool clientItem::OnPoll()
                 for ( i = 0; i < len; i++ ) {
                     if ( restartChar && buf[i] == restartChar ) {
                         PRINTF ("Got a restart command\n");
+                        waitForManualStart = false;
                         processClass::restartOnce();
                     }
                     if ( quitChar && buf[i] == quitChar ) {

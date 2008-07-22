@@ -37,7 +37,8 @@ bool processFactoryNeedsRestart()
     time_t now = time(0);
     if ( ( autoRestart == false && processClass::_restartTime ) || 
          processClass::_runningItem ||
-         now < processClass::_restartTime ) return false;
+         now < processClass::_restartTime ||
+         waitForManualStart ) return false;
     return true;
     
 }

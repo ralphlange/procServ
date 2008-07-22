@@ -29,6 +29,7 @@
 extern bool   inDebugMode;
 extern bool   logPortLocal;
 extern bool   autoRestart;
+extern bool   waitForManualStart;
 extern bool   shutdownServer;
 extern char   *procservName;
 extern char   *childName;

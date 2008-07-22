@@ -24,6 +24,7 @@
 bool   inDebugMode;              // This enables a lot of printfs
 bool   logPortLocal;             // This restricts log port access to localhost
 bool   autoRestart = true;       // Enables instant restart of exiting child
+bool   waitForManualStart = false;  // Waits for telnet cmd to manually start child
 bool   shutdownServer = false;   // To keep the server from shutting down
 bool   quiet = false;            // Suppress info output (server)
 char   *procservName;            // The name of this beast (server)
@@ -126,6 +127,7 @@ void printHelp()
            " -p --pidfile <str>   name of PID file (for server PID)\n"
            " -q --quiet           suppress informational output (server)\n"
            "    --restrict        restrict log connections to localhost\n"
+           " -w --wait            wait for telnet cmd to manually start child\n"
         );
 }
 
@@ -165,13 +167,14 @@ int main(int argc,char * argv[])
             {"pidfile",        required_argument, 0, 'p'},
             {"quiet",          no_argument,       0, 'q'},
             {"restrict",       no_argument,       0, 'R'},
+            {"wait",           no_argument,       0, 'w'},
             {0, 0, 0, 0}
         };
 
         /* getopt_long stores the option index here. */
         int option_index = 0;
      
-        c = getopt_long (argc, argv, "+c:dhi:k:l:L:n:p:q",
+        c = getopt_long (argc, argv, "+c:dhi:k:l:L:n:p:qw",
                          long_options, &option_index);
 
         /* Detect the end of the options. */
@@ -259,6 +262,10 @@ int main(int argc,char * argv[])
 
         case 'q':                                 // Quiet
             quiet = true;
+            break;
+
+        case 'w':                                 // Wait for manual start
+            waitForManualStart = true;
             break;
 
         case 'T':                                 // Toggle auto restart command
@@ -391,6 +398,7 @@ int main(int argc,char * argv[])
                  command );
     if ( strlen(infoMessage1) + strlen(buff) + 1 < sizeof(infoMessage1) )
         strcat( infoMessage1, buff);
+    sprintf( infoMessage2, "@@@ Child \"%s\" is SHUT DOWN" NL, childName );
 
     // Run here until something makes it die
     while ( ! shutdownServer )
