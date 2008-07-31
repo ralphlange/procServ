@@ -137,7 +137,7 @@ processClass::processClass(int argc,char * argv[])
             fprintf( stderr, "%s: child could not chdir to %s, %s\n",
                      procservName, chDir, strerror(errno) );
         } else {
-            execv(*argv,argv);                         // execv()
+            execvp(*argv,argv);                         // execv()
         }
 
 	// This shouldn't return, but did...
