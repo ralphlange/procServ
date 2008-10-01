@@ -45,7 +45,7 @@ bool processFactoryNeedsRestart()
 
 connectionItem * processFactory(int argc, char *argv[])
 {
-    char buf[100];
+    char buf[512];
     time(&IOCStart); // When did we do this?
     
     

@@ -61,7 +61,7 @@ clientItem::clientItem(int socketIn, bool readonly)
     char procServStart_buf[32]; // Time when this procServ started - as string
     struct tm IOCStart_tm;      // Time when the current IOC was started
     char IOCStart_buf[32];      // Time when the current IOC was started - as string
-    char buf1[128], buf2[128];
+    char buf1[512], buf2[512];
     char greeting1[] = "@@@ Welcome to the procServ process server ("
         PROCSERV_VERSION_STRING ")" NL;
     char greeting2[256] = "";
