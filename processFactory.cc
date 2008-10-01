@@ -113,7 +113,12 @@ processClass::processClass(int argc,char * argv[])
     _markedForDeletion = _pid <= 0;
     if (_pid) // I am the parent
     {
-	PRINTF("Created process %d on %s\n", _pid, factoryName);
+	if(_pid < 0) {
+            fprintf(stderr, "Fork failed: %s\n", errno == ENOENT ? "No pty" : strerror(errno));
+        }
+        else {
+            PRINTF("Created process %d on %s\n", _pid, factoryName);
+        }
 
 	// Don't start a new one before this time:
 	_restartTime = MIN_TIME_BETWEEN_RESTARTS + time(0);
