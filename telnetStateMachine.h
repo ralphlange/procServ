@@ -1,7 +1,7 @@
 // Process server for soft ioc
 // David H. Thompson 8/29/2003
 // Ralph Lange 04/25/2008
-// GNU Public License applies - see www.gnu.org
+// GNU Public License (GPLv3) applies - see www.gnu.org
 
 #ifndef telnetStateMachineH
 #define telnetStateMachineH
