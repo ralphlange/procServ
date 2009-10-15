@@ -6,6 +6,8 @@
 CXXFLAGS+= -g -Wall
 LDLIBS += -lutil
 
+A2X=a2x
+
 # Change the time format ["%c"] (on console, in log files)
 #CXXFLAGS+= -DSTRFTIME_FORMAT='"%b %d, %Y %r"'
 
@@ -24,8 +26,14 @@ LDLIBS += -lutil
 procServ_OBS=procServ.o connectionItem.o acceptFactory.o clientFactory.o processFactory.o telnetStateMachine.o
 
 all: procServ
+doc: procServ.1 procServ.pdf procServ.html
+
 clean:
 	rm -f procServ $(procServ_OBS)
+
+realclean: clean
+	rm -f procServ.1 procServ.xml procServ.pdf procServ.html
+	rm -f *~
 
 
 procServ.o: procServ.cc procServ.h
@@ -38,3 +46,12 @@ telnetStateMachine.o: telnetStateMachine.cc procServ.h telnetStateMachine.h
 
 procServ: $(procServ_OBS)
 	$(LINK.cc) $^ $(LOADLIBES) $(LDLIBS) -o $@
+
+procServ.1: procServ.txt
+	$(A2X) -f manpage $<
+
+procServ.pdf: procServ.txt
+	$(A2X) -f pdf $<
+
+procServ.html: procServ.txt
+	$(A2X) -f xhtml $<
