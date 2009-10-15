@@ -128,6 +128,14 @@ Type the telnet escape character `\^]` to get back to a telnet prompt and quit t
 While procServ was originally intended to be an environment to run soft IOCs, any process might be started as child. It provides an environment for any program that requires access to its console and should be run in the background as a daemon. By writing a file log directly or through a console access and logging facility (such as `conserver`), the log of such a program's output can be used to correlate its messages to other events.
 E.g., in an EPICS environment, running `casw` (the beacon anomaly watcher) can provide useful log output to analyse and track down network issues (name resolution broadcast storms).
 
+ENVIRONMENT VARIABLES
+---------------------
+
+`PROCSERV_PID`::
+    This sets the file name to write the PID of the server process into. (See `-p` option.)
+`PROCSERV_DEBUG`::
+    If set, procServ starts in debug mode. (See `-d` option.)
+
 KNOWN PROBLEMS
 --------------
 
