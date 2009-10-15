@@ -8,7 +8,7 @@ procServ - Process Server with Telnet Console and Log Access
 
 SYNOPSIS
 --------
-`procServ` `[--allow]` `[--autorestartcmd char]` `[--coresize size]` `[-c|--chdir dir]` `[-d|--debug]` `[-h|--help]` `[--restrict]` `[-i|--ignore chars]` `[-k|--killchar char]` `[--killsig signal]` `[-l|--logport port]` `[-L|--logfile file]` `[-n|--name title]` `[--noautorestart]` `[-p|--pidfile file]` `[-q|--quiet]` `[-w|--wait]` `port` `command` `args ...`
+`procServ` `[--allow]` `[--autorestartcmd char]` `[--coresize size]` `[-c|--chdir dir]` `[-d|--debug]` `[-h|--help]` `[--restrict]` `[-i|--ignore chars]` `[-k|--killchar char]` `[--killsig signal]` `[-l|--logport port]` `[-L|--logfile file]` `[-n|--name title]` `[--noautorestart]` `[-p|--pidfile file]` `[-q|--quiet]` `[-V|--version]` `[-w|--wait]` `port` `command` `args ...`
 
 DESCRIPTION
 -----------
@@ -77,6 +77,8 @@ OPTIONS
     Do not write informational output (server). Avoids cluttering the screen when run as part of a system script.
 `--restrict`::
     Restrict log connections to localhost.
+`-V | --version`::
+    Print program version.
 `-w | --wait`::
     Do not start the child. Instead, wait for a telnet connection and a manual start command.
 

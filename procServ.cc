@@ -135,8 +135,14 @@ void printHelp()
            " -p --pidfile <str>   name of PID file (for server PID)\n"
            " -q --quiet           suppress informational output (server)\n"
            "    --restrict        restrict log connections to localhost\n"
+           " -V --version         print program version\n"
            " -w --wait            wait for telnet cmd to manually start child\n"
         );
+}
+
+void printVersion()
+{
+    printf(PROCSERV_VERSION_STRING "\n");
 }
 
 int main(int argc,char * argv[])
@@ -177,6 +183,7 @@ int main(int argc,char * argv[])
             {"pidfile",        required_argument, 0, 'p'},
             {"quiet",          no_argument,       0, 'q'},
             {"restrict",       no_argument,       0, 'R'},
+            {"version",        no_argument,       0, 'V'},
             {"wait",           no_argument,       0, 'w'},
             {0, 0, 0, 0}
         };
@@ -184,7 +191,7 @@ int main(int argc,char * argv[])
         /* getopt_long stores the option index here. */
         int option_index = 0;
      
-        c = getopt_long (argc, argv, "+c:dhi:k:l:L:n:p:qw",
+        c = getopt_long (argc, argv, "+c:dhi:k:l:L:n:p:qVw",
                          long_options, &option_index);
 
         /* Detect the end of the options. */
@@ -280,6 +287,10 @@ int main(int argc,char * argv[])
         case 'q':                                 // Quiet
             quiet = true;
             break;
+
+        case 'V':                                 // Version
+            printVersion();
+            exit(0);
 
         case 'w':                                 // Wait for manual start
             waitForManualStart = true;
