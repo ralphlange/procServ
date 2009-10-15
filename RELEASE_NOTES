@@ -1,3 +1,10 @@
+V 2.4.1 10/14/2009 Ralph Lange <Ralph.Lange@bessy.de>
+Uses execvp() instead of execv() - so that PATH is honored. (suggested by Steve Lewis)
+Larger buffers for text messages (avoid overflow with long path names). (suggested by Eric Norum)
+Added diagnostic message when forkpty() fails. (suggested by Eric Norum)
+Manpage reformatted as .txt, uses a2x to generate manpage/pdf/html. (suggested by Michael Davidsaver)
+New command line option -V (--version) to print program version.
+
 V 2.4.0 07/22/2008 Ralph Lange <Ralph.Lange@bessy.de>
 New command line option --allow to allow control connections from any host. (Must be
 explicitly enabled in Makefile.)
