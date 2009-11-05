@@ -1,0 +1,21 @@
+Dependencies:
+
+   -- asciidoc, http://www.methods.co.nz/asciidoc (package: asciidoc),
+      to create documentation in different formats (man, pdf, html)
+      NOTE: The distribution tar contains the doc in all available formats,
+            so you don't need asciidoc to make and install procServ
+
+procServ is on Sourceforge:
+
+   http://sourceforge.net/projects/procserv/
+
+Read-only access to the source code repository (Mercurial) is available at:
+
+   http://procserv.hg.sourceforge.net:8000/hgroot/procserv/procserv
+
+For a wiki, and to create bug reports, feature or support requests,
+use procServ's Trac instance at:
+
+   http://sourceforge.net/apps/trac/procserv/
+
+Enjoy!

@@ -1,3 +1,6 @@
+Added the usual autoconf-style project files: INSTALL, AUTHORS, README, ChangeLog, etc.
+Changed build to use automake/autoconf.
+
 V 2.4.1 10/14/2009 Ralph Lange <Ralph.Lange@bessy.de>
 Uses execvp() instead of execv() - so that PATH is honored. (suggested by Steve Lewis)
 Larger buffers for text messages (avoid overflow with long path names). (suggested by Eric Norum)
@@ -62,15 +65,6 @@ Tuned the informational printfs.
 Added some interaction with telnet protocol, enough that linemode in the telnet client is
 disabled. The whole telnet state machine is more complex than it needs to be but I think that
 I can use it later.  There is room for adding features here.
-
-
-Known problems:
-I don't have the CR-LF handling from the user just right.  One of the debugging functions in
-the sequencer does something incompatible and the user has to send ^j s instead of cr to get
-the next line.
-
-Users monitoring see characters flowing both ways, double echos.  The fix for this is to
-have SendToAll be a litte smarter.
 
 1.1 9/2/2003
 This works.  Telnet comes up in linemode meaning that characters are echoed and held by telnet
