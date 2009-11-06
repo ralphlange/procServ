@@ -40,5 +40,36 @@ AC_FUNC_STAT
 AC_FUNC_STRFTIME
 AC_CHECK_FUNCS([localtime_r socket strdup strerror])
 
+# Add configure option for time string format
+AC_ARG_ENABLE([time-format],
+              [AS_HELP_STRING([--enable-time-format="<strftime format string>"],
+                              [set strftime format for output and log ["%c"]])],
+              [],
+              [enable_time_format=no])
+AS_IF([test "x$enable_time_format" != xno],
+      [AC_DEFINE_UNQUOTED([STRFTIME_FORMAT], "$enable_time_format",
+                 [Define to set time format])])
+
+# Add configure option for holdoff time between child restarts
+AC_ARG_ENABLE([restart-holdoff-time],
+              [AS_HELP_STRING([--enable-restart-holdoff-time=<time>],
+                              [set holdoff time (in s) between child process restarts [15]])],
+              [],
+              [enable_restart_holdoff_time=no])
+AS_IF([test "x$enable_restart_holdoff_time" != xno],
+      [AC_DEFINE_UNQUOTED([MIN_TIME_BETWEEN_RESTARTS], [$enable_restart_holdoff_time],
+                 [Define to set holdoff time between child restarts])])
+
+# Add configure option for access from anywhere
+AC_ARG_ENABLE([access-from-anywhere],
+              [AS_HELP_STRING([--enable-access-from-anywhere],
+                              [allow unauthenticated access from anywhere \
+                               (CAVEAT: opens a security hole!!)])],
+              [],
+              [enable_access_from_anywhere=no])
+AS_IF([test "x$enable_access_from_anywhere" != xno],
+      [AC_DEFINE([ALLOW_FROM_ANYWHERE], [1],
+                 [Define to allow access from anywhere])])
+
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
