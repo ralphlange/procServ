@@ -7,15 +7,15 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/types.h> 
-#include <sys/socket.h> 
-#include <netinet/in.h> 
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
 #include <errno.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <signal.h>
-#include <pty.h>  /* for openpty and forkpty */ 
-#include <utmp.h> /* for login_tty */ 
+#include <pty.h>  /* for openpty and forkpty */
+#include <utmp.h> /* for login_tty */
 #include <time.h>
 #include <string.h>
 
@@ -24,8 +24,8 @@
 
 #define LINEBUF_LENGTH 1024
 
-#ifndef MIN_TIME_BETWEEN_RESTARTS
-#define MIN_TIME_BETWEEN_RESTARTS 15
+#ifndef RESTART_HOLDOFF_TIME
+#define RESTART_HOLDOFF_TIME 15
 #endif
 
 
@@ -121,7 +121,7 @@ processClass::processClass(int argc,char * argv[])
         }
 
 	// Don't start a new one before this time:
-	_restartTime = MIN_TIME_BETWEEN_RESTARTS + time(0);
+	_restartTime = RESTART_HOLDOFF_TIME + time(0);
 
         // Update client connect message
 	sprintf( infoMessage2, "@@@ Child \"%s\" PID: %d" NL, childName, _pid );

@@ -57,7 +57,7 @@ AC_ARG_ENABLE([restart-holdoff-time],
               [],
               [enable_restart_holdoff_time=no])
 AS_IF([test "x$enable_restart_holdoff_time" != xno],
-      [AC_DEFINE_UNQUOTED([MIN_TIME_BETWEEN_RESTARTS], [$enable_restart_holdoff_time],
+      [AC_DEFINE_UNQUOTED([RESTART_HOLDOFF_TIME], [$enable_restart_holdoff_time],
                  [Define to set holdoff time between child restarts])])
 
 # Add configure option for access from anywhere
