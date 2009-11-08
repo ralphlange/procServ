@@ -12,6 +12,9 @@ AC_CONFIG_SRCDIR([connectionItem.cc])
 # we don't need config.h for now
 #AC_CONFIG_HEADER([config.h])
 
+CFLAGS="$CFLAGS -Wall"
+CXXFLAGS="$CXXFLAGS -Wall"
+
 # Checks for programs.
 AC_PROG_CXX
 AC_PROG_CC
@@ -74,6 +77,17 @@ AC_ARG_ENABLE([access-from-anywhere],
 AS_IF([test "x$enable_access_from_anywhere" != xno],
       [AC_DEFINE([ALLOW_FROM_ANYWHERE], [1],
                  [Define to allow access from anywhere])])
+
+AC_ARG_ENABLE([devel],
+              [AS_HELP_STRING([--enable-devel],
+                              [Control build type: debug (enable), release (disable), default (none)])],
+              [], [])
+AS_IF([test x$enable_devel = xyes], [
+  CFLAGS="$CFLAGS -Werror"
+  CXXFLAGS="$CXXFLAGS -Werror"
+  CPPFLAGS="$CPPFLAGS -DDEBUG"
+  ])
+  
 
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
