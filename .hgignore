@@ -1,2 +1,6 @@
 Makefile.in
 configure
+depcomp
+install-sh
+missing
+aclocal.m4
