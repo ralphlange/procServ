@@ -16,12 +16,16 @@ DISTCLEANFILES = *~ procServ.xml procServ.fo
 
 doc_DATA = AUTHORS COPYING ChangeLog NEWS README procServ.txt
 
-if BUILD_DOC
+if INSTALL_DOC
 
 dist_man1_MANS = procServ.1
 
 doc_DATA += procServ.pdf procServ.html
 EXTRA_DIST = $(doc_DATA)
+
+endif # INSTALL_DOC
+
+if BUILD_DOC
 
 procServ.1: $(srcdir)/procServ.txt
 	$(A2X) -D ${builddir} -f manpage $(srcdir)/procServ.txt

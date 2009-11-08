@@ -27,7 +27,13 @@ Building from procServ Mercurial repository
   $ hg clone http://procserv.hg.sourceforge.net:8000/hgroot/procserv/procserv
   $ cd procserv
   $ autoreconf -i -s
-  $ ./configure
+  $ ./configure --enable-doc
   $ make
+
+  Note: When building from the repository you must explicitly
+        use --enable-doc or --disable-doc.  Omitting this
+        option assumes the distribution behaviour, that
+        the documentation should be installed, but doesn't
+        need to be built.
 
 Enjoy!
