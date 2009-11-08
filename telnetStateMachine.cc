@@ -193,7 +193,7 @@ void telnetStateMachine::doCommand() // The state is in _buf[]/_count;
 {
     if (TELCMD_OK(_buf[0]))
     {
-	switch(_buf[0])
+	switch((unsigned char)_buf[0])
 	{
 	case WILL:
 	case WONT:
