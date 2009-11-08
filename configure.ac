@@ -89,5 +89,34 @@ AS_IF([test x$enable_devel = xyes], [
   ])
   
 
+# Skip building documentation
+
+AC_ARG_ENABLE([doc],
+              [AS_HELP_STRING([--disable-doc],
+                              [Do not build documentation])],
+              [],[])
+# If $enable_doc is:
+#  no              - Don't build or install documentation.
+#  empty (default) - Build docs if needed
+#  yes             - Same as default and checks that utilities needed
+#                    to generate documentation are present.
+
+AM_CONDITIONAL([BUILD_DOC], [test x$enable_doc != xno])
+
+AC_CHECK_PROGS(A2X, a2x)
+
+# These are used by a2x and must be present for it to function
+AC_CHECK_PROGS(XMLLINT, xmllint)
+AC_CHECK_PROGS(XSLTPROC, xsltproc)
+AC_CHECK_PROGS(FOP, fop)
+
+AS_IF([test x$enable_doc = xyes], [
+  AS_IF([test x$A2X = x],[AC_MSG_ERROR([Missing a2x (from asciidoc)])],
+        [test x$XMLLINT = x],[AC_MSG_ERROR([Missing xmllint])],
+        [test x$XSLTPROC = x],[AC_MSG_ERROR([Missing xsltproc])],
+        [test x$FOP = x],[AC_MSG_ERROR([Missing fop])]
+  )
+])
+
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT

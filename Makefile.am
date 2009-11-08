@@ -3,8 +3,6 @@
 # Ralph Lange 11/05/2009
 # GNU Public License (GPLv3) applies - see www.gnu.org
 
-A2X = a2x
-
 bin_PROGRAMS = procServ
 
 procServ_SOURCES = procServ.cc procServ.h \
@@ -13,15 +11,23 @@ procServ_SOURCES = procServ.cc procServ.h \
                    telnetStateMachine.cc telnetStateMachine.h \
                    procServ.txt
 
+MAINTAINERCLEANFILES = procServ.pdf procServ.html procServ.1
+DISTCLEANFILES = *~ procServ.xml procServ.fo
+
+doc_DATA = AUTHORS COPYING ChangeLog NEWS README procServ.txt
+
+if BUILD_DOC
+
 dist_man1_MANS = procServ.1
 
-EXTRA_DIST = procServ.pdf procServ.html
-MAINTAINERCLEANFILES = ${srcdir}/procServ.pdf ${srcdir}/procServ.html ${srcdir}/procServ.1
-DISTCLEANFILES = ${srcdir}/*~ ${srcdir}/procServ.xml
+doc_DATA += procServ.pdf procServ.html
+EXTRA_DIST = $(doc_DATA)
 
-procServ.1: procServ.txt
-	$(A2X) -D ${srcdir} -f manpage $<
-procServ.pdf: procServ.txt
-	$(A2X) -D ${srcdir} -f pdf $<
-procServ.html: procServ.txt
-	$(A2X) -D ${srcdir} -f xhtml $<
+procServ.1: $(srcdir)/procServ.txt
+	$(A2X) -D ${builddir} -f manpage $(srcdir)/procServ.txt
+procServ.pdf: $(srcdir)/procServ.txt
+	$(A2X) -D ${builddir} -f pdf $(srcdir)/procServ.txt
+procServ.html: $(srcdir)/procServ.txt
+	$(A2X) -D ${builddir} -f xhtml $(srcdir)/procServ.txt
+
+endif # BUILD_DOC

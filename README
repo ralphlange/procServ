@@ -22,6 +22,8 @@ Building from procServ Mercurial repository
 
   Requires autoconf >=2.61, automake >= 1.10
 
+  Optional asciidoc >= 8.4, FOP >= 0.95, xsltproc >= 1.1.24
+
   $ hg clone http://procserv.hg.sourceforge.net:8000/hgroot/procserv/procserv
   $ cd procserv
   $ autoreconf -i -s
