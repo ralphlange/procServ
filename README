@@ -18,4 +18,14 @@ use procServ's Trac instance at:
 
    http://sourceforge.net/apps/trac/procserv/
 
+Building from procServ Mercurial repository
+
+  Requires autoconf >=2.61, automake >= 1.10
+
+  $ hg clone http://procserv.hg.sourceforge.net:8000/hgroot/procserv/procserv
+  $ cd procserv
+  $ autoreconf -i -s
+  $ ./configure
+  $ make
+
 Enjoy!

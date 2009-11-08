@@ -1,6 +1,8 @@
 Makefile.in
 configure
-depcomp
-install-sh
-missing
+build-aux
 aclocal.m4
+autom4te.cache
+procServ.1
+procServ.xml
+procServ.fo

@@ -1,9 +1,12 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
-AC_PREREQ(2.61)
-AC_INIT(procServ Process Server, 1.5.0, tech-talk@aps.anl.gov, procServ)
-AM_INIT_AUTOMAKE
+AC_PREREQ([2.61])
+AC_INIT([procServ Process Server], [1.5.0], [tech-talk@aps.anl.gov], [procServ],
+	[http://www-csr.bessy.de/control/SoftDist/procServ/])
+
+AC_CONFIG_AUX_DIR([build-aux])
+AM_INIT_AUTOMAKE([1.10 -Wall])
 
 AC_CONFIG_SRCDIR([connectionItem.cc])
 # we don't need config.h for now
@@ -15,10 +18,11 @@ AC_PROG_CC
 
 # Checks for libraries.
 # FIXME: Replace `main' with a function in `-lutil':
-AC_CHECK_LIB([util], [forkpty])
+AC_CHECK_LIB([util], [forkpty], [], [AC_MSG_ERROR([Missing required library])])
 
 # Checks for header files.
-AC_CHECK_HEADERS([arpa/inet.h fcntl.h netinet/in.h sys/ioctl.h sys/socket.h sys/time.h termios.h utmp.h pty.h])
+AC_CHECK_HEADERS([arpa/inet.h fcntl.h netinet/in.h sys/ioctl.h sys/socket.h sys/time.h termios.h utmp.h pty.h],[],
+	[AC_MSG_ERROR([Missing required header(s)])])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_HEADER_STDBOOL
@@ -38,7 +42,7 @@ AC_FUNC_SETPGRP
 AC_TYPE_SIGNAL
 AC_FUNC_STAT
 AC_FUNC_STRFTIME
-AC_CHECK_FUNCS([localtime_r socket strdup strerror])
+AC_CHECK_FUNCS([localtime_r socket strdup strerror],[],[AC_MSG_ERROR([Missing required function(s)])])
 
 # Add configure option for time string format
 AC_ARG_ENABLE([time-format],
