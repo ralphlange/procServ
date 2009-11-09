@@ -21,10 +21,7 @@
 #define PRINTF if (inDebugMode) printf
 #endif 
 
-#define PROCSERV_VERSION       2
-#define PROCSERV_REVISION      4
-#define PROCSERV_MODIFICATION  1
-#define PROCSERV_VERSION_STRING "procServ version 2.4.1"
+#define PROCSERV_VERSION_STRING PACKAGE_STRING
 
 extern bool   inDebugMode;
 extern bool   logPortLocal;
