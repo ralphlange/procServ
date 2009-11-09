@@ -110,14 +110,15 @@ AC_CHECK_PROGS(A2X, a2x)
 AC_CHECK_PROGS(ASCIIDOC, asciidoc)
 AC_CHECK_PROGS(XMLLINT, xmllint)
 AC_CHECK_PROGS(XSLTPROC, xsltproc)
-AC_CHECK_PROGS(FOP, fop)
+# a2x will use one of these
+AC_CHECK_PROGS(PDFGEN, fop dblatex)
 
 AS_IF([test x$enable_doc = xyes], [
   AS_IF([test x$A2X = x],[AC_MSG_ERROR([Missing a2x (from asciidoc)])],
         [test x$ASCIIDOC = x],[AC_MSG_ERROR([Missing asciidoc])],
         [test x$XMLLINT = x],[AC_MSG_ERROR([Missing xmllint])],
         [test x$XSLTPROC = x],[AC_MSG_ERROR([Missing xsltproc])],
-        [test x$FOP = x],[AC_MSG_ERROR([Missing fop])]
+        [test x$PDFGEN = x],[AC_MSG_ERROR([Missing a docbook to pdf converter (fop or dblatex)])]
   )
 ])
 
