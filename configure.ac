@@ -2,8 +2,8 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.61])
-AC_INIT([procServ Process Server], [1.5.0], [tech-talk@aps.anl.gov], [procServ],
-	[http://www-csr.bessy.de/control/SoftDist/procServ/])
+AC_INIT([procServ Process Server], [2.5.0], [tech-talk@aps.anl.gov], [procServ],
+	[http://sourceforge.net/projects/procserv/])
 
 AC_CONFIG_AUX_DIR([build-aux])
 AM_INIT_AUTOMAKE([1.10 -Wall])
