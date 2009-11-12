@@ -120,6 +120,9 @@ AS_IF([test x$enable_doc = xyes], [
         [test x$XSLTPROC = x],[AC_MSG_ERROR([Missing xsltproc])],
         [test x$PDFGEN = x],[AC_MSG_ERROR([Missing a docbook to pdf converter (fop or dblatex)])]
   )
+],[test x$enable_doc != xno], [
+  AC_CHECK_FILES([${srcdir}/procServ.1 ${srcdir}/procServ.pdf ${srcdir}/procServ.html],[],
+    [AC_MSG_ERROR([Documentation not found.  Use --disable-doc to skip installing it, or --enable-doc to generate it])])
 ])
 
 AC_CONFIG_FILES([Makefile])
