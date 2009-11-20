@@ -348,7 +348,7 @@ int main(int argc,char * argv[])
         strcat ( ignChars, &toggleRestartChar );
 
     // set up available server commands message
-    sprintf( infoMessage3, "@@@ Use %s%c to restart the child, %s%c to quit the server" NL,
+    sprintf( infoMessage3, "@@@ Use %s%c to restart the child now, %s%c to quit the server" NL,
              restartChar < 32 ? "^" : "",
              restartChar < 32 ? restartChar + 64 : restartChar,
              quitChar < 32 ? "^" : "",

@@ -88,8 +88,7 @@ processClass::~processClass()
 
     SendToAll( now_buf, strlen(now_buf), this );
     SendToAll( goodbye, strlen(goodbye), this );
-    if ( ! autoRestart )
-        SendToAll( infoMessage3, strlen(infoMessage3), this );
+    SendToAll( infoMessage3, strlen(infoMessage3), this );
 
                                 // Negative PID sends signal to all members of process group
     if ( _pid > 0 ) kill( -_pid, SIGKILL );
