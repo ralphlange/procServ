@@ -46,16 +46,6 @@ AC_FUNC_STAT
 AC_FUNC_STRFTIME
 AC_CHECK_FUNCS([localtime_r socket strdup strerror],[],[AC_MSG_ERROR([Missing required function(s)])])
 
-# Add configure option for holdoff time between child restarts
-AC_ARG_ENABLE([restart-holdoff-time],
-              [AS_HELP_STRING([--enable-restart-holdoff-time=<time>],
-                              [set holdoff time (in s) between child process restarts [15]])],
-              [],
-              [enable_restart_holdoff_time=no])
-AS_IF([test "x$enable_restart_holdoff_time" != xno],
-      [AC_DEFINE_UNQUOTED([RESTART_HOLDOFF_TIME], [$enable_restart_holdoff_time],
-                 [Define to set holdoff time between child restarts])])
-
 # Add configure option for access from anywhere
 AC_ARG_ENABLE([access-from-anywhere],
               [AS_HELP_STRING([--enable-access-from-anywhere],
