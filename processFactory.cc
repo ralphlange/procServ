@@ -70,13 +70,19 @@ processClass::~processClass()
 
     struct tm now_tm;
     time_t now;
-    char now_buf[128];
+    size_t result;
+    char now_buf[128] = "@@@ Current time: ";
     char goodbye[128];
 
     time( &now );
     localtime_r( &now, &now_tm );
-    strftime( now_buf, sizeof(now_buf) - 1, 
-              "@@@ Current time: " STRFTIME_FORMAT NL, &now_tm );
+    result = strftime( &now_buf[strlen(now_buf)], sizeof(now_buf) - strlen(now_buf) - 1,
+                       timeFormat, &now_tm );
+    if (result && (sizeof(now_buf) - strlen(now_buf) > 2)) {
+        strcat(now_buf, NL);
+    } else {
+        strcpy(now_buf, "@@@ Current time: N/A");
+    }
     sprintf ( goodbye, "@@@ Child process is shutting down, %s" NL,
               autoRestart ? "a new one will be restarted shortly" :
               "auto restart is disabled" );

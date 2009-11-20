@@ -20,7 +20,6 @@ AC_PROG_CXX
 AC_PROG_CC
 
 # Checks for libraries.
-# FIXME: Replace `main' with a function in `-lutil':
 AC_CHECK_LIB([util], [forkpty], [], [AC_MSG_ERROR([Missing required library])])
 
 # Checks for header files.
@@ -46,16 +45,6 @@ AC_TYPE_SIGNAL
 AC_FUNC_STAT
 AC_FUNC_STRFTIME
 AC_CHECK_FUNCS([localtime_r socket strdup strerror],[],[AC_MSG_ERROR([Missing required function(s)])])
-
-# Add configure option for time string format
-AC_ARG_ENABLE([time-format],
-              [AS_HELP_STRING([--enable-time-format="<strftime format string>"],
-                              [set strftime format for output and log ["%c"]])],
-              [],
-              [enable_time_format=no])
-AS_IF([test "x$enable_time_format" != xno],
-      [AC_DEFINE_UNQUOTED([STRFTIME_FORMAT], "$enable_time_format",
-                 [Define to set time format])])
 
 # Add configure option for holdoff time between child restarts
 AC_ARG_ENABLE([restart-holdoff-time],

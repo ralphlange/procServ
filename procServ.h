@@ -31,6 +31,7 @@ extern bool   shutdownServer;
 extern char   *procservName;
 extern char   *childName;
 extern char   *ignChars;
+extern char   *timeFormat;
 extern char   killChar;
 extern char   toggleRestartChar;
 extern char   restartChar;
@@ -44,10 +45,6 @@ extern rlim_t coreSize;
 extern char   *chDir;
 
 #define NL "\r\n"
-
-#ifndef STRFTIME_FORMAT
-#define STRFTIME_FORMAT "%c"
-#endif
 
 class connectionItem;
 

@@ -50,6 +50,8 @@ char   *myDir = NULL;            // Directory where server was started
 pid_t  procservPid;              // PID of server (daemon if not in debug mode)
 char   *pidFile;                 // File name for server PID
 char   defaultpidFile[] = "pid.txt";  // default
+char   *timeFormat;              // Time format string
+char   defaulttimeFormat[] = "%c";    // default
 
 char   infoMessage1[512];        // Sign on message: server PID, child pwd and command line
 char   infoMessage2[128];        // Sign on message: child PID
@@ -135,6 +137,7 @@ void printHelp()
            " -p --pidfile <str>   name of PID file (for server PID)\n"
            " -q --quiet           suppress informational output (server)\n"
            "    --restrict        restrict log connections to localhost\n"
+           "    --timefmt <str>   set time format (strftime) to <str>\n"
            " -V --version         print program version\n"
            " -w --wait            wait for telnet cmd to manually start child\n"
         );
@@ -159,6 +162,7 @@ int main(int argc,char * argv[])
     procservName = argv[0];
     myDir = get_current_dir_name();
     chDir = myDir;
+    timeFormat = defaulttimeFormat;
 
     pidFile = getenv( "PROCSERV_PID" );
     if ( pidFile && ! strcmp( pidFile, "" ) ) pidFile = defaultpidFile;
@@ -183,6 +187,7 @@ int main(int argc,char * argv[])
             {"pidfile",        required_argument, 0, 'p'},
             {"quiet",          no_argument,       0, 'q'},
             {"restrict",       no_argument,       0, 'R'},
+            {"timefmt",        required_argument, 0, 'F'},
             {"version",        no_argument,       0, 'V'},
             {"wait",           no_argument,       0, 'w'},
             {0, 0, 0, 0}
@@ -190,7 +195,7 @@ int main(int argc,char * argv[])
 
         /* getopt_long stores the option index here. */
         int option_index = 0;
-     
+
         c = getopt_long (argc, argv, "+c:dhi:k:l:L:n:p:qVw",
                          long_options, &option_index);
 
@@ -217,6 +222,10 @@ int main(int argc,char * argv[])
 
         case 'd':                                 // Debug mode
             inDebugMode = true;
+            break;
+
+        case 'F':                                 // Time string format
+            timeFormat = strdup( optarg );
             break;
 
         case 'h':                                 // Help
@@ -476,7 +485,7 @@ int main(int argc,char * argv[])
 	    // Go clean up dead connections
 	    OnPollTimeout();
 	    connectionItem * npi; 
-	    
+
 	    // Pick up the process item if it dies
 	    // This call returns NULL if the process item lives
 	    if (processFactoryNeedsRestart())

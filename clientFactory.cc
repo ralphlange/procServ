@@ -86,15 +86,15 @@ clientItem::clientItem(int socketIn, bool readonly)
 
     localtime_r( &procServStart, &procServStart_tm );
     strftime( procServStart_buf, sizeof(procServStart_buf)-1,
-              STRFTIME_FORMAT, &procServStart_tm );
+              timeFormat, &procServStart_tm );
 
     localtime_r( &IOCStart, &IOCStart_tm );
     strftime( IOCStart_buf, sizeof(IOCStart_buf)-1,
-              STRFTIME_FORMAT, &IOCStart_tm );
+              timeFormat, &IOCStart_tm );
 
     sprintf( buf1, "@@@ procServ server started at: %s" NL,
              procServStart_buf);
-    
+
     if ( processClass::exists() ) {
         sprintf( buf2, "@@@ Child \"%s\" started at: %s" NL,
                  childName, IOCStart_buf );
