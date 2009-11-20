@@ -24,10 +24,6 @@
 
 #define LINEBUF_LENGTH 1024
 
-#ifndef RESTART_HOLDOFF_TIME
-#define RESTART_HOLDOFF_TIME 15
-#endif
-
 
 processClass * processClass::_runningItem=NULL;
 time_t processClass::_restartTime=0;
@@ -127,7 +123,7 @@ processClass::processClass(int argc,char * argv[])
         }
 
 	// Don't start a new one before this time:
-	_restartTime = RESTART_HOLDOFF_TIME + time(0);
+	_restartTime = holdoffTime + time(0);
 
         // Update client connect message
 	sprintf( infoMessage2, "@@@ Child \"%s\" PID: %d" NL, childName, _pid );

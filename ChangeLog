@@ -1,5 +1,6 @@
+Made time format string and holdoff time command line options (Trac #3).
 Added the usual autoconf-style project files: INSTALL, AUTHORS, README, ChangeLog, etc.
-Changed build to use automake/autoconf.
+Changed build to use automake/autoconf (Trac #2).
 
 V 2.4.1 10/14/2009 Ralph Lange <Ralph.Lange@bessy.de>
 Uses execvp() instead of execv() - so that PATH is honored. (suggested by Steve Lewis)

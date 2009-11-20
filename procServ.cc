@@ -46,6 +46,7 @@ int    killSig = SIGKILL;        // Kill signal (default: SIGKILL)
 rlim_t coreSize = -1;            // Max core size for child
 char   *chDir = NULL;            // Directory to change to before starting child
 char   *myDir = NULL;            // Directory where server was started
+time_t holdoffTime = 15;         // Holdoff time between child restarts (in seconds)
 
 pid_t  procservPid;              // PID of server (daemon if not in debug mode)
 char   *pidFile;                 // File name for server PID
@@ -127,6 +128,7 @@ void printHelp()
            " -c --chdir <dir>     change directory to <dir> before starting child\n"
            " -d --debug           enable debug mode (keeps child in foreground)\n"
            " -h --help            print this message\n"
+           "    --holdoff <n>     set holdoff time between child restarts\n"
            " -i --ignore <str>    ignore all chars in <str> (^ for ctrl)\n"
            " -k --killcmd <str>   command to kill (reboot) the child (^ for ctrl)\n"
            "    --killsig <n>     signal to send to child when killing\n"
@@ -154,6 +156,7 @@ int main(int argc,char * argv[])
     struct pollfd * pollList=NULL,* ppoll; // Allocate as much space as needed
     int c;
     unsigned int i, j;
+    int k;
     int ctlPort, logPort=0;
     char *command;
     bool wrongOption = false;
@@ -177,6 +180,7 @@ int main(int argc,char * argv[])
             {"chdir",          required_argument, 0, 'c'},
             {"debug",          no_argument,       0, 'd'},
             {"help",           no_argument,       0, 'h'},
+            {"holdoff",        required_argument, 0, 'H'},
             {"ignore",         required_argument, 0, 'i'},
             {"killcmd",        required_argument, 0, 'k'},
             {"killsig",        required_argument, 0, 'K'},
@@ -212,8 +216,8 @@ int main(int argc,char * argv[])
             break;
 
         case 'C':                                 // Core size
-            i = atoi( optarg );
-            if ( i >= 0 ) coreSize = i;
+            k = atoi( optarg );
+            if ( k >= 0 ) coreSize = k;
             break;
 
         case 'c':                                 // Dir to change to
@@ -231,6 +235,11 @@ int main(int argc,char * argv[])
         case 'h':                                 // Help
             printHelp();
             exit(0);
+
+        case 'H':                                 // Holdoff time
+            k = atoi( optarg );
+            if ( k >= 0 ) holdoffTime = k;
+            break;
 
         case 'i':                                 // Ignore characters
             ignChars = (char*) calloc( strlen(optarg) + 1 + ONE_CHAR_COMMANDS, 1);

@@ -43,6 +43,7 @@ extern char   infoMessage3[];
 extern pid_t  procservPid;
 extern rlim_t coreSize;
 extern char   *chDir;
+extern time_t holdoffTime;
 
 #define NL "\r\n"
 

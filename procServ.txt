@@ -8,7 +8,7 @@ procServ - Process Server with Telnet Console and Log Access
 
 SYNOPSIS
 --------
-`procServ` `[--allow]` `[--autorestartcmd char]` `[--coresize size]` `[-c|--chdir dir]` `[-d|--debug]` `[-h|--help]` `[--restrict]` `[-i|--ignore chars]` `[-k|--killchar char]` `[--killsig signal]` `[-l|--logport port]` `[-L|--logfile file]` `[-n|--name title]` `[--noautorestart]` `[-p|--pidfile file]` `[--timefmt fmt]` `[-q|--quiet]` `[-V|--version]` `[-w|--wait]` `port` `command` `args ...`
+`procServ` `[--allow]` `[--autorestartcmd char]` `[--coresize size]` `[-c|--chdir dir]` `[-d|--debug]` `[-h|--help]` `[--holdoff n]` `[-i|--ignore chars]` `[-k|--killchar char]` `[--killsig signal]` `[-l|--logport port]` `[-L|--logfile file]` `[-n|--name title]` `[--noautorestart]` `[-p|--pidfile file]` `[-q|--quiet]` `[--restrict]` `[--timefmt fmt]` `[-V|--version]` `[-w|--wait]` `port` `command` `args ...`
 
 DESCRIPTION
 -----------
@@ -27,7 +27,7 @@ All diagnostic messages from the server process start with "`@@@ `" to be clearl
 A name specified by the `-n` (`--name`) option will replace the command string in many messages for increased readability.
 
 The server will by default automatically respawn a child process when it dies.
-To avoid spinning, a minimum time between child process restarts is honoured (default: 15 seconds, can be changed at compile time).
+To avoid spinning, a minimum time between child process restarts is honoured (default: 15 seconds, can be changed using the `--holdoff` option).
 This behaviour can be toggled online using the toggle command `\^T`, the default may be changed using the `--noautorestart` option.
 You can restart a running child manually by sending a signal to the child process using the kill command `\^X`.
 With the child process being shut down, the server accepts two commands: `\^R` to restart the child and `\^Q` to quit the server.
@@ -57,6 +57,8 @@ OPTIONS
     Enter debug mode. Debug mode will keep the server process in the foreground and enables diagnostic messages that will be sent to the controlling terminal.
 `-h | --help`::
     Print help message.
+`--holdoff` 'n'::
+    Wait at least 'n' seconds between child restart attempts. Default is 15 seconds.
 `-i | --ignore` 'chars'::
     Ignore all characters in 'chars' on access connections. This can be used to shield the child process from input characters that are potentially dangerous, e.g. `\^D` and `\^C` characters that would shut down a soft IOC. Use `\^` to specify control characters, `\^\^` to specify a single `\^` character.
 `-k | --killcmd` 'char'::
@@ -74,7 +76,7 @@ OPTIONS
 `-p | --pidfile` 'file'::
     Write the PID of the server process into 'file' to facilitate integration into regular system service administration mechanisms.
 `--timefmt` 'fmt'::
-    Set the strftime(3) format string used to print time stamps to 'fmt'.
+    Set the format string used to print time stamps to 'fmt'. Default is "%c". (See strftime(3) documentation for details.)
 `-q | --quiet`::
     Do not write informational output (server). Avoids cluttering the screen when run as part of a system script.
 `--restrict`::
