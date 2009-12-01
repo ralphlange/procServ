@@ -1,0 +1,29 @@
+# Process Server (for soft IOCs)
+# David H. Thompson 8/29/2003
+# Ralph Lange 12/01/2009
+# GNU Public License (GPLv3) applies - see www.gnu.org
+
+TOP=@EPICS_TOP@
+include $(TOP)/configure/CONFIG
+
+A2X=a2x
+
+PROD = procServ
+procServ_SRCS = procServ.cc connectionItem.cc acceptFactory.cc \
+                clientFactory.cc processFactory.cc telnetStateMachine.cc
+
+USR_CXXFLAGS += @DEFS@
+procServ_SYS_LIBS += util
+
+include $(TOP)/configure/RULES
+
+doc: procServ.1 procServ.pdf procServ.html
+
+procServ.1: procServ.txt
+	$(A2X) -f manpage $<
+
+procServ.pdf: procServ.txt
+	$(A2X) -f pdf $<
+
+procServ.html: procServ.txt
+	$(A2X) -f xhtml $<

@@ -1,4 +1,5 @@
 Makefile.in
+Makefile.Automake.in
 configure
 build-aux
 aclocal.m4

@@ -57,6 +57,21 @@ AS_IF([test "x$enable_access_from_anywhere" != xno],
       [AC_DEFINE([ALLOW_FROM_ANYWHERE], [1],
                  [Define to allow access from anywhere])])
 
+# Add configure option for creating EPICS build system Makefile
+AC_ARG_WITH([epics-top],
+              [AS_HELP_STRING([--with-epics-top=TOP],
+                              [create Makefile for EPICS build system: relative path to TOP])],
+              [],
+              [with_epics_top=no])
+AS_IF([test "x$with_epics_top" != xno],
+      [if test "x$with_epics_top" = xyes; then
+          with_epics_top=../..
+       fi
+       use_epics_makefile=yes
+       AC_SUBST([EPICS_TOP],[$with_epics_top])
+      ])
+AM_CONDITIONAL([WITH_EPICS], [test x$with_epics_top != xno])
+
 AC_ARG_ENABLE([devel],
               [AS_HELP_STRING([--enable-devel],
                               [Control build type: debug (enable), release (disable), default (none)])],
@@ -104,5 +119,16 @@ AS_IF([test x$enable_doc = xyes], [
     [AC_MSG_ERROR([Documentation not found.  Use --disable-doc to skip installing it, or --enable-doc to generate it])])
 ])
 
-AC_CONFIG_FILES([Makefile])
+# Clumsy workaround (waiting for AM_COND_IF in Automake 1.10.3) to use EPICS Makefile.in
+AC_CONFIG_FILES([Makefile],
+                [],
+                [if test ! -e Makefile.Automake.in; then
+                   cp Makefile.in Makefile.Automake.in
+                 fi
+                 if test x$use_epics_makefile = xyes; then
+                   cp Makefile.Epics.in Makefile.in
+                 else
+                   cp Makefile.Automake.in Makefile.in
+                 fi
+                ])
 AC_OUTPUT

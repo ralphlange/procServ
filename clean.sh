@@ -8,6 +8,6 @@ then
   hg status -i -n | xargs rm -f
 
 else
-  rm -f configure aclocal.m4 Makefile.in
+  rm -f configure aclocal.m4 Makefile.in Makefile.Automake.in
 
 fi
