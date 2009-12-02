@@ -6,7 +6,8 @@
 TOP=@EPICS_TOP@
 include $(TOP)/configure/CONFIG
 
-A2X=a2x
+A2X = a2x
+A2X_FLAGS = -a revdate=@PACKAGE_DATE@ -a revnumber=@PACKAGE_VERSION@
 
 PROD = procServ
 procServ_SRCS = procServ.cc connectionItem.cc acceptFactory.cc \
@@ -23,10 +24,10 @@ maintainer-clean:: realclean
 doc: procServ.1 procServ.pdf procServ.html
 
 procServ.1: procServ.txt
-	$(A2X) -f manpage $<
+	$(A2X) $(A2X_FLAGS) -f manpage $<
 
 procServ.pdf: procServ.txt
-	$(A2X) -f pdf $<
+	$(A2X) $(A2X_FLAGS) -f pdf $<
 
 procServ.html: procServ.txt
-	$(A2X) -f xhtml $<
+	$(A2X) $(A2X_FLAGS) -f xhtml $<

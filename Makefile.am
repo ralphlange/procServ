@@ -27,11 +27,13 @@ endif # INSTALL_DOC
 
 if BUILD_DOC
 
+A2X_FLAGS = -a revdate=@PACKAGE_DATE@ -a revnumber=@PACKAGE_VERSION@ -D ${builddir}
+
 procServ.1: $(srcdir)/procServ.txt
-	$(A2X) -D ${builddir} -f manpage $(srcdir)/procServ.txt
+	$(A2X) $(A2X_FLAGS) -f manpage $(srcdir)/procServ.txt
 procServ.pdf: $(srcdir)/procServ.txt
-	$(A2X) -D ${builddir} -f pdf $(srcdir)/procServ.txt
+	$(A2X) $(A2X_FLAGS) -f pdf $(srcdir)/procServ.txt
 procServ.html: $(srcdir)/procServ.txt
-	$(A2X) -D ${builddir} -f xhtml $(srcdir)/procServ.txt
+	$(A2X) $(A2X_FLAGS) -f xhtml $(srcdir)/procServ.txt
 
 endif # BUILD_DOC
