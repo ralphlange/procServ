@@ -18,22 +18,33 @@ use procServ's Trac instance at:
 
    http://sourceforge.net/apps/trac/procserv/
 
+
+Building within an EPICS build system
+
+   Unpack procServ at the appropriate place within your EPICS structure.
+   Inside that directory, run ./configure --with-epics-top=TOP
+   where TOP is the relative path to the structure TOP.
+   (For a structure created with epicsMakeBaseExt.pl, the appropriate place
+   for the procServ subdir would be under TOP/src, with ../.. being the relative
+   path to specify to configure - which is the default.)
+
+
 Building from procServ Mercurial repository
 
-  Requires autoconf >=2.61, automake >= 1.10
+   Requires autoconf >=2.61, automake >= 1.10
 
-  Optional asciidoc >= 8.4, FOP >= 0.95, xsltproc >= 1.1.24
+   Optional asciidoc >= 8.4, FOP >= 0.95, xsltproc >= 1.1.24
 
-  $ hg clone http://procserv.hg.sourceforge.net:8000/hgroot/procserv/procserv
-  $ cd procserv
-  $ autoreconf -i -s
-  $ ./configure --enable-doc
-  $ make
+   $ hg clone http://procserv.hg.sourceforge.net:8000/hgroot/procserv/procserv
+   $ cd procserv
+   $ make
+   $ ./configure --enable-doc
+   $ make
 
-  Note: When building from the repository you must explicitly
-        use --enable-doc or --disable-doc.  Omitting this
-        option assumes the distribution behaviour, that
-        the documentation should be installed, but doesn't
-        need to be built.
+   Note: When building from the repository you must explicitly
+         use --enable-doc or --disable-doc.  Omitting this
+         option assumes the distribution behaviour, that
+         the documentation should be installed, but doesn't
+         need to be built.
 
 Enjoy!
