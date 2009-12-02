@@ -87,7 +87,9 @@ AS_IF([test x$enable_devel = xyes], [
 
 AC_ARG_ENABLE([doc],
               [AS_HELP_STRING([--disable-doc],
-                              [Do not install documentation])],
+                              [Do not install documentation])
+AS_HELP_STRING([--enable-doc],
+                              [Build (and install) documentation])],
               [],[])
 # If $enable_doc is:
 #  no              - Don't build or install generated documentation.
