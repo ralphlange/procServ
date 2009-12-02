@@ -12,7 +12,7 @@ else
 AUTORECONF=autoreconf
 HG=hg
 
-all:
+all:	clean
 	$(AUTORECONF) -si
 
 clean distclean maintainer-clean:

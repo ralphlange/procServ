@@ -122,15 +122,17 @@ AS_IF([test x$enable_doc = xyes], [
 ])
 
 # Clumsy workaround (waiting for AM_COND_IF in Automake 1.10.3) to use EPICS Makefile.in
+# Careful: while in "EPICS mode" you must remove Makefile.Automake.in before manually running autoreconf.
+# Better:  Run "make maintainer-clean" then "make" which will clean up then autoreconf.
 AC_CONFIG_FILES([Makefile],
                 [],
                 [if test ! -e Makefile.Automake.in; then
-                   cp Makefile.in Makefile.Automake.in
+                   mv Makefile.in Makefile.Automake.in
                  fi
                  if test x$use_epics_makefile = xyes; then
                    cp Makefile.Epics.in Makefile.in
                  else
-                   cp Makefile.Automake.in Makefile.in
+                   mv Makefile.Automake.in Makefile.in
                  fi
                 ])
 AC_OUTPUT

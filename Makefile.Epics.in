@@ -17,6 +17,9 @@ procServ_SYS_LIBS += util
 
 include $(TOP)/configure/RULES
 
+maintainer-clean:: realclean
+	rm -f Makefile
+
 doc: procServ.1 procServ.pdf procServ.html
 
 procServ.1: procServ.txt
