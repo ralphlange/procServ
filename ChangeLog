@@ -1,6 +1,11 @@
+V 2.5.0 12/02/2009 Ralph Lange <Ralph.Lange@bessy.de>
+Improved manpage formatting (Trac #9).
+Added makefile wrapper for developer use (Trac #8).
+Fixed some minor compiler warnings (Trac #7).
+Added support for building within EPICS build system (Trac #4).
 Made time format string and holdoff time command line options (Trac #3).
 Added the usual autoconf-style project files: INSTALL, AUTHORS, README, ChangeLog, etc.
-Changed build to use automake/autoconf (Trac #2).
+Changed build to use GNU automake/autoconf (Trac #2).
 
 V 2.4.1 10/14/2009 Ralph Lange <Ralph.Lange@bessy.de>
 Uses execvp() instead of execv() - so that PATH is honored. (suggested by Steve Lewis)
