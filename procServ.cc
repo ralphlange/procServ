@@ -450,9 +450,9 @@ int main(int argc,char * argv[])
     while ( ! shutdownServer )
     {
 	char buf[100];
-	int nPoll=0; // local copy of the # items to poll
-	int nPollAlloc; // How big is pollList right now
-	int pollStatus; // What poll returns
+	int nPoll = 0;      // local copy of the # items to poll
+	int nPollAlloc = 0; // How big is pollList right now
+	int pollStatus;     // What poll returns
 
 	connectionItem * p ;
 

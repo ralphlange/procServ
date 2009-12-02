@@ -192,7 +192,7 @@ bool clientItem::OnPoll()
 // Send characters to client
 int clientItem::Send(const char * buf,int count)
 {
-    int status;
+    int status = 0;
 
     if (!_markedForDeletion)
     {
