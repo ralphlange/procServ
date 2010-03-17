@@ -1,0 +1,28 @@
+#!/usr/bin/make -f
+
+build: build-stamp
+build-stamp:
+	dh build --before configure
+	dh_auto_configure -- --docdir=\$${prefix}/share/doc/procserv
+	dh build --after configure
+	touch build-stamp
+
+clean:
+	dh clean
+
+install: build install-stamp
+install-stamp:
+	dh install --until auto_install
+        # Remove extra ChangeLog and COPYING files installed by upstream make
+	rm $(CURDIR)/debian/procserv/usr/share/doc/procserv/ChangeLog
+	rm $(CURDIR)/debian/procserv/usr/share/doc/procserv/COPYING
+	dh install --remaining
+	touch install-stamp
+
+binary-arch: install
+	dh binary-arch
+
+binary-indep: install
+	dh binary-indep
+
+binary: binary-arch binary-indep

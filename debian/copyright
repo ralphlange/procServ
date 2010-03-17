@@ -1,0 +1,39 @@
+This package was debianized by Michael Davidsaver <mdavidsaver@bnl.gov> on
+Fri, 28 Aug 2009 11:10:45 -0400.
+
+The current Debian maintainer is Ralph Lange <Ralph.Lange@bessy.de>
+
+It was downloaded from http://sourceforge.net/projects/procserv/
+
+Upstream Authors:
+
+    David H. Thompson <thompsondh@ornl.gov>
+    Ralph Lange <Ralph.Lange@bessy.de>
+
+Copyright:
+
+    2003-2008 - David H. Thompson
+    2008-2010 - Ralph Lange
+
+License:
+
+    This package is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 3 of the License, or
+    (at your option) any later version.
+
+    This package is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this package; if not, write to the Free Software
+    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
+
+On Debian systems, the complete text of the GNU General
+Public License can be found in `/usr/share/common-licenses/GPL-3'.
+
+The Debian packaging is (C) 2009, Michael Davidsaver <mdavidsaver@bnl.gov>
+                        (C) 2009-2010, Ralph Lange <Ralph.Lange@bessy.de>
+and is licensed under the GPL, see above.

@@ -1,0 +1,57 @@
+procserv (2.5.0-6) unstable; urgency=low
+
+  * copyright: corrected years
+  * control: bumped Standards-Version to 3.8.4 with no changes
+  * rules: changed from CDBS based rules to plain debhelper+dh
+
+ -- Ralph Lange <Ralph.Lange@bessy.de>  Tue, 02 Mar 2010 17:11:16 -0500
+
+procserv (2.5.0-5) unstable; urgency=low
+
+  * rules: build package in "." (default) to prevent CDBS from generating
+    strange warnings and running the configure script twice
+  * control: added Vcs-* entries pointing to the collab-maint repository
+  * Added a watch file pointing to the SourceForge download
+
+ -- Ralph Lange <Ralph.Lange@bessy.de>  Mon, 04 Jan 2010 16:19:35 -0500
+
+procserv (2.5.0-4) unstable; urgency=low
+
+  * control: package now Suggests: telnet
+  * removed .hg* stuff from package build
+
+ -- Ralph Lange <Ralph.Lange@bessy.de>  Thu, 31 Dec 2009 11:22:24 -0500
+
+procserv (2.5.0-3) unstable; urgency=low
+
+  * control: added ${misc:Depends} for debhelper
+
+ -- Ralph Lange <Ralph.Lange@bessy.de>  Wed, 30 Dec 2009 16:18:46 -0500
+
+procserv (2.5.0-2) unstable; urgency=low
+
+  * control: removed unused Depends, changed Section and Priority, updated
+    Description
+  * rules: simplified by adding extra argument to configure to change doc
+    location
+
+ -- Ralph Lange <Ralph.Lange@bessy.de>  Tue, 29 Dec 2009 15:12:46 -0500
+
+procserv (2.5.0-1) unstable; urgency=low
+
+  * New Upstream Version
+
+ -- Michael Davidsaver <mdavidsaver@bnl.gov>  Tue, 15 Dec 2009 16:59:46 -0500
+
+procserv (2.4.1-1) unstable; urgency=low
+
+  * version bump
+
+ -- Michael Davidsaver <mdavidsaver@bnl.gov>  Wed, 21 Oct 2009 12:11:32 -0400
+
+procserv (2.4.0-1) unstable; urgency=low
+
+  * Initial release
+
+ -- Michael Davidsaver <mdavidsaver@bnl.gov>  Fri, 28 Aug 2009 11:10:45 -0400
+
