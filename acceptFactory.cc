@@ -1,6 +1,6 @@
 // Process server for soft ioc
 // David H. Thompson 8/29/2003
-// Ralph Lange 04/22/2008
+// Ralph Lange 03/18/2010
 // GNU Public License (GPLv3) applies - see www.gnu.org
 
 #include <unistd.h>
@@ -31,8 +31,10 @@ public:
 // service and calls clientFactory when clients are accepted
 connectionItem * acceptFactory ( int port, bool local, bool readonly )
 {
-    PRINTF("Creating new acceptItem %d\n", port);
-    return new acceptItem(port, local, readonly);
+    connectionItem *ci = new acceptItem(port, local, readonly);
+    PRINTF("Created new telnet listener (acceptItem %p) on port %d (read%s)\n",
+           ci, port, readonly?"only":"/write");
+    return ci;
 }
 
 acceptItem::~acceptItem()

@@ -1,6 +1,6 @@
 // Process server for soft ioc
 // David H. Thompson 8/29/2003
-// Ralph Lange 04/25/2008
+// Ralph Lange 03/18/2010
 // GNU Public License (GPLv3) applies - see www.gnu.org
 
 
@@ -39,7 +39,10 @@ private:
 // service and calls clientFactory when clients are accepted
 connectionItem * clientFactory(int socketIn, bool readonly)
 {
-    return new clientItem(socketIn, readonly);
+    connectionItem *ci = new clientItem(socketIn, readonly);
+    PRINTF("Created new client connection (clientItem %p; read%s)\n",
+           ci, readonly?"only":"/write");
+    return ci;
 }
 
 clientItem::~clientItem()
