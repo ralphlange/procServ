@@ -1,3 +1,5 @@
+syntax: glob
+
 Makefile.in
 Makefile.Automake.in
 configure
@@ -6,5 +8,7 @@ aclocal.m4
 autom4te.cache
 procServ.1
 procServ.xml
-procServ.fo
+procServ.html
+procServ.pdf
 clean
+*~
