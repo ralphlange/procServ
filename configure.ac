@@ -27,7 +27,7 @@ AC_PROG_CC
 # Checks for header files.
 #AC_CHECK_HEADERS([arpa/inet.h fcntl.h netinet/in.h sys/ioctl.h sys/socket.h sys/time.h termios.h utmp.h pty.h],[],
 #	[AC_MSG_ERROR([Missing required header(s)])])
-AC_CHECK_HEADERS([pty.h])
+AC_CHECK_HEADERS([pty.h libutil.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_HEADER_STDBOOL

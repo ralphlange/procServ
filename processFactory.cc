@@ -12,13 +12,16 @@
 #include <errno.h>
 #include <arpa/inet.h>
 #include <signal.h>
-#include <utmp.h> /* for login_tty */
 #include <time.h>
 #include <string.h>
 #include <strings.h>
 
+// for forkpty()
+#ifdef HAVE_LIBUTIL_H
+#include <libutil.h>
+#endif
 #ifdef HAVE_PTY_H
-#include <pty.h>  /* for forkpty */
+#include <pty.h>
 #endif
 #ifndef HAVE_FORKPTY                     /* use our own implementation */
 extern "C" int forkpty(int*, char*, void*, void*);
@@ -135,7 +138,7 @@ processClass::processClass(int argc,char * argv[])
     }
     else                                    // I am the child
     {
-	setpgrp();                                 // Become process group leader
+        setsid();                                  // Become process group leader
         if ( setCoreSize ) {                       // Set core size limit?
             getrlimit( RLIMIT_CORE, &corelimit );
             corelimit.rlim_cur = coreSize;
