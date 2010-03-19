@@ -58,10 +58,10 @@ acceptItem::acceptItem ( int port, bool local, bool readonly )
 
     _readonly = readonly;
 
-    _ioHandle = socket( PF_INET, SOCK_STREAM, IPPROTO_TCP );
-    assert( _ioHandle>0 );
+    _ioHandle = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+    assert(_ioHandle>0);
 
-    setsockopt( _ioHandle, SOL_SOCKET, SO_REUSEPORT, &optval, sizeof(optval) );
+    setsockopt(_ioHandle, SOL_SOCKET, SO_REUSEPORT, &optval, sizeof(optval));
 
     addr.sin_family = AF_INET;
     addr.sin_port = htons(port);
@@ -70,15 +70,14 @@ acceptItem::acceptItem ( int port, bool local, bool readonly )
     else 
         addr.sin_addr.s_addr = htonl( INADDR_ANY );
 
-    bindStatus = bind( _ioHandle, (struct sockaddr *) &addr, sizeof(addr) );
-    if (bindStatus<0)
+    bindStatus = bind(_ioHandle, (struct sockaddr *) &addr, sizeof(addr));
+    if (bindStatus < 0)
     {
-	PRINTF( "Bind: %s\n", strerror(errno) );
-	// exit(-1);
+	PRINTF("Bind error: %s\n", strerror(errno));
 	throw errno;
     }
     else
-	PRINTF( "Bind returned %d\n", bindStatus );
+	PRINTF("Bind returned %d\n", bindStatus);
 
     listen(_ioHandle,5);
     return; 
