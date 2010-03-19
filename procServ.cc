@@ -1,6 +1,6 @@
 // Process server for soft ioc
 // David H. Thompson 8/29/2003
-// Ralph Lange 03/18/2010
+// Ralph Lange 03/19/2010
 // GNU Public License (GPLv3) applies - see www.gnu.org
 
 
@@ -644,12 +644,10 @@ void DeleteConnection(connectionItem *ci)
 
 void OnSigChild(int)
 {
-    fprintf(stderr,"sigchild handler\n");
-	sigChildSet++;
+    sigChildSet++;
 }
 void OnSigPipe(int)
 {
-    fprintf(stderr,"sigpipe handler\n");
     sigPipeSet++;
 }
 
