@@ -347,12 +347,12 @@ int main(int argc,char * argv[])
     }
 
     // Single command characters should be ignored, too
-    if ( ignChars == NULL && ( killChar || toggleRestartChar ) )
-        ignChars = (char*) calloc( 1 + ONE_CHAR_COMMANDS, 1);
-    if ( killChar )
-        strcat ( ignChars, &killChar );
-    if ( toggleRestartChar )
-        strcat ( ignChars, &toggleRestartChar );
+    if (ignChars == NULL && (killChar || toggleRestartChar))
+        ignChars = (char*) calloc(1 + ONE_CHAR_COMMANDS, 1);
+    if (killChar)
+        strncat (ignChars, &killChar, 1);
+    if (toggleRestartChar)
+        strncat (ignChars, &toggleRestartChar, 1);
 
     // Set up available server commands message
     PRINTF("Setting up messages\n");
@@ -706,9 +706,6 @@ void forkAndGo()
 int checkCommandFile(const char * command)
 {
     struct stat s;
-    int ngroups_max=1+sysconf(_SC_NGROUPS_MAX);
-    gid_t * groups=new gid_t[ngroups_max];
-    ngroups_max=getgroups(ngroups_max,groups);
     mode_t min_permissions=S_IRUSR|S_IXUSR|S_IXGRP|S_IRGRP|S_IROTH|S_IXOTH;
 
     PRINTF("Checking command file validity\n");
@@ -716,23 +713,21 @@ int checkCommandFile(const char * command)
     // chdir if possible (to allow relative command)
     if (chDir && chdir(chDir)) perror(chDir);
 
-    if (stat(command,&s))
-    {
-	perror(command);
-	return -1;
+    if (stat(command,&s)) {
+        perror(command);
+        return -1;
     }
 
     // Back to where we came from
-    if ( chdir( myDir ) ) perror( myDir );
+    if (chdir(myDir)) perror(myDir);
 
-    if (!S_ISREG(s.st_mode))
-    {
-	fprintf(stderr, "%s: %s is not a regular file\n", procservName, command);
-	return -1;
+    if (!S_ISREG(s.st_mode)) {
+        fprintf(stderr, "%s: %s is not a regular file\n", procservName, command);
+        return -1;
     }
-    if ( min_permissions == (s.st_mode & min_permissions) ) return 0; // This is great!
+    if (min_permissions == (s.st_mode & min_permissions)) return 0; // This is great!
     // else
-    fprintf( stderr, "%s: Warning - Please change permissions on %s to at least -r-xr-xr-x\n"
+    fprintf(stderr, "%s: Warning - Please change permissions on %s to at least -r-xr-xr-x\n"
              "procServ may not be able to continue without execute permission!\n",
              procservName, command);
     return 0;
