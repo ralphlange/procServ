@@ -1,6 +1,6 @@
 // Process server for soft ioc
 // David H. Thompson 8/29/2003
-// Ralph Lange 03/18/2010
+// Ralph Lange 03/19/2010
 // GNU Public License (GPLv3) applies - see www.gnu.org
 
 #include <unistd.h>
@@ -14,8 +14,11 @@
 #include <arpa/inet.h>
 #include <string.h>
 
-#include "procServ.h"
+#ifndef SO_REUSEPORT               // Linux doesn't know SO_REUSEPORT
+#define SO_REUSEPORT SO_REUSEADDR
+#endif
 
+#include "procServ.h"
 
 class acceptItem : public connectionItem
 {
@@ -58,7 +61,7 @@ acceptItem::acceptItem ( int port, bool local, bool readonly )
     _ioHandle = socket( PF_INET, SOCK_STREAM, IPPROTO_TCP );
     assert( _ioHandle>0 );
 
-    setsockopt( _ioHandle, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval) );
+    setsockopt( _ioHandle, SOL_SOCKET, SO_REUSEPORT, &optval, sizeof(optval) );
 
     addr.sin_family = AF_INET;
     addr.sin_port = htons(port);
