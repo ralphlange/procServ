@@ -1,6 +1,6 @@
 // Process server for soft ioc
 // David H. Thompson 8/29/2003
-// Ralph Lange 04/25/2008
+// Ralph Lange 03/18/2010
 // GNU Public License (GPLv3) applies - see www.gnu.org
 
 
@@ -18,9 +18,8 @@ public:
     processClass(int argc,char * argv[]);
     bool OnPoll();
     int Send( const char *,int);
-    void OnWait(int pid);
+    void markDeadIfChildIs(pid_t pid);
     char factoryName[100];
-    void SetupTio(struct termios *);
     virtual bool isProcess() const { return true; }
     static void restartOnce ();
     static bool exists() { return _runningItem ? true : false; }

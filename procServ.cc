@@ -1,6 +1,6 @@
 // Process server for soft ioc
 // David H. Thompson 8/29/2003
-// Ralph Lange 04/22/2008
+// Ralph Lange 03/18/2010
 // GNU Public License (GPLv3) applies - see www.gnu.org
 
 
@@ -34,6 +34,7 @@ bool   autoRestart = true;       // Enables instant restart of exiting child
 bool   waitForManualStart = false;  // Waits for telnet cmd to manually start child
 bool   shutdownServer = false;   // To keep the server from shutting down
 bool   quiet = false;            // Suppress info output (server)
+bool   setCoreSize = false;      // Set core size for child
 char   *procservName;            // The name of this beast (server)
 char   *childName;               // The name of that beast (child)
 int    connectionNo;             // Total number of connections
@@ -43,9 +44,9 @@ char   toggleRestartChar = 0x14; // Toggle autorestart character (default: ^T)
 char   restartChar = 0x12;       // Restart character (default: ^R)
 char   quitChar = 0x11;          // Quit character (default: ^Q)
 int    killSig = SIGKILL;        // Kill signal (default: SIGKILL)
-rlim_t coreSize = -1;            // Max core size for child
-char   *chDir = NULL;            // Directory to change to before starting child
-char   *myDir = NULL;            // Directory where server was started
+rlim_t coreSize;                 // Max core size for child
+char   *chDir;                   // Directory to change to before starting child
+char   *myDir;                   // Directory where server was started
 time_t holdoffTime = 15;         // Holdoff time between child restarts (in seconds)
 
 pid_t  procservPid;              // PID of server (daemon if not in debug mode)
@@ -85,6 +86,8 @@ void writePidFile()
 {
     int pid=getpid();
     FILE * fp=NULL;
+
+    PRINTF("Writing PID file %s\n", pidFile);
 
     fp = fopen( pidFile, "w" );
     // Don't stop here - just go without
@@ -163,12 +166,13 @@ int main(int argc,char * argv[])
     char buff[512];
 
     procservName = argv[0];
-    myDir = get_current_dir_name();
+    myDir = getcwd(NULL, 512);
     chDir = myDir;
     timeFormat = defaulttimeFormat;
 
     pidFile = getenv( "PROCSERV_PID" );
-    if ( pidFile && ! strcmp( pidFile, "" ) ) pidFile = defaultpidFile;
+    if ( !pidFile || strlen(pidFile) == 0 ) pidFile = defaultpidFile;
+    if ( getenv("PROCSERV_DEBUG") != NULL ) inDebugMode = true;
 
     const int ONE_CHAR_COMMANDS = 2;  // togglerestartcmd, killcmd
 
@@ -217,7 +221,10 @@ int main(int argc,char * argv[])
 
         case 'C':                                 // Core size
             k = atoi( optarg );
-            if ( k >= 0 ) coreSize = k;
+            if ( k >= 0 ) {
+                coreSize = k;
+                setCoreSize = true;
+            }
             break;
 
         case 'c':                                 // Dir to change to
@@ -347,7 +354,8 @@ int main(int argc,char * argv[])
     if ( toggleRestartChar )
         strcat ( ignChars, &toggleRestartChar );
 
-    // set up available server commands message
+    // Set up available server commands message
+    PRINTF("Setting up messages\n");
     sprintf( infoMessage3, "@@@ Use %s%c to restart the child now, %s%c to quit the server" NL,
              restartChar < 32 ? "^" : "",
              restartChar < 32 ? restartChar + 64 : restartChar,
@@ -368,12 +376,16 @@ int main(int argc,char * argv[])
 
     if ( checkCommandFile( command ) ) exit( errno );
 
-    sig.sa_handler=&OnSigChild;
-    sigaction(SIGCHLD,&sig,NULL);
-    sig.sa_handler=&OnSigPipe;
-    sigaction(SIGPIPE,&sig,NULL);
+    PRINTF("Installing signal handlers\n");
+//    sig.sa_handler=&OnSigChild;
+//    sigaction(SIGCHLD,&sig,NULL);
+    signal(SIGCHLD,&OnSigChild);
+//    sig.sa_handler=&OnSigPipe;
+//    sigaction(SIGPIPE,&sig,NULL);
+    signal(SIGPIPE,&OnSigPipe);
 
     // Make an accept item to listen for control connections
+    PRINTF("Creating control listener\n");
     try
     {
 	connectionItem *acceptItem = acceptFactory( ctlPort, ctlPortLocal );
@@ -389,6 +401,7 @@ int main(int argc,char * argv[])
 
     if ( logPort ) {
         // Make an accept item to listen for log connections
+        PRINTF("Creating log listener\n");
         try
         {
             connectionItem *acceptItem = acceptFactory( logPort, logPortLocal, true );
@@ -405,8 +418,6 @@ int main(int argc,char * argv[])
 
     procservPid=getpid();
 
-    if ( getenv("PROCSERV_DEBUG") != NULL ) inDebugMode = true;
-
     if ( inDebugMode == false )
     {
 	forkAndGo();
@@ -414,7 +425,7 @@ int main(int argc,char * argv[])
     }
     else
     {
-	debugFD = 1;          // Enable debug messages
+        debugFD = 1;          // Enable debug messages
     }
 
     // Open log file
@@ -430,10 +441,10 @@ int main(int argc,char * argv[])
     }
 
     // Record some useful data for managers 
-    sprintf( infoMessage1, "@@@ procServ server PID: %d" NL
+    sprintf( infoMessage1, "@@@ procServ server PID: %ld" NL
              "@@@ Server startup directory: %s" NL
              "@@@ Child startup directory: %s" NL,
-             getpid(),
+             (long) getpid(),
              myDir,
              chDir);
     if ( strcmp( childName, command ) )
@@ -555,21 +566,22 @@ void OnPollTimeout()
 {
     pid_t pid;
     int wstatus;
-    connectionItem * p = connectionItem::head;
+    connectionItem *pc, *pn;
     char buf[128];
-    
+
     if (sigChildSet)
     {
 	pid = wait(&wstatus);
-	while(p)
+        pc = connectionItem::head;
+        while(pc)
 	{
-	    p->OnWait(pid);
-	    p=p->next;
+            pc->markDeadIfChildIs(pid);
+            pc=pc->next;
 	}
 	sigChildSet--;
 
 	sprintf( buf, NL "@@@ @@@ @@@ @@@ @@@" NL
-                 "@@@ Received a sigChild for process %d." , pid );
+                 "@@@ Received a sigChild for process %ld." , (long) pid );
 
 	if (WIFEXITED(wstatus))
 	{
@@ -586,26 +598,21 @@ void OnPollTimeout()
 	SendToAll( buf, strlen(buf), NULL );
     }
 
-    p = connectionItem::head;
-    while (p)
+    // Clean up connections
+    pc = connectionItem::head;
+    while (pc)
     {
-    
-	if (p->IsDead())
-	{
-	    DeleteConnection(p);
-	    // p is now invalid. 
-	    // break the loop now and we will
-	    // get another chance later.
-	    break;
-	}
-	p=p->next;
+        pn = pc->next;
+        if (pc->IsDead()) DeleteConnection(pc);
+        pc = pn;
     }
 }
 
 // Call this to add the item to the list of connections
 void AddConnection(connectionItem * ci)
 {
-	if (connectionItem::head )
+    PRINTF("Adding connection %p to list\n", ci);
+    if (connectionItem::head )
 	{
 	    ci->next=connectionItem::head;
 	    ci->next->prev=ci;
@@ -615,13 +622,13 @@ void AddConnection(connectionItem * ci)
 	ci->prev=NULL;
 	connectionItem::head=ci;
 	connectionNo++;
-	PRINTF("Adding connection\n");
 }
 
 
 void DeleteConnection(connectionItem *ci)
 {
-	if (ci->prev) // Not the head
+    PRINTF("Deleting connection %p\n", ci);
+    if (ci->prev) // Not the head
 	{
 		ci->prev->next=ci->next;
 	}
@@ -630,68 +637,67 @@ void DeleteConnection(connectionItem *ci)
 		connectionItem::head = ci->next;
 	}
 	if (ci->next) ci->next->prev=ci->prev;
-	delete ci;
+        delete ci;
 	connectionNo--;
 	assert(connectionNo>=0);
-	PRINTF("Deleting connection\n");
 }
 
 void OnSigChild(int)
 {
+    fprintf(stderr,"sigchild handler\n");
 	sigChildSet++;
 }
 void OnSigPipe(int)
 {
-	sigPipeSet++;
+    fprintf(stderr,"sigpipe handler\n");
+    sigPipeSet++;
 }
 
 // Fork the daemon and exit the parent
 void forkAndGo()
 {
-    pid_t p=fork();
-    char buf[] = "/dev/null";
+    pid_t p;
     int fh;
     struct stat statBuf;
 
-    fstat( 1, &statBuf ); // Find out what stdout is
+    fstat(1, &statBuf);      // Find out what stdout is
 
-    if ( p ) // I am the parent
-    {
-        if ( !quiet ) {
-            fprintf( stderr, "%s: spawning daemon process: %d\n", procservName, p );
-            if ( logFile == NULL ) {
-                if ( S_ISREG(statBuf.st_mode) )
-                    fprintf( stderr, "The open file on stdout will be used as a log file.\n" );
+    if ((p = fork()) < 0) {  // Fork failed
+        perror("Could not fork daemon process");
+        exit(errno);
+    } else if (p > 0) {      // I am the parent (foreground command)
+        if (!quiet) {
+            fprintf(stderr, "%s: spawning daemon process: %ld\n", procservName, (long) p);
+            if (logFileFD == -1) {
+                if (S_ISREG(statBuf.st_mode))
+                    fprintf(stderr, "The open file on stdout will be used as a log file.\n");
                 else
-                    fprintf( stderr, "No log file specified and stdout is not a file "
-                             "- no log will be kept.\n" );
+                    fprintf(stderr, "No log file specified and stdout is not a file "
+                            "- no log will be kept.\n" );
             }
         }
-	exit(0);
+        exit(0);
+    } else {                 // I am the child (background daemon)
+        procservPid = getpid();
+
+        // Use stdout as log file, if no file is set and stdout is a file
+        if (logFileFD == -1 && S_ISREG(statBuf.st_mode)) logFileFD = dup(1);
+
+        // Redirect stdin, stdout, stderr to /dev/null
+        char buf[] = "/dev/null";
+        fh = open(buf, O_RDWR);
+        if (fh < 0) { perror(buf); exit(-1); }
+        close(0); close(1); close(2);
+        dup(fh); dup(fh); dup(fh);
+        close(fh);
+
+        // Make sure we are not attached to a terminal
+        fh = open("/dev/tty", O_RDWR);
+        if (fh >= 0) {                // It's a terminal
+            ioctl(fh, TIOCNOTTY);     // Detach from /dev/tty
+            close(fh);
+        }
     }
-    procservPid = getpid();
-
-    // p==0
-    // The daemon starts up here
-
-    // Redirect all of the I/O away from /dev/tty
-    fh = open( buf, O_RDWR );
-    if ( fh<0 ) { perror( buf ); exit( -1 ); }
-
-    if ( logFileFD == -1 && S_ISREG(statBuf.st_mode) )
-    {
-	logFileFD = dup(1);
-    }
-    close(0); close(1); close(2);
-    
-    dup(fh); dup(fh); dup(fh);
-    close(fh);
-
-    // Now, make sure we are not attached to a terminal
-    fh = open( "/dev/tty", O_RDWR );
-    if ( fh<0 ) return;         // Not a terminal
-    ioctl( fh, TIOCNOTTY );     // Detatch from /dev/tty
-    close( fh );
 }
 
 
@@ -705,8 +711,10 @@ int checkCommandFile(const char * command)
     ngroups_max=getgroups(ngroups_max,groups);
     mode_t min_permissions=S_IRUSR|S_IXUSR|S_IXGRP|S_IRGRP|S_IROTH|S_IXOTH;
 
+    PRINTF("Checking command file validity\n");
+
     // chdir if possible (to allow relative command)
-    if ( chDir && chdir( chDir ) ) perror( chDir );
+    if (chDir && chdir(chDir)) perror(chDir);
 
     if (stat(command,&s))
     {
@@ -719,7 +727,7 @@ int checkCommandFile(const char * command)
 
     if (!S_ISREG(s.st_mode))
     {
-	fprintf(stderr,"%s: %s is not a regular file\n", procservName, command);
+	fprintf(stderr, "%s: %s is not a regular file\n", procservName, command);
 	return -1;
     }
     if ( min_permissions == (s.st_mode & min_permissions) ) return 0; // This is great!

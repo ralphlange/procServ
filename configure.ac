@@ -1,8 +1,12 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
+# Process Server (for soft IOCs)
+# Ralph Lange 03/18/2010
+# GNU Public License (GPLv3) applies - see www.gnu.org
+
 
 AC_PREREQ([2.61])
-AC_INIT([procServ Process Server], [2.5.0], [tech-talk@aps.anl.gov], [procServ],
+AC_INIT([procServ Process Server], [2.5.0a1], [tech-talk@aps.anl.gov], [procServ],
 	[http://sourceforge.net/projects/procserv/])
 AC_SUBST([PACKAGE_DATE],[12/02/2009])
 
@@ -20,12 +24,10 @@ CXXFLAGS="$CXXFLAGS -Wall"
 AC_PROG_CXX
 AC_PROG_CC
 
-# Checks for libraries.
-AC_CHECK_LIB([util], [forkpty], [], [AC_MSG_ERROR([Missing required library])])
-
 # Checks for header files.
-AC_CHECK_HEADERS([arpa/inet.h fcntl.h netinet/in.h sys/ioctl.h sys/socket.h sys/time.h termios.h utmp.h pty.h],[],
-	[AC_MSG_ERROR([Missing required header(s)])])
+#AC_CHECK_HEADERS([arpa/inet.h fcntl.h netinet/in.h sys/ioctl.h sys/socket.h sys/time.h termios.h utmp.h pty.h],[],
+#	[AC_MSG_ERROR([Missing required header(s)])])
+AC_CHECK_HEADERS([pty.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_HEADER_STDBOOL
@@ -40,12 +42,15 @@ AC_STRUCT_TM
 AC_FUNC_FORK
 AC_FUNC_GETGROUPS
 AC_PROG_GCC_TRADITIONAL
-AC_FUNC_MALLOC
+AC_PROG_RANLIB
 AC_FUNC_SETPGRP
 AC_TYPE_SIGNAL
-AC_FUNC_STAT
 AC_FUNC_STRFTIME
-AC_CHECK_FUNCS([localtime_r socket strdup strerror],[],[AC_MSG_ERROR([Missing required function(s)])])
+AC_SEARCH_LIBS([socket], [socket])
+AC_SEARCH_LIBS([setsockopt], [socket])
+AC_SEARCH_LIBS([inet_aton], [resolv])
+AC_SEARCH_LIBS([forkpty], [util])
+AC_REPLACE_FUNCS([forkpty])
 
 # Add configure option for access from anywhere
 AC_ARG_ENABLE([access-from-anywhere],

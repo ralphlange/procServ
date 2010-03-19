@@ -1,8 +1,7 @@
 // Process server for soft ioc
 // David H. Thompson 8/29/2003
-// Ralph Lange 04/25/2008
+// Ralph Lange 03/18/2010
 // GNU Public License (GPLv3) applies - see www.gnu.org
-
 
 #include <unistd.h>
 #include <stdio.h>
@@ -11,19 +10,24 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <errno.h>
-#include <netinet/in.h>
 #include <arpa/inet.h>
 #include <signal.h>
-#include <pty.h>  /* for openpty and forkpty */
 #include <utmp.h> /* for login_tty */
 #include <time.h>
 #include <string.h>
+#include <strings.h>
+
+#ifdef HAVE_PTY_H
+#include <pty.h>  /* for forkpty */
+#endif
+#ifndef HAVE_FORKPTY                     /* use our own implementation */
+extern "C" int forkpty(int*, char*, void*, void*);
+#endif
 
 #include "procServ.h"
 #include "processClass.h"
 
 #define LINEBUF_LENGTH 1024
-
 
 processClass * processClass::_runningItem=NULL;
 time_t processClass::_restartTime=0;
@@ -36,15 +40,13 @@ bool processFactoryNeedsRestart()
          now < processClass::_restartTime ||
          waitForManualStart ) return false;
     return true;
-    
 }
 
 connectionItem * processFactory(int argc, char *argv[])
 {
     char buf[512];
-    time(&IOCStart); // When did we do this?
-    
-    
+    time(&IOCStart); // Remember when we did this
+
     if (processFactoryNeedsRestart())
     {
 	sprintf( buf, "@@@ Restarting child \"%s\"" NL, childName );
@@ -55,7 +57,9 @@ connectionItem * processFactory(int argc, char *argv[])
             SendToAll( buf, strlen(buf), 0 );
         }
 
-	return new processClass( argc, argv );
+        connectionItem *ci = new processClass( argc, argv );
+        PRINTF("Created new child connection (processClass %p)\n", ci);
+	return ci;
     }
     else
 	return NULL;
@@ -105,36 +109,34 @@ processClass::~processClass()
 processClass::processClass(int argc,char * argv[])
 {
     _runningItem=this;
-    struct termios tio;
     struct rlimit corelimit;
-    SetupTio(&tio);
-    _pid = forkpty( &_ioHandle, factoryName, &tio, NULL );
     char buf[128];
 
+    _pid = forkpty(&_ioHandle, factoryName, NULL, NULL);
+
     _markedForDeletion = _pid <= 0;
-    if (_pid) // I am the parent
+    if (_pid)                               // I am the parent
     {
 	if(_pid < 0) {
             fprintf(stderr, "Fork failed: %s\n", errno == ENOENT ? "No pty" : strerror(errno));
-        }
-        else {
-            PRINTF("Created process %d on %s\n", _pid, factoryName);
+        } else {
+            PRINTF("Created process %ld on %s\n", (long) _pid, factoryName);
         }
 
-	// Don't start a new one before this time:
-	_restartTime = holdoffTime + time(0);
+        // Don't start a new one before this time:
+        _restartTime = holdoffTime + time(0);
 
         // Update client connect message
-	sprintf( infoMessage2, "@@@ Child \"%s\" PID: %d" NL, childName, _pid );
+        sprintf(infoMessage2, "@@@ Child \"%s\" PID: %ld" NL, childName, (long) _pid);
 
-	sprintf( buf, "@@@ The PID of new child \"%s\" is: %d" NL, childName, _pid );
-	strcat( buf, "@@@ @@@ @@@ @@@ @@@" NL );
-	SendToAll( buf, strlen(buf), this );
+        sprintf(buf, "@@@ The PID of new child \"%s\" is: %ld" NL, childName, (long) _pid);
+        strcat(buf, "@@@ @@@ @@@ @@@ @@@" NL);
+        SendToAll( buf, strlen(buf), this );
     }
-    else // I am the child 
+    else                                    // I am the child
     {
 	setpgrp();                                 // Become process group leader
-        if ( coreSize >= 0 ) {                     // Set core size limit
+        if ( setCoreSize ) {                       // Set core size limit?
             getrlimit( RLIMIT_CORE, &corelimit );
             corelimit.rlim_cur = coreSize;
             setrlimit( RLIMIT_CORE, &corelimit );
@@ -159,6 +161,7 @@ processClass::processClass(int argc,char * argv[])
 bool processClass::OnPoll()
 {
     if (_pfd==NULL || _pfd->revents==0 ) return false;
+
     // Otherwise process the revents and return true;
 
     char  buf[1600];
@@ -166,7 +169,7 @@ bool processClass::OnPoll()
     if (_pfd->revents&(POLLIN|POLLPRI))
     {
 	int len=read(_ioHandle,buf,sizeof( buf)-1);
-	if (len>=0)
+        if (len>=0)
 	{
 	    buf[len]='\0';
 	}
@@ -181,18 +184,16 @@ bool processClass::OnPoll()
 	}
 
     }
-    if (_pfd->revents&(POLLHUP|POLLERR))
+    if (_pfd->revents&(POLLHUP|POLLERR|POLLNVAL))
     {
-	PRINTF("ProcessItem:: Got hangup or error \n");
-	_markedForDeletion=true;
-    }
-    if (_pfd->revents&POLLNVAL)
-    {
+	PRINTF("ProcessItem:: poll returned a%s%s%s condition\n",
+               _pfd->revents&POLLHUP?" Hangup":"",
+               _pfd->revents&POLLERR?" Error":"",
+               _pfd->revents&POLLNVAL?" Invalid FD":"");
 	_markedForDeletion=true;
     }
     return true;
 }
-
 
 // Send characters to clients
 int processClass::Send( const char * buf, int count )
@@ -242,9 +243,8 @@ int processClass::Send( const char * buf, int count )
 }
 
 // This gets called if a SIGCHLD was received by the main thread
-void processClass::OnWait(pid_t pid)
+void processClass::markDeadIfChildIs(pid_t pid)
 {
-
     if (pid==_pid)
     {
 	_markedForDeletion=true;
@@ -257,42 +257,11 @@ void processFactorySendSignal(int signal)
 {
     if (processClass::_runningItem)
     {
-	PRINTF("Sending signal %d to pid %d\n",
-		signal,processClass::_runningItem->_pid);
+	PRINTF("Sending signal %d to pid %ld\n",
+		signal, (long) processClass::_runningItem->_pid);
 	kill(-processClass::_runningItem->_pid,signal);
     }
 }
-
-#define CC(c) (c&0x1f)
-
-void processClass::SetupTio(struct termios *tio)
-{
-    tio->c_iflag=   IXON|ICRNL ; 
-    tio->c_oflag=OPOST|ONLCR|NL0|CR0|TAB0|BS0|FF0|VT0 ;
-    tio->c_cflag=   B38400|CS8|CREAD   ;        
-    tio->c_lflag= ISIG|ICANON|IEXTEN |ECHO|ECHONL;
-    tio->c_line=0; // Line dicipline 0 
-    tio->c_cc[VINTR ]=CC('C');
-    tio->c_cc[VQUIT ]=CC('\\');
-    tio->c_cc[VERASE ]=0x7f;
-    tio->c_cc[VKILL ]=CC('U');
-    tio->c_cc[VEOF ]=CC('D');
-    tio->c_cc[VTIME ]=0;
-    tio->c_cc[VMIN ]=1;
-    tio->c_cc[VSWTC ]=0;
-    tio->c_cc[VSTART ]=CC('Q');
-    tio->c_cc[VSTOP ]=CC('S');
-    tio->c_cc[VSUSP ]=CC('Z');
-    tio->c_cc[VEOL ]=0;
-    tio->c_cc[VREPRINT ]=CC('R');
-    tio->c_cc[VDISCARD ]=0; // CC('');
-    tio->c_cc[VWERASE ]=CC('W');
-    tio->c_cc[VLNEXT ]=CC('V');
-    tio->c_cc[VEOL2 ]=0;
-    tio->c_ispeed=B38400;
-    tio->c_ospeed=B38400;
-}
-
 
 void processClass::restartOnce ()
 {

@@ -1,6 +1,6 @@
 // Process server for soft ioc
 // David H. Thompson 8/29/2003
-// Ralph Lange 04/25/2008
+// Ralph Lange 03/18/2010
 // GNU Public License (GPLv3) applies - see www.gnu.org
 
 
@@ -19,7 +19,7 @@
 
 #ifndef PRINTF
 #define PRINTF if (inDebugMode) printf
-#endif 
+#endif
 
 #define PROCSERV_VERSION_STRING PACKAGE_STRING
 
@@ -28,6 +28,7 @@ extern bool   logPortLocal;
 extern bool   autoRestart;
 extern bool   waitForManualStart;
 extern bool   shutdownServer;
+extern bool   setCoreSize;
 extern char   *procservName;
 extern char   *childName;
 extern char   *ignChars;
@@ -110,7 +111,7 @@ public:
     // Send characters to clients
     virtual int Send(const char *, int count) = 0;
  
-    virtual void OnWait(int pid); // called if sig child received
+    virtual void markDeadIfChildIs(pid_t pid);   // called if parent receives sig child
 
     int GetHandle() const { return _ioHandle; }
     bool IsDead() const { return _markedForDeletion; }

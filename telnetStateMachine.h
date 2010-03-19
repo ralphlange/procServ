@@ -1,12 +1,17 @@
 // Process server for soft ioc
 // David H. Thompson 8/29/2003
-// Ralph Lange 04/25/2008
+// Ralph Lange 03/18/2010
 // GNU Public License (GPLv3) applies - see www.gnu.org
 
 #ifndef telnetStateMachineH
 #define telnetStateMachineH
 
 #include <arpa/telnet.h>
+
+#ifndef NTELOPTS                            // Fix for arpa/telnet.h needed on Solaris
+#define NTELOPTS (1+TELOPT_NEW_ENVIRON)
+#endif
+
 int TelnetStateMachine(char * buf,int len); // Returns new length
 #define OPT_STRING_LEN 32
 

@@ -1,6 +1,5 @@
 # Process Server (for soft IOCs)
-# David H. Thompson 8/29/2003
-# Ralph Lange 11/05/2009
+# Ralph Lange 03/18/2010
 # GNU Public License (GPLv3) applies - see www.gnu.org
 
 bin_PROGRAMS = procServ
@@ -11,8 +10,10 @@ procServ_SOURCES = procServ.cc procServ.h \
                    telnetStateMachine.cc telnetStateMachine.h \
                    procServ.txt
 
+LDADD = $(LIBOBJS)
+
+DISTCLEANFILES = *~ procServ.xml
 MAINTAINERCLEANFILES = procServ.pdf procServ.html procServ.1
-DISTCLEANFILES = *~ procServ.xml procServ.fo
 
 doc_DATA = AUTHORS COPYING ChangeLog NEWS README procServ.txt
 
@@ -21,7 +22,7 @@ if INSTALL_DOC
 dist_man1_MANS = procServ.1
 
 doc_DATA += procServ.pdf procServ.html
-EXTRA_DIST = $(doc_DATA) Makefile.Epics.in
+EXTRA_DIST = $(doc_DATA) Makefile.Epics.in forkpty.c
 
 endif # INSTALL_DOC
 
