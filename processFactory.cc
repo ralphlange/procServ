@@ -16,14 +16,17 @@
 #include <string.h>
 #include <strings.h>
 
-// for forkpty()
-#ifdef HAVE_LIBUTIL_H
+// forkpty()
+#ifdef HAVE_LIBUTIL_H      // FreeBSD
 #include <libutil.h>
 #endif
-#ifdef HAVE_PTY_H
+#ifdef HAVE_UTIL_H         // Mac OS X
+#include <util.h>
+#endif
+#ifdef HAVE_PTY_H          // Linux
 #include <pty.h>
 #endif
-#ifndef HAVE_FORKPTY                     /* use our own implementation */
+#ifndef HAVE_FORKPTY       // Solaris, use our own implementation
 extern "C" int forkpty(int*, char*, void*, void*);
 #endif
 
