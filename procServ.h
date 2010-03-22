@@ -1,6 +1,6 @@
 // Process server for soft ioc
 // David H. Thompson 8/29/2003
-// Ralph Lange 03/18/2010
+// Ralph Lange 03/22/2010
 // GNU Public License (GPLv3) applies - see www.gnu.org
 
 
@@ -90,30 +90,17 @@ extern connectionItem * processItem; // Set if it exists
 class connectionItem
 {
 public:
-    // Virtual functions:
     virtual ~connectionItem();
 
-   // Functions inplemented in the base class
-    //
-    // SetPoll is called to fill in a poll prior to calling and OnPoll() is used to
-    // process events from sockets and file handles.  
-    // SetPoll() called to fill in a pollfd prior to calling poll.
-    // the connectionItem must fill in fd and events and return 1 to be polled or
-    // set its own _pfd to NULL and return 0
-    virtual bool SetPoll(struct pollfd * pfd);
-    
-    // OnPoll is called after a poll returns non-zero in events
-    // return true if the item accepted an event, false otherwise
-    // OnPoll will be called regardless of how SetPoll responded and must return true
-    // only if _pfd is not null and _pfd->revents!=0
-    virtual bool OnPoll() = 0;
-    
-    // Send characters to clients
+    // Called from main() when input from this client is ready to be read.
+    virtual void readFromFd(void) = 0;
+
+    // Send characters to this client.
     virtual int Send(const char *, int count) = 0;
- 
+
     virtual void markDeadIfChildIs(pid_t pid);   // called if parent receives sig child
 
-    int GetHandle() const { return _ioHandle; }
+    int getFd() const { return _fd; }
     bool IsDead() const { return _markedForDeletion; }
 
     // Return false unless you are the process item (processClass overloads)
@@ -121,14 +108,7 @@ public:
 
 protected:
     connectionItem ( int fd = -1, bool readonly = false );
-
-    // These two members fill in the pollfd structure
-    int _ioHandle; // my file handle
-    short _events;
-    
-    // Keep a copy, poll() fills in revents;
-    struct pollfd * _pfd;
-    
+    int _fd;                 // File descriptor of this connection
     bool _markedForDeletion; // True if this connection is dead
     bool _readonly;          // True if input has to be ignored
 

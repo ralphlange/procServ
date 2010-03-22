@@ -1,6 +1,6 @@
 // Process server for soft ioc
 // David H. Thompson 8/29/2003
-// Ralph Lange 03/19/2010
+// Ralph Lange 03/22/2010
 // GNU Public License (GPLv3) applies - see www.gnu.org
 
 
@@ -17,6 +17,7 @@
 #include <unistd.h> 
 #include <termios.h>
 #include <sys/ioctl.h>
+#include <sys/select.h>
 #include <string.h>
 
 #include "procServ.h"
@@ -80,7 +81,7 @@ int sigChildSet;
 void OnSigPipe(int);
 int sigPipeSet;
 
-struct sigaction sig;
+static struct sigaction sig;     // Global to ensure being zero
 
 void writePidFile()
 {
@@ -155,16 +156,15 @@ void printVersion()
 
 int main(int argc,char * argv[])
 {
-    time(&procServStart); // What time is it now
-    struct pollfd * pollList=NULL,* ppoll; // Allocate as much space as needed
     int c;
     unsigned int i, j;
     int k;
-    int ctlPort, logPort=0;
+    int ctlPort, logPort = 0;
     char *command;
     bool wrongOption = false;
     char buff[512];
 
+    time(&procServStart);             // remember start time
     procservName = argv[0];
     myDir = getcwd(NULL, 512);
     chDir = myDir;
@@ -377,12 +377,10 @@ int main(int argc,char * argv[])
     if ( checkCommandFile( command ) ) exit( errno );
 
     PRINTF("Installing signal handlers\n");
-//    sig.sa_handler=&OnSigChild;
-//    sigaction(SIGCHLD,&sig,NULL);
-    signal(SIGCHLD,&OnSigChild);
-//    sig.sa_handler=&OnSigPipe;
-//    sigaction(SIGPIPE,&sig,NULL);
-    signal(SIGPIPE,&OnSigPipe);
+    sig.sa_handler = &OnSigChild;
+    sigaction(SIGCHLD, &sig, NULL);              // sigaction() needed for Solaris
+    sig.sa_handler = &OnSigPipe;
+    sigaction(SIGPIPE, &sig, NULL);
 
     // Make an accept item to listen for control connections
     PRINTF("Creating control listener\n");
@@ -460,72 +458,59 @@ int main(int argc,char * argv[])
     // Run here until something makes it die
     while ( ! shutdownServer )
     {
-	char buf[100];
-	int nPoll = 0;      // local copy of the # items to poll
-	int nPollAlloc = 0; // How big is pollList right now
-	int pollStatus;     // What poll returns
+        char buf[100];
+        connectionItem * p;
+        fd_set fdset;         // FD stuff for select()
+        int fd, nFd;
+        int ready;            // select() return value
+        struct timeval timeout;
 
-	connectionItem * p ;
+        if (sigPipeSet > 0) {
+            sprintf( buf, "@@@ Got a sigPipe signal: Did the IOC close its tty?" NL);
+            SendToAll( buf, strlen(buf), NULL );
+            sigPipeSet--;
+        }
 
-	if (sigPipeSet>0)
-	{
-	    PRINTF("Got a sigPipe\n");
-	    sprintf( buf, "@@@ Got a sigPipe signal: Did the IOC close its tty?" NL);
-	    SendToAll( buf, strlen(buf), NULL );
-	    sigPipeSet--;
-	}
-	// Adjust the poll data array
-	if (nPollAlloc != connectionNo)
-	{
-	    if (pollList) free(pollList);
-	    pollList = (pollfd*) malloc( connectionNo * sizeof(struct pollfd) );
-	    nPollAlloc = connectionNo;
-	}
+        // Prepare FD set for select()
+        p = connectionItem::head;
+        nFd = -1;
+        FD_ZERO(&fdset);
+        while (p) {
+            if ((fd = p->getFd()) > -1) {     // Connection needs to be watched
+                if (fd > nFd) nFd = fd;
+                FD_SET(fd, &fdset);
+            }
+            p = p->next;
+        }
+        nFd++;
+        timeout.tv_sec = 0;                   // select() timeout: 0.5 sec
+        timeout.tv_usec = 500000;
 
-	// Load the socket number and flags
-	ppoll=pollList;
-	nPoll=0;
-	p = connectionItem::head;
-	while(p)
-	{
-	    if (p->SetPoll(ppoll))
-	    {
-	    	ppoll++; // Move to the nexr fd slot
-		nPoll++; // How many to poll
-	    }
-	    p=p->next;
-	}
-	
-	// Now do the poll to find new data
-	pollStatus=poll(pollList,nPoll,500);
+        ready = select(nFd, &fdset, NULL, NULL, &timeout);
 
-	// handle what poll returns
-        if (pollStatus==0)
-	{
-	    // Go clean up dead connections
-	    OnPollTimeout();
-	    connectionItem * npi; 
+        if (ready == -1) {                    // Error
+            perror("Error in select() call");
+        } else if (ready == 0) {              // Timeout
+            // Go clean up dead connections
+            OnPollTimeout();
+            connectionItem * npi; 
 
-	    // Pick up the process item if it dies
-	    // This call returns NULL if the process item lives
-	    if (processFactoryNeedsRestart())
-	    {
-	    	npi= processFactory(argc-optind-2,argv+optind+1);
-	    	if (npi) AddConnection(npi);
-	    }
-	}
-	else
-	{
-	    // Loop thru all of the connectionItems until we find the one(s) that need to
-	    // do I/O
-	    p = connectionItem::head;
-	    nPoll=0;
-	    while(p && nPoll<pollStatus)
-	    {
-		if (p->OnPoll()) nPoll++;
-		p=p->next;
-	    }
-	}
+            // Pick up the process item if it dies
+            // This call returns NULL if the process item lives
+            if (processFactoryNeedsRestart())
+            {
+                npi= processFactory(argc-optind-2,argv+optind+1);
+                if (npi) AddConnection(npi);
+            }
+        } else {                              // Work to be done
+            // Loop through all connections
+            p = connectionItem::head;
+            while (p) {
+                if (FD_ISSET(p->getFd(), &fdset)) p->readFromFd();
+                p = p->next;
+            }
+            OnPollTimeout();
+        }
     }
 }
 
@@ -546,7 +531,7 @@ void SendToAll(const char * message,int count,const connectionItem * sender)
     }
 
     while ( p ) {
-	if ( p->isProcess() ) 
+	if ( p->isProcess() )
 	{
 	    // Non-null senders that are not processes can send to processes
 	    if (sender && !sender->isProcess()) p->Send(message,count);
@@ -644,10 +629,13 @@ void DeleteConnection(connectionItem *ci)
 
 void OnSigChild(int)
 {
+    PRINTF("SigChild received\n");
     sigChildSet++;
 }
+
 void OnSigPipe(int)
 {
+    PRINTF("SigPipe received\n");
     sigPipeSet++;
 }
 

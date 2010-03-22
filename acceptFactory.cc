@@ -1,6 +1,6 @@
 // Process server for soft ioc
 // David H. Thompson 8/29/2003
-// Ralph Lange 03/19/2010
+// Ralph Lange 03/22/2010
 // GNU Public License (GPLv3) applies - see www.gnu.org
 
 #include <unistd.h>
@@ -24,7 +24,7 @@ class acceptItem : public connectionItem
 {
 public:
     acceptItem ( int port, bool local, bool readonly );
-    bool OnPoll();
+    void readFromFd(void);
     int Send ( const char *, int );
 
 public:
@@ -42,7 +42,7 @@ connectionItem * acceptFactory ( int port, bool local, bool readonly )
 
 acceptItem::~acceptItem()
 {
-    if (_ioHandle>=0) close(_ioHandle);
+    if (_fd >= 0) close(_fd);
     PRINTF("~acceptItem()\n");
 }
 
@@ -58,10 +58,10 @@ acceptItem::acceptItem ( int port, bool local, bool readonly )
 
     _readonly = readonly;
 
-    _ioHandle = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
-    assert(_ioHandle>0);
+    _fd = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+    assert(_fd>0);
 
-    setsockopt(_ioHandle, SOL_SOCKET, SO_REUSEPORT, &optval, sizeof(optval));
+    setsockopt(_fd, SOL_SOCKET, SO_REUSEPORT, &optval, sizeof(optval));
 
     addr.sin_family = AF_INET;
     addr.sin_port = htons(port);
@@ -70,7 +70,7 @@ acceptItem::acceptItem ( int port, bool local, bool readonly )
     else 
         addr.sin_addr.s_addr = htonl( INADDR_ANY );
 
-    bindStatus = bind(_ioHandle, (struct sockaddr *) &addr, sizeof(addr));
+    bindStatus = bind(_fd, (struct sockaddr *) &addr, sizeof(addr));
     if (bindStatus < 0)
     {
 	PRINTF("Bind error: %s\n", strerror(errno));
@@ -79,41 +79,24 @@ acceptItem::acceptItem ( int port, bool local, bool readonly )
     else
 	PRINTF("Bind returned %d\n", bindStatus);
 
-    listen(_ioHandle,5);
+    listen(_fd,5);
     return; 
 }
 
-// OnPoll is called after a poll returns non-zero in events
-bool acceptItem::OnPoll()
+// Accept connection and create a new connectionItem for it.
+void acceptItem::readFromFd(void)
 {
-    int newSocket;
+    int newFd;
     struct sockaddr addr;
     socklen_t len = sizeof(addr);
 
-    if ( _pfd==NULL || _pfd->revents==0 ) return false;
-
-    // Otherwise process the revents and return true
-
-    if ( _pfd->revents & (POLLIN|POLLPRI) )
-    {
-	newSocket = accept( _ioHandle, &addr, &len );
-	PRINTF( "acceptItem: Accepted connection on handle %d\n", newSocket );
-	AddConnection( clientFactory(newSocket, _readonly) );
-    }
-    if ( _pfd->revents & (POLLHUP|POLLERR) )
-    {
-	PRINTF( "acceptItem: Got hangup or error\n ");
-    }
-    if ( _pfd->revents & POLLNVAL )
-    {
-	_ioHandle = -1;
-	_markedForDeletion = true;
-    }
-    return true;
+    newFd = accept( _fd, &addr, &len );
+    PRINTF( "acceptItem: Accepted connection on handle %d\n", newFd );
+    AddConnection( clientFactory(newFd, _readonly) );
 }
 
 // Send characters to client
-int acceptItem::Send ( const char * buf, int count)
+int acceptItem::Send (const char * buf, int count)
 {
     // Makes no sense to send to the listening socket
     return true;

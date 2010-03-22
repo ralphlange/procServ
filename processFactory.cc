@@ -1,6 +1,6 @@
 // Process server for soft ioc
 // David H. Thompson 8/29/2003
-// Ralph Lange 03/18/2010
+// Ralph Lange 03/22/2010
 // GNU Public License (GPLv3) applies - see www.gnu.org
 
 #include <unistd.h>
@@ -102,7 +102,7 @@ processClass::~processClass()
 
                                 // Negative PID sends signal to all members of process group
     if ( _pid > 0 ) kill( -_pid, SIGKILL );
-    if ( _ioHandle > 0 ) close( _ioHandle );
+    if ( _fd > 0 ) close( _fd );
     _runningItem = NULL;
 }
 
@@ -118,7 +118,7 @@ processClass::processClass(int argc,char * argv[])
     struct rlimit corelimit;
     char buf[128];
 
-    _pid = forkpty(&_ioHandle, factoryName, NULL, NULL);
+    _pid = forkpty(&_fd, factoryName, NULL, NULL);
 
     _markedForDeletion = _pid <= 0;
     if (_pid)                               // I am the parent
@@ -161,44 +161,24 @@ processClass::processClass(int argc,char * argv[])
     }
 }
 
-// OnPoll is called after a poll returns non-zero in events
-// return 0 normally
-// may modify pfd-revents as needed
-bool processClass::OnPoll()
+// processClass::readFromFd
+// Reads, checks for EOF/Error, and sends to the other connections
+void processClass::readFromFd(void)
 {
-    if (_pfd==NULL || _pfd->revents==0 ) return false;
-
-    // Otherwise process the revents and return true;
-
     char  buf[1600];
 
-    if (_pfd->revents&(POLLIN|POLLPRI))
-    {
-	int len=read(_ioHandle,buf,sizeof( buf)-1);
-        if (len>=0)
-	{
-	    buf[len]='\0';
-	}
-	if (len<1)
-	{
-	    _markedForDeletion=true;
-	}
-	else
-	{
-	    buf[len]='\0';
-	    SendToAll(&buf[0],len,this);
-	}
-
+    int len = read(_fd, buf, sizeof(buf)-1);
+    if (len < 1) {
+        PRINTF("processItem: Got error reading input connection\n");
+        _markedForDeletion = true;
+    } else if (len == 0) {
+        PRINTF("processItem: Got EOF reading input connection\n");
+        _markedForDeletion = true;
+    } else {
+        PRINTF("processItem: read %d chars\n", len);
+        buf[len]='\0';
+        SendToAll(&buf[0], len, this);
     }
-    if (_pfd->revents&(POLLHUP|POLLERR|POLLNVAL))
-    {
-	PRINTF("ProcessItem:: poll returned a%s%s%s condition\n",
-               _pfd->revents&POLLHUP?" Hangup":"",
-               _pfd->revents&POLLERR?" Error":"",
-               _pfd->revents&POLLNVAL?" Invalid FD":"");
-	_markedForDeletion=true;
-    }
-    return true;
 }
 
 // Send characters to clients
@@ -240,21 +220,12 @@ int processClass::Send( const char * buf, int count )
 
     if ( count > 0 )
     {
-	status = write( _ioHandle, buf2, count - ign );
+	status = write( _fd, buf2, count - ign );
 	if ( status < 0 ) _markedForDeletion = true;
     }
 
     if ( count > LINEBUF_LENGTH ) free( buf2 );
     return status;
-}
-
-// This gets called if a SIGCHLD was received by the main thread
-void processClass::markDeadIfChildIs(pid_t pid)
-{
-    if (pid==_pid)
-    {
-	_markedForDeletion=true;
-    }
 }
 
 // The telnet state machine can call this to blast a running

@@ -1,6 +1,6 @@
 // Process server for soft ioc
 // David H. Thompson 8/29/2003
-// Ralph Lange 03/18/2010
+// Ralph Lange 03/22/2010
 // GNU Public License (GPLv3) applies - see www.gnu.org
 
 
@@ -27,7 +27,7 @@ public:
     clientItem(int port, bool readonly);
     ~clientItem();
 
-    bool OnPoll();
+    void readFromFd(void);
     int Send( const char *,int count);
 
 private:
@@ -47,9 +47,9 @@ connectionItem * clientFactory(int socketIn, bool readonly)
 
 clientItem::~clientItem()
 {
-    if ( _ioHandle >= 0 ) close( _ioHandle );
+    if ( _fd >= 0 ) close( _fd );
     PRINTF("~clientItem()\n");
-    if ( _readonly ) _loggers--;
+    if (_readonly) _loggers--;
     else _users--;
 }
 
@@ -108,87 +108,65 @@ clientItem::clientItem(int socketIn, bool readonly)
              _users, _loggers );
 
     setsockopt( socketIn, SOL_SOCKET, SO_KEEPALIVE, &optval, sizeof(optval) );
-    _ioHandle = socketIn;
+    _fd = socketIn;
     _readonly = readonly;
 
     if ( _readonly ) {          // Logging client
         _loggers++;
     } else {                    // Regular (user) client
         _users++;
-        write( _ioHandle, greeting1, strlen(greeting1) );
-        write( _ioHandle, greeting2, strlen(greeting2) );
+        write( _fd, greeting1, strlen(greeting1) );
+        write( _fd, greeting2, strlen(greeting2) );
     }
 
-    write( _ioHandle, infoMessage1, strlen(infoMessage1) );
-    write( _ioHandle, infoMessage2, strlen(infoMessage2) );
-    write( _ioHandle, buf1, strlen(buf1) );
+    write( _fd, infoMessage1, strlen(infoMessage1) );
+    write( _fd, infoMessage2, strlen(infoMessage2) );
+    write( _fd, buf1, strlen(buf1) );
     if ( ! _readonly )
-        write( _ioHandle, buf2, strlen(buf2) );
+        write( _fd, buf2, strlen(buf2) );
     if ( ! processClass::exists() )
-        write( _ioHandle, infoMessage3, strlen(infoMessage3) );
+        write( _fd, infoMessage3, strlen(infoMessage3) );
 
     _telnet.SetConnectionItem( this );
 }
 
-// OnPoll is called after a poll returns non-zero in events
-// return false if there are no events to be serviced
-// return true normally
-// may modify pfd-revents as needed
-bool clientItem::OnPoll()
+// clientItem::readFromFd
+// Reads from the FD, scans for restart / quit char if in child shut down mode,
+// else sends the characters to the other connections
+void clientItem::readFromFd(void)
 {
     char buf[1600];
     int  len;
 
-    if (_pfd==NULL || _pfd->revents==0 ) return false;
+    len = read(_fd, buf, sizeof(buf)-1);
+    if (len < 1) {
+        PRINTF("clientItem:: Got error reading input connection\n");
+        _markedForDeletion = true;
+    } else if (len == 0) {
+        PRINTF("clientItem:: Got EOF reading input connection\n");
+        _markedForDeletion=true;
+    } else if (len > 0 && _readonly == false ) {
+        len = _telnet.OnReceive(buf,len);
 
-    // Otherwise process the revents and return true;
+        if (processClass::exists() == false) {  // We're in child shut down mode
+            buf[len]='\0';
+            int i;
 
-    if (_pfd->revents&(POLLPRI|POLLIN))
-    {
-	len = read( _ioHandle, buf, sizeof(buf)-1 );
-	if (len<1)
-	{
-	    _markedForDeletion=true;
-	}
-	else
-	{
-	    len=_telnet.OnReceive(buf,len);
-	}
-
-	if (len>0 && _readonly==false )
-	{
-            if ( ! processClass::exists() )
-            {
-                buf[len]='\0';
-                int i;
-
-                // Scan input for commands
-                for ( i = 0; i < len; i++ ) {
-                    if ( restartChar && buf[i] == restartChar ) {
-                        PRINTF ("Got a restart command\n");
-                        waitForManualStart = false;
-                        processClass::restartOnce();
-                    }
-                    if ( quitChar && buf[i] == quitChar ) {
-                        PRINTF ("Got a shutdown command\n");
-                        shutdownServer = true;
-                    }
+            // Scan input for commands
+            for ( i = 0; i < len; i++ ) {
+                if ( restartChar && buf[i] == restartChar ) {
+                    PRINTF ("Got a restart command\n");
+                    waitForManualStart = false;
+                    processClass::restartOnce();
+                }
+                if ( quitChar && buf[i] == quitChar ) {
+                    PRINTF ("Got a shutdown command\n");
+                    shutdownServer = true;
                 }
             }
-	    SendToAll(&buf[0],len,this);
-	}
+        }
+        SendToAll(&buf[0], len, this);
     }
-    if (_pfd->revents&(POLLHUP|POLLERR))
-    {
-	PRINTF("ClientItem:: Got hangup or error \n");
-	_markedForDeletion=true;
-    }
-    if (_pfd->revents&POLLNVAL)
-    {
-	_markedForDeletion=true;
-	_ioHandle=-1;
-    }
-    return true;
 }
 
 
@@ -199,7 +177,7 @@ int clientItem::Send(const char * buf,int count)
 
     if (!_markedForDeletion)
     {
-	while ( (status=write(_ioHandle,buf,count))==-1 && errno==EINTR);
+	while ( (status=write(_fd,buf,count)) == -1 && errno == EINTR);
     }
     if (status==-1) _markedForDeletion=true;
     return status;
