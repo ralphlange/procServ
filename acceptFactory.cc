@@ -63,6 +63,7 @@ acceptItem::acceptItem ( int port, bool local, bool readonly )
 
     setsockopt(_fd, SOL_SOCKET, SO_REUSEPORT, &optval, sizeof(optval));
 
+    memset(&addr, 0, sizeof(addr));
     addr.sin_family = AF_INET;
     addr.sin_port = htons(port);
     if ( local )
