@@ -1,7 +1,7 @@
 Summary: A process server with telnet console and log access
 Name: procServ
-Version: 2.5.0
-Release: 4%{?dist}
+Version: 2.5.1
+Release: 1%{?dist}
 License: GPLv3
 Group: Applications/System
 URL: http://sourceforge.net/projects/procserv
@@ -43,6 +43,9 @@ rm -rf $RPM_BUILD_ROOT
 %{_mandir}/man1/procServ.*
 
 %changelog
+* Tue Mar 23 2010 Ralph Lange <Ralph.Lange@bessy.de> 2.5.1-1
+- New upstream version
+
 * Fri Jan 15 2010 Ralph Lange <Ralph.Lange@bessy.de> 2.5.0-4
 - Improved description
 
@@ -56,4 +59,3 @@ rm -rf $RPM_BUILD_ROOT
 
 * Thu Dec 03 2009 Matthieu Bec <mbec@gemini.edu> 2.5.0-1
 - first spec
-

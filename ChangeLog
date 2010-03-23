@@ -1,3 +1,12 @@
+V 2.5.1 03/23/2010 Ralph Lange <Ralph.Lange@bessy.de>
+Made procServ kill child using killsig on termination (by Matthieu Bec) (Trac #14).
+Added changes to compile on Solaris (Trac #11).
+Added changes to compile on Mac OS X (Trac #12).
+Added DEB package building (Trac #6).
+Added RPM package building (Trac #10).
+Fixed non-portable termios stuff (Trac #15).
+Fixed out-of-boundary writes and memory leaks (Trac #17).
+
 V 2.5.0 12/02/2009 Ralph Lange <Ralph.Lange@bessy.de>
 Improved manpage formatting (Trac #9).
 Added makefile wrapper for developer use (Trac #8).
