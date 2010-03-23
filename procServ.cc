@@ -76,30 +76,28 @@ void forkAndGo();
 int checkCommandFile(const char *command);
 
 // Signal handlers
-void OnSigChild(int);
 void OnSigPipe(int);
 void OnSigTerm(int);
-// Counters used for communication between sig handlers and main()
-int sigChildSet;
+// Counter used for communication between sig handler and main()
 int sigPipeSet;
 
 void writePidFile()
 {
-    int pid=getpid();
-    FILE * fp=NULL;
+    int pid = getpid();
+    FILE * fp;
 
     PRINTF("Writing PID file %s\n", pidFile);
 
     fp = fopen( pidFile, "w" );
     // Don't stop here - just go without
-    if ( fp==NULL ) {
+    if (fp == NULL) {
         fprintf( stderr,
                  "%s: unable to open PID file %s\n",
                  procservName, pidFile );
         return;
     }
-    fprintf( fp, "%d\n", pid );
-    fclose( fp );
+    fprintf(fp, "%d\n", pid);
+    fclose(fp);
 }
 
 char getOptionChar ( const char* buf ) 
@@ -380,9 +378,7 @@ int main(int argc,char * argv[])
     memset(&sig, 0, sizeof(sig));
 
     PRINTF("Installing signal handlers\n");
-    sig.sa_handler = &OnSigChild;
-    sigaction(SIGCHLD, &sig, NULL);              // sigaction() needed for Solaris
-    sig.sa_handler = &OnSigPipe;
+    sig.sa_handler = &OnSigPipe;              // sigaction() needed for Solaris
     sigaction(SIGPIPE, &sig, NULL);
     sig.sa_handler = &OnSigTerm;
     sigaction(SIGTERM, &sig, NULL);
@@ -465,13 +461,13 @@ int main(int argc,char * argv[])
     {
         char buf[100];
         connectionItem * p;
-        fd_set fdset;         // FD stuff for select()
+        fd_set fdset;              // FD stuff for select()
         int fd, nFd;
-        int ready;            // select() return value
+        int ready;                 // select() return value
         struct timeval timeout;
 
         if (sigPipeSet > 0) {
-            sprintf( buf, "@@@ Got a sigPipe signal: Did the IOC close its tty?" NL);
+            sprintf( buf, "@@@ Got a sigPipe signal: Did the child close its tty?" NL);
             SendToAll( buf, strlen(buf), NULL );
             sigPipeSet--;
         }
@@ -559,16 +555,14 @@ void OnPollTimeout()
     connectionItem *pc, *pn;
     char buf[128];
 
-    if (sigChildSet)
-    {
-	pid = wait(&wstatus);
+    pid = waitpid(-1, &wstatus, WNOHANG);
+    if (pid > 0 ) {
         pc = connectionItem::head;
         while(pc)
 	{
             pc->markDeadIfChildIs(pid);
             pc=pc->next;
 	}
-	sigChildSet--;
 
 	sprintf( buf, NL "@@@ @@@ @@@ @@@ @@@" NL
                  "@@@ Received a sigChild for process %ld." , (long) pid );
@@ -630,12 +624,6 @@ void DeleteConnection(connectionItem *ci)
         delete ci;
 	connectionNo--;
 	assert(connectionNo>=0);
-}
-
-void OnSigChild(int)
-{
-    PRINTF("SigChild received\n");
-    sigChildSet++;
 }
 
 void OnSigPipe(int)
