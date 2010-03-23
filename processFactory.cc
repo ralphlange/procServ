@@ -175,7 +175,6 @@ void processClass::readFromFd(void)
         PRINTF("processItem: Got EOF reading input connection\n");
         _markedForDeletion = true;
     } else {
-        PRINTF("processItem: read %d chars\n", len);
         buf[len]='\0';
         SendToAll(&buf[0], len, this);
     }

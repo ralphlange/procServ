@@ -1,6 +1,6 @@
 // Process server for soft ioc
 // David H. Thompson 8/29/2003
-// Ralph Lange 03/22/2010
+// Ralph Lange 03/23/2010
 // GNU Public License (GPLv3) applies - see www.gnu.org
 
 #include <unistd.h>
@@ -50,7 +50,7 @@ acceptItem::~acceptItem()
 // Accept item constructor
 // This opens a socket, binds it to the decided port,
 // and sets it to listen mode
-acceptItem::acceptItem ( int port, bool local, bool readonly )
+acceptItem::acceptItem(int port, bool local, bool readonly)
 {
     int optval = 1;
     struct sockaddr_in addr;
@@ -74,13 +74,14 @@ acceptItem::acceptItem ( int port, bool local, bool readonly )
     bindStatus = bind(_fd, (struct sockaddr *) &addr, sizeof(addr));
     if (bindStatus < 0)
     {
-	PRINTF("Bind error: %s\n", strerror(errno));
-	throw errno;
+        PRINTF("Bind error: %s\n", strerror(errno));
+        throw errno;
     }
     else
-	PRINTF("Bind returned %d\n", bindStatus);
+        PRINTF("Bind returned %d\n", bindStatus);
 
-    listen(_fd,5);
+    PRINTF("Listening on fd %d\n", _fd);
+    listen(_fd, 5);
     return; 
 }
 
