@@ -1,6 +1,6 @@
 # Process Server (for soft IOCs)
 # David H. Thompson 8/29/2003
-# Ralph Lange 12/01/2009
+# Ralph Lange 03/23/2010
 # GNU Public License (GPLv3) applies - see www.gnu.org
 
 TOP=@EPICS_TOP@
@@ -12,6 +12,7 @@ A2X_FLAGS = -a revdate=@PACKAGE_DATE@ -a revnumber=@PACKAGE_VERSION@
 PROD = procServ
 procServ_SRCS = procServ.cc connectionItem.cc acceptFactory.cc \
                 clientFactory.cc processFactory.cc telnetStateMachine.cc
+procServ_OBJS = @LIBOBJS@
 
 USR_CXXFLAGS += @DEFS@
 procServ_SYS_LIBS += util
