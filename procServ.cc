@@ -75,13 +75,13 @@ void forkAndGo();
 // Checks the command file (existence and access rights)
 int checkCommandFile(const char *command);
 
+// Signal handlers
 void OnSigChild(int);
-int sigChildSet;
-
 void OnSigPipe(int);
+void OnSigTerm(int);
+// Counters used for communication between sig handlers and main()
+int sigChildSet;
 int sigPipeSet;
-
-static struct sigaction sig;     // Global to ensure being zero
 
 void writePidFile()
 {
@@ -376,11 +376,16 @@ int main(int argc,char * argv[])
 
     if ( checkCommandFile( command ) ) exit( errno );
 
+    struct sigaction sig;
+    memset(&sig, 0, sizeof(sig));
+
     PRINTF("Installing signal handlers\n");
     sig.sa_handler = &OnSigChild;
     sigaction(SIGCHLD, &sig, NULL);              // sigaction() needed for Solaris
     sig.sa_handler = &OnSigPipe;
     sigaction(SIGPIPE, &sig, NULL);
+    sig.sa_handler = &OnSigTerm;
+    sigaction(SIGTERM, &sig, NULL);
 
     // Make an accept item to listen for control connections
     PRINTF("Creating control listener\n");
@@ -637,6 +642,13 @@ void OnSigPipe(int)
 {
     PRINTF("SigPipe received\n");
     sigPipeSet++;
+}
+
+void OnSigTerm(int)
+{
+    PRINTF("SigTerm received\n");
+    processFactorySendSignal(killSig);
+    shutdownServer = true;
 }
 
 // Fork the daemon and exit the parent
