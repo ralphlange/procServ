@@ -1,10 +1,10 @@
-procserv (2.5.0-6) unstable; urgency=low
-
+procserv (2.5.1-1) unstable; urgency=low
+  * new upstream version
   * copyright: corrected years
   * control: bumped Standards-Version to 3.8.4 with no changes
   * rules: changed from CDBS based rules to plain debhelper+dh
 
- -- Ralph Lange <Ralph.Lange@bessy.de>  Tue, 02 Mar 2010 17:11:16 -0500
+ -- Ralph Lange <Ralph.Lange@bessy.de>  Wed, 24 Mar 2010 11:50:16 -0500
 
 procserv (2.5.0-5) unstable; urgency=low
 
