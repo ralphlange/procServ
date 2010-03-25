@@ -1,5 +1,5 @@
 /* Process server for soft ioc
- * Ralph Lange 03/08/2010
+ * Ralph Lange 03/25/2010
  * GNU Public License (GPLv3) applies - see www.gnu.org */
 
 #include <unistd.h>
@@ -31,9 +31,9 @@ int forkpty(int* fdm, char* name, void* x1, void* x2)
         dup2(pts, 0);               /* connect to slave fd */
         dup2(pts, 1);
         dup2(pts, 2);
-        close(pts);
     } else {
         *fdm = ptm;                 /* return fd to parent */
     }
+    close(pts);
     return pid;
 }
