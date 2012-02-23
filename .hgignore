@@ -1,14 +1,13 @@
-syntax: glob
-
+Makefile
 Makefile.in
 Makefile.Automake.in
 configure
 build-aux
 aclocal.m4
 autom4te.cache
-procServ.1
-procServ.xml
-procServ.html
-procServ.pdf
-clean
-*~
+procServ.(1|xml|fo|html|pdf)
+^QtC-
+.*\.o$
+procServ
+.deps
+config.(log|status)
