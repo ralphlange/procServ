@@ -656,7 +656,8 @@ void forkAndGo()
             fprintf(stderr, "%s: spawning daemon process: %ld\n", procservName, (long) p);
             if (logFileFD == -1) {
                 if (S_ISREG(statBuf.st_mode))
-                    fprintf(stderr, "The open file on stdout will be used as a log file.\n");
+                    fprintf(stderr, "The open file on stdout will be used as a log file. "
+                            "DEPRECATED: Use '-L' option instead.\n");
                 else
                     fprintf(stderr, "No log file specified and stdout is not a file "
                             "- no log will be kept.\n" );
