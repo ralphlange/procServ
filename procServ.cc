@@ -382,6 +382,8 @@ int main(int argc,char * argv[])
     sigaction(SIGPIPE, &sig, NULL);
     sig.sa_handler = &OnSigTerm;
     sigaction(SIGTERM, &sig, NULL);
+    sig.sa_handler = SIG_IGN;
+    sigaction(SIGXFSZ, &sig, NULL);
 
     // Make an accept item to listen for control connections
     PRINTF("Creating control listener\n");
