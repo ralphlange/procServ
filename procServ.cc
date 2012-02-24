@@ -61,7 +61,7 @@ char   infoMessage2[128];        // Sign on message: child PID
 char   infoMessage3[128];        // Sign on message: available server commands
 
 char   *logFile = NULL;          // File name for log
-int    logFileFD=-1;;            // FD for log file
+int    logFileFD=-1;             // FD for log file
 int    debugFD=-1;               // FD for debug output
 
 #define MAX_CONNECTIONS 64
@@ -74,10 +74,12 @@ void OnPollTimeout();
 void forkAndGo();
 // Checks the command file (existence and access rights)
 int checkCommandFile(const char *command);
+void openLogFile();
 
 // Signal handlers
 void OnSigPipe(int);
 void OnSigTerm(int);
+void OnSigHup(int);
 // Counter used for communication between sig handler and main()
 int sigPipeSet;
 
@@ -382,6 +384,8 @@ int main(int argc,char * argv[])
     sigaction(SIGPIPE, &sig, NULL);
     sig.sa_handler = &OnSigTerm;
     sigaction(SIGTERM, &sig, NULL);
+    sig.sa_handler = &OnSigHup;
+    sigaction(SIGHUP, &sig, NULL);
     sig.sa_handler = SIG_IGN;
     sigaction(SIGXFSZ, &sig, NULL);
 
@@ -419,17 +423,7 @@ int main(int argc,char * argv[])
 
     procservPid=getpid();
 
-    // Open log file
-    if ( logFile ) {
-        logFileFD = open( logFile, O_CREAT|O_WRONLY|O_APPEND, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH );
-        if ( logFileFD == -1 ) {         // Don't stop here - just go without
-            fprintf( stderr,
-                     "%s: unable to open log file %s\n",
-                     procservName, logFile );
-        } else {
-            PRINTF( "Opened file %s for logging\n", logFile );
-        }
-    }
+    openLogFile();
 
     if ( inDebugMode == false )
     {
@@ -491,9 +485,7 @@ int main(int argc,char * argv[])
 
         ready = select(nFd, &fdset, NULL, NULL, &timeout);
 
-        if (ready == -1) {                    // Error
-            perror("Error in select() call");
-        } else if (ready == 0) {              // Timeout
+        if (0 == ready) {                     // Timeout
             // Go clean up dead connections
             OnPollTimeout();
             connectionItem * npi; 
@@ -504,6 +496,10 @@ int main(int argc,char * argv[])
             {
                 npi= processFactory(argc-optind-2,argv+optind+1);
                 if (npi) AddConnection(npi);
+            }
+        } else if (-1 == ready) {             // Error
+            if (EINTR != errno) {
+                perror("Error in select() call");
             }
         } else {                              // Work to be done
             // Loop through all connections
@@ -641,6 +637,12 @@ void OnSigTerm(int)
     shutdownServer = true;
 }
 
+void OnSigHup(int)
+{
+    PRINTF("SigHup received\n");
+    openLogFile();
+}
+
 // Fork the daemon and exit the parent
 void forkAndGo()
 {
@@ -716,6 +718,23 @@ int checkCommandFile(const char * command)
              "procServ may not be able to continue without execute permission!\n",
              procservName, command);
     return 0;
+}
+
+void openLogFile()
+{
+    if (-1 != logFileFD) {
+        close(logFileFD);
+    }
+    if (logFile) {
+        logFileFD = open(logFile, O_CREAT|O_WRONLY|O_APPEND, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH);
+        if (-1 == logFileFD) {         // Don't stop here - just go without
+            fprintf(stderr,
+                    "%s: unable to open log file %s\n",
+                    procservName, logFile);
+        } else {
+            PRINTF("Opened file %s for logging\n", logFile);
+        }
+    }
 }
 
 connectionItem * connectionItem::head;
