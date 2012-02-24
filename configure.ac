@@ -1,14 +1,14 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 # Process Server (for soft IOCs)
-# Ralph Lange 03/23/2010
+# Ralph Lange 02/24/2012
 # GNU Public License (GPLv3) applies - see www.gnu.org
 
 
 AC_PREREQ([2.61])
-AC_INIT([procServ Process Server], [2.5.1], [tech-talk@aps.anl.gov], [procServ],
+AC_INIT([procServ Process Server], [2.6.0.rc1], [tech-talk@aps.anl.gov], [procServ],
 	[http://sourceforge.net/projects/procserv/])
-AC_SUBST([PACKAGE_DATE],[03/23/2010])
+AC_SUBST([PACKAGE_DATE],[02/24/2012])
 
 AC_CONFIG_AUX_DIR([build-aux])
 AM_INIT_AUTOMAKE([1.10 -Wall])
