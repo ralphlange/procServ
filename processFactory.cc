@@ -1,6 +1,6 @@
 // Process server for soft ioc
 // David H. Thompson 8/29/2003
-// Ralph Lange 03/22/2010
+// Ralph Lange 02/24/2012
 // GNU Public License (GPLv3) applies - see www.gnu.org
 
 #include <unistd.h>
@@ -136,7 +136,8 @@ processClass::processClass(int argc,char * argv[])
         sprintf(infoMessage2, "@@@ Child \"%s\" PID: %ld" NL, childName, (long) _pid);
 
         sprintf(buf, "@@@ The PID of new child \"%s\" is: %ld" NL, childName, (long) _pid);
-        strcat(buf, "@@@ @@@ @@@ @@@ @@@" NL);
+        SendToAll( buf, strlen(buf), this );
+        strcpy(buf, "@@@ @@@ @@@ @@@ @@@" NL);
         SendToAll( buf, strlen(buf), this );
     }
     else                                    // I am the child

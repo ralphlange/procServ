@@ -1,6 +1,6 @@
 // Process server for soft ioc
 // David H. Thompson 8/29/2003
-// Ralph Lange 03/22/2010
+// Ralph Lange 02/24/2012
 // GNU Public License (GPLv3) applies - see www.gnu.org
 
 
@@ -105,6 +105,7 @@ public:
 
     // Return false unless you are the process item (processClass overloads)
     virtual bool isProcess() const { return false; }
+    virtual bool isLogger() const { return _readonly; }
 
 protected:
     connectionItem ( int fd = -1, bool readonly = false );

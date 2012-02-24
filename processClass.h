@@ -1,6 +1,6 @@
 // Process server for soft ioc
 // David H. Thompson 8/29/2003
-// Ralph Lange 03/22/2010
+// Ralph Lange 02/24/2012
 // GNU Public License (GPLv3) applies - see www.gnu.org
 
 
@@ -21,6 +21,7 @@ public:
     void markDeadIfChildIs(pid_t pid) { if (pid==_pid) _markedForDeletion=true; }
     char factoryName[100];
     virtual bool isProcess() const { return true; }
+    virtual bool isLogger() const { return false; }
     static void restartOnce ();
     static bool exists() { return _runningItem ? true : false; }
     virtual ~processClass();

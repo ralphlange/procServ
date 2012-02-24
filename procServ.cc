@@ -55,6 +55,8 @@ char   *pidFile;                 // File name for server PID
 char   defaultpidFile[] = "pid.txt";  // default
 char   *timeFormat;              // Time format string
 char   defaulttimeFormat[] = "%c";    // default
+bool   stampLog = false;         // Prefix log lines with time stamp
+char   *stampFormat;             // Log time stamp format string
 
 char   infoMessage1[512];        // Sign on message: server PID, child pwd and command line
 char   infoMessage2[128];        // Sign on message: child PID
@@ -126,26 +128,27 @@ void printHelp()
     printf("<port>              use telnet <port> for command connections\n"
            "<command args ...>  command line to start child process\n"
            "Options:\n"
-           "    --allow           allow control connections from anywhere\n"
-           "    --autorestartcmd  command to toggle auto restart flag (^ for ctrl)\n"
-           "    --coresize <n>    sets maximum core size for child to <n>\n"
-           " -c --chdir <dir>     change directory to <dir> before starting child\n"
-           " -d --debug           enable debug mode (keeps child in foreground)\n"
-           " -h --help            print this message\n"
-           "    --holdoff <n>     set holdoff time between child restarts\n"
-           " -i --ignore <str>    ignore all chars in <str> (^ for ctrl)\n"
-           " -k --killcmd <str>   command to kill (reboot) the child (^ for ctrl)\n"
-           "    --killsig <n>     signal to send to child when killing\n"
-           " -l --logport <n>     allow log connections through telnet port <n>\n"
-           " -L --logfile <file>  write log to <file>\n"
-           " -n --name <str>      set child's name (defaults to command line)\n"
-           "    --noautorestart   do not restart child on exit by default\n"
-           " -p --pidfile <str>   name of PID file (for server PID)\n"
-           " -q --quiet           suppress informational output (server)\n"
-           "    --restrict        restrict log connections to localhost\n"
-           "    --timefmt <str>   set time format (strftime) to <str>\n"
-           " -V --version         print program version\n"
-           " -w --wait            wait for telnet cmd to manually start child\n"
+           "    --allow             allow control connections from anywhere\n"
+           "    --autorestartcmd    command to toggle auto restart flag (^ for ctrl)\n"
+           "    --coresize <n>      sets maximum core size for child to <n>\n"
+           " -c --chdir <dir>       change directory to <dir> before starting child\n"
+           " -d --debug             enable debug mode (keeps child in foreground)\n"
+           " -h --help              print this message\n"
+           "    --holdoff <n>       set holdoff time between child restarts\n"
+           " -i --ignore <str>      ignore all chars in <str> (^ for ctrl)\n"
+           " -k --killcmd <str>     command to kill (reboot) the child (^ for ctrl)\n"
+           "    --killsig <n>       signal to send to child when killing\n"
+           " -l --logport <n>       allow log connections through telnet port <n>\n"
+           " -L --logfile <file>    write log to <file>\n"
+           "    --logstamp [<str>]  prefix log lines with timestamp [strftime format]\n"
+           " -n --name <str>        set child's name (defaults to command line)\n"
+           "    --noautorestart     do not restart child on exit by default\n"
+           " -p --pidfile <str>     name of PID file (for server PID)\n"
+           " -q --quiet             suppress informational output (server)\n"
+           "    --restrict          restrict log connections to localhost\n"
+           "    --timefmt <str>     set time format (strftime) to <str>\n"
+           " -V --version           print program version\n"
+           " -w --wait              wait for telnet cmd to manually start child\n"
         );
 }
 
@@ -190,6 +193,7 @@ int main(int argc,char * argv[])
             {"killsig",        required_argument, 0, 'K'},
             {"logport",        required_argument, 0, 'l'},
             {"logfile",        required_argument, 0, 'L'},
+            {"logstamp",       optional_argument, 0, 'f'},
             {"name",           required_argument, 0, 'n'},
             {"noautorestart",  no_argument,       0, 'N'},
             {"pidfile",        required_argument, 0, 'p'},
@@ -236,7 +240,13 @@ int main(int argc,char * argv[])
             break;
 
         case 'F':                                 // Time string format
-            timeFormat = strdup( optarg );
+            timeFormat = strdup(optarg);
+            break;
+
+        case 'f':                                 // Log time stamp format
+            stampLog = true;
+            if (optarg)
+                stampFormat = strdup(optarg);
             break;
 
         case 'h':                                 // Help
@@ -372,6 +382,11 @@ int main(int argc,char * argv[])
                  "%s: invalid control port %d (<1024)\n",
                  procservName, ctlPort );
 	exit(1);
+    }
+
+    if (stampLog && !stampFormat) {
+        stampFormat = (char*) calloc(strlen(timeFormat)+4, 1);
+        sprintf(stampFormat, "[%s] ", timeFormat);
     }
 
     if ( checkCommandFile( command ) ) exit( errno );
@@ -521,11 +536,24 @@ int main(int argc,char * argv[])
 void SendToAll(const char * message,int count,const connectionItem * sender)
 {
     connectionItem * p = connectionItem::head;
+    char stamp[64];
+    int len;
+    time_t now;
+    struct tm now_tm;
 
+    if (stampLog) {
+        time(&now);
+        localtime_r(&now, &now_tm);
+        strftime(stamp, sizeof(stamp)-1, stampFormat, &now_tm);
+        len = strlen(stamp);
+    }
     // Log the traffic to file / stdout (debug)
-    if ( sender==NULL  || sender->isProcess() )
+    if (sender==NULL || sender->isProcess())
     {
-        if ( logFileFD > 0 ) write( logFileFD, message, count );
+        if (logFileFD > 0) {
+            if (stampLog) write(logFileFD, stamp, len);
+            write(logFileFD, message, count);
+        }
         if ( debugFD > 0 ) write( debugFD, message, count );
     }
 
@@ -533,12 +561,15 @@ void SendToAll(const char * message,int count,const connectionItem * sender)
 	if ( p->isProcess() )
 	{
 	    // Non-null senders that are not processes can send to processes
-	    if (sender && !sender->isProcess()) p->Send(message,count);
+        if (sender && !sender->isProcess()) p->Send(message, count);
 	}
 	else // Not a process
 	{
 	    // Null senders and processes can send to non-processes (ie connections)
-	    if (sender==NULL || sender->isProcess() ) p->Send(message,count);
+        if (sender==NULL || sender->isProcess()) {
+            if (stampLog && p->isLogger()) p->Send(stamp, len);
+            p->Send(message, count);
+        }
 	}
 	p=p->next;
     }
@@ -556,28 +587,28 @@ void OnPollTimeout()
     pid = waitpid(-1, &wstatus, WNOHANG);
     if (pid > 0 ) {
         pc = connectionItem::head;
-        while(pc)
-	{
+        while (pc) {
             pc->markDeadIfChildIs(pid);
             pc=pc->next;
-	}
+        }
 
-	sprintf( buf, NL "@@@ @@@ @@@ @@@ @@@" NL
-                 "@@@ Received a sigChild for process %ld." , (long) pid );
+        strcpy(buf, "@@@ @@@ @@@ @@@ @@@" NL);
+        SendToAll(buf, strlen(buf), NULL);
 
-	if (WIFEXITED(wstatus))
-	{
-	    sprintf( buf + strlen(buf), " Normal exit status = %d",
-                     WEXITSTATUS(wstatus) );
-	}
+        sprintf(buf, "@@@ Received a sigChild for process %ld.", (long) pid);
+        SendToAll(buf, strlen(buf), NULL);
 
-	if (WIFSIGNALED(wstatus))
-	{
-	    sprintf( buf + strlen(buf), " The process was killed by signal %d",
-                     WTERMSIG(wstatus) );
-	}
-	strcat( buf, NL );
-	SendToAll( buf, strlen(buf), NULL );
+        if (WIFEXITED(wstatus)) {
+            sprintf(buf + strlen(buf), " Normal exit status = %d",
+                    WEXITSTATUS(wstatus));
+        }
+
+        if (WIFSIGNALED(wstatus)) {
+            sprintf(buf + strlen(buf), " The process was killed by signal %d",
+                    WTERMSIG(wstatus));
+        }
+        strcat(buf, NL);
+        SendToAll(buf, strlen(buf), NULL);
     }
 
     // Clean up connections

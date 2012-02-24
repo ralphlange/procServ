@@ -3,7 +3,6 @@
 :man manual: procServ Manual
 PROCSERV(1)
 ===========
-v{revnumber}, {revdate}
 
 NAME
 ----
@@ -19,14 +18,14 @@ DESCRIPTION
 procServ(1) creates a run time environment for a command (e.g. a soft IOC).
 It forks a server run as a daemon into the background, which creates a child process running 'command' with all remaining 'args' from the command line.
 The server provides console access (stdin/stdout) to the child process by offering a telnet connection at the specified port.
-For security reasons, access is restricted to connections from localhost (127.0.0.1), so that logging into a valid account on the host machine is required.
+For security reasons, by default access is restricted to connections from localhost (127.0.0.1), so that logging into a valid account on the host machine is required.
 
-procServ can be configured to write a console log of all in- and output of the child process into a file using the *-L* (*\--logfile*) option.
+procServ can be configured to write a console log of all in- and output of the child process into a file using the *-L* (*\--logfile*) option. Sending the signal SIGHUP to the server will make it reopen the log file.
 To facilitate running under a central console access management (like conserver), the *-l* (*\--logport*) option creates an additional telnet port, which is by default public (i.e. not restricted to localhost), and provides read-only log access to the child's console.
 The *-r* (*\--restrict*) option restricts the log port to localhost, similar to the access port.
 
 Both access and log ports allow multiple connections, which are handled transparently: all input from access connections is forwarded to the child process, all output from the child is forwarded to all access and log connections (and written to the log file).
-All diagnostic messages from the server process start with "`@@@ `" to be clearly distinguished from child process messages.
+All diagnostic messages from the server process start with "@@@ " to be clearly distinguished from child process messages.
 A name specified by the *-n* (*\--name*) option will replace the command string in many messages for increased readability.
 
 The server will by default automatically respawn a child process when it dies.
@@ -72,6 +71,8 @@ OPTIONS
     Provide read-only access to the child's console on 'port'. By default all hosts can connect to 'port', use the *-r* (*\--restrict*) option to restrict access to localhost.
 *-L, \--logfile*='file'::
     Write a console log of all in- and output to 'file'.
+*\--logstamp*[='fmt']::
+    Prefix lines in logs with a time stamp, setting the time stamp format string to 'fmt'. Default is "[<timefmt>] ". (See *\--timefmt* option.)
 *-n, \--name*='title'::
     In all server messages, use 'title' instead of the full command line to increase readability.
 *\--noautorestart*::
@@ -132,8 +133,7 @@ Type the kill command character `\^X` to reboot the soft IOC and get server mess
 
 Type the telnet escape character `\^]` to get back to a telnet prompt and quit to exit telnet (and ssh when you were connecting remotely).
 
-While procServ was originally intended to be an environment to run soft IOCs, any process might be started as child. It provides an environment for any program that requires access to its console and should be run in the background as a daemon. By writing a file log directly or through a console access and logging facility (such as `conserver`), the log of such a program's output can be used to correlate its messages to other events.
-E.g., in an EPICS environment, running `casw` (the beacon anomaly watcher) can provide useful log output to analyse and track down network issues (name resolution broadcast storms).
+Though procServ was originally intended to be an environment to run soft IOCs, any process might be started as child. It provides an environment for any program that requires access to its console, while running in the background as a daemon, and keeping a log by writing a file or through a console access and logging facility (such as `conserver`).
 
 ENVIRONMENT VARIABLES
 ---------------------
@@ -156,7 +156,7 @@ Report bugs on the procServ Trac at <http://sourceforge.net/apps/trac/procserv/>
 AUTHORS
 -------
 
-Written by David H. Thompson <thompsondh@ornl.gov> and Ralph Lange <Ralph.Lange@bessy.de>.
+Written by David H. Thompson <thompsondh@ornl.gov> and Ralph Lange <Ralph.Lange@gmx.de>.
 
 RESOURCES
 ---------
