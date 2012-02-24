@@ -417,16 +417,6 @@ int main(int argc,char * argv[])
 
     procservPid=getpid();
 
-    if ( inDebugMode == false )
-    {
-	forkAndGo();
-	writePidFile();
-    }
-    else
-    {
-        debugFD = 1;          // Enable debug messages
-    }
-
     // Open log file
     if ( logFile ) {
         logFileFD = open( logFile, O_CREAT|O_WRONLY|O_APPEND, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH );
@@ -437,6 +427,16 @@ int main(int argc,char * argv[])
         } else {
             PRINTF( "Opened file %s for logging\n", logFile );
         }
+    }
+
+    if ( inDebugMode == false )
+    {
+	forkAndGo();
+	writePidFile();
+    }
+    else
+    {
+        debugFD = 1;          // Enable debug messages
     }
 
     // Record some useful data for managers 
