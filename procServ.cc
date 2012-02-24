@@ -678,11 +678,7 @@ void forkAndGo()
         close(fh);
 
         // Make sure we are not attached to a terminal
-        fh = open("/dev/tty", O_RDWR);
-        if (fh >= 0) {                // It's a terminal
-            ioctl(fh, TIOCNOTTY);     // Detach from /dev/tty
-            close(fh);
-        }
+        setsid();
     }
 }
 
