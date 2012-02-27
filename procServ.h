@@ -1,6 +1,6 @@
 // Process server for soft ioc
 // David H. Thompson 8/29/2003
-// Ralph Lange 02/24/2012
+// Ralph Lange 02/27/2012
 // GNU Public License (GPLv3) applies - see www.gnu.org
 
 
@@ -48,6 +48,8 @@ extern time_t holdoffTime;
 
 #define NL "\r\n"
 
+#define CTL_SC(c) c < 32 ? "^" : "", c < 32 ? c + 64 : c
+
 class connectionItem;
 
 extern time_t procServStart; // Time when this IOC started
@@ -62,7 +64,6 @@ void SendToAll(const char * message,int count,const connectionItem * sender);
 // Call this to add the item to the list of connections
 void AddConnection(connectionItem *);
 void DeleteConnection(connectionItem *ci);
-
 
 // connectionItems are made in class factories so none of the
 // constructors are public:

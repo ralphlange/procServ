@@ -70,17 +70,13 @@ clientItem::clientItem(int socketIn, bool readonly)
     char greeting2[256] = "";
 
     if ( killChar ) {
-        sprintf( greeting2, "@@@ Use %s%c to kill the child, ",
-                 killChar < 32 ? "^" : "",
-                 killChar < 32 ? killChar + 64 : killChar );
+        sprintf(greeting2, "@@@ Use %s%c to kill the child, ", CTL_SC(killChar));
     } else {
         sprintf( greeting2, "@@@ Kill command disabled, " );
     }
     sprintf( buf1, "auto restart is %s, ", autoRestart ? "ON" : "OFF" );
     if ( toggleRestartChar ) {
-        sprintf( buf2, "use %s%c to toggle auto restart" NL,
-                 toggleRestartChar < 32 ? "^" : "",
-                 toggleRestartChar < 32 ? toggleRestartChar + 64 : toggleRestartChar );
+        sprintf(buf2, "use %s%c to toggle auto restart" NL, CTL_SC(toggleRestartChar));
     } else {
         sprintf( buf2, "auto restart toggle disabled" NL );
     }
@@ -155,7 +151,8 @@ void clientItem::readFromFd(void)
 
                 // Scan input for commands
                 for ( i = 0; i < len; i++ ) {
-                    if ( restartChar && buf[i] == restartChar ) {
+                    if ((restartChar && buf[i] == restartChar)
+                            || (killChar && buf[i] == killChar)) {
                         PRINTF ("Got a restart command\n");
                         waitForManualStart = false;
                         processClass::restartOnce();
