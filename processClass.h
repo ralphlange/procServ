@@ -1,6 +1,6 @@
 // Process server for soft ioc
 // David H. Thompson 8/29/2003
-// Ralph Lange 02/24/2012
+// Ralph Lange 02/27/2012
 // GNU Public License (GPLv3) applies - see www.gnu.org
 
 
@@ -11,11 +11,11 @@
 
 class processClass : public connectionItem
 {
-friend connectionItem * processFactory(int argc, char *argv[]);
+friend connectionItem * processFactory(char *exe, char *argv[]);
 friend bool processFactoryNeedsRestart();
 friend void processFactorySendSignal(int signal);
 public:
-    processClass(int argc,char * argv[]);
+    processClass(char *exe, char *argv[]);
     void readFromFd(void);
     int Send(const char *,int);
     void markDeadIfChildIs(pid_t pid) { if (pid==_pid) _markedForDeletion=true; }

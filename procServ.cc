@@ -39,6 +39,8 @@ bool   quiet = false;            // Suppress info output (server)
 bool   setCoreSize = false;      // Set core size for child
 char   *procservName;            // The name of this beast (server)
 char   *childName;               // The name of that beast (child)
+char   *childExec;               // Exec to run as child
+char   **childArgv;              // Argv for child process
 int    connectionNo;             // Total number of connections
 char   *ignChars = NULL;         // Characters to ignore
 char   killChar = 0x18;          // Kill command character (default: ^X)
@@ -132,10 +134,11 @@ void printHelp()
            "Options:\n"
            "    --allow             allow control connections from anywhere\n"
            "    --autorestartcmd    command to toggle auto restart flag (^ for ctrl)\n"
-           "    --coresize <n>      sets maximum core size for child to <n>\n"
+           "    --coresize <n>      set maximum core size for child to <n>\n"
            " -c --chdir <dir>       change directory to <dir> before starting child\n"
-           " -d --debug             enable debug mode (keeps child in foreground)\n"
-           " -f --foreground        keeps child in foreground (interactive)\n"
+           " -d --debug             debug mode (keeps child in foreground)\n"
+           " -e --exec <str>        specify child executable (default: arg0 of <command>)\n"
+           " -f --foreground        keep child in foreground (interactive)\n"
            " -h --help              print this message\n"
            "    --holdoff <n>       set holdoff time between child restarts\n"
            " -i --ignore <str>      ignore all chars in <str> (^ for ctrl)\n"
@@ -144,7 +147,7 @@ void printHelp()
            " -l --logport <n>       allow log connections through telnet port <n>\n"
            " -L --logfile <file>    write log to <file>\n"
            "    --logstamp [<str>]  prefix log lines with timestamp [strftime format]\n"
-           " -n --name <str>        set child's name (defaults to command line)\n"
+           " -n --name <str>        set child's name (default: arg0 of <command>)\n"
            "    --noautorestart     do not restart child on exit by default\n"
            " -p --pidfile <str>     name of PID file (for server PID)\n"
            " -q --quiet             suppress informational output (server)\n"
@@ -189,6 +192,7 @@ int main(int argc,char * argv[])
             {"coresize",       required_argument, 0, 'C'},
             {"chdir",          required_argument, 0, 'c'},
             {"debug",          no_argument,       0, 'd'},
+            {"exec",           required_argument, 0, 'e'},
             {"foreground",     no_argument,       0, 'f'},
             {"help",           no_argument,       0, 'h'},
             {"holdoff",        required_argument, 0, 'H'},
@@ -212,7 +216,7 @@ int main(int argc,char * argv[])
         /* getopt_long stores the option index here. */
         int option_index = 0;
 
-        c = getopt_long (argc, argv, "+c:dfhi:k:l:L:n:p:qVw",
+        c = getopt_long (argc, argv, "+c:de:fhi:k:l:L:n:p:qVw",
                          long_options, &option_index);
 
         /* Detect the end of the options. */
@@ -241,6 +245,10 @@ int main(int argc,char * argv[])
 
         case 'd':                                 // Debug mode
             inDebugMode = true;
+            break;
+
+        case 'e':                                 // Child executable
+            childExec = strdup( optarg );
             break;
 
         case 'f':                                 // Foreground mode
@@ -379,14 +387,20 @@ int main(int argc,char * argv[])
 
     ctlPort = atoi(argv[optind]);
     command = argv[optind+1];
-    if ( childName == NULL ) childName = command;
+
+    if (childName == NULL) childName = command;
+    childArgv = argv + optind;
+    if (childExec == NULL) {
+        childArgv++;
+        childExec = command;
+    }
 
     if ( ctlPort < 1024 )
     {
         fprintf( stderr,
                  "%s: invalid control port %d (<1024)\n",
                  procservName, ctlPort );
-	exit(1);
+        exit(1);
     }
 
     if (stampLog && !stampFormat) {
@@ -394,7 +408,7 @@ int main(int argc,char * argv[])
         sprintf(stampFormat, "[%s] ", timeFormat);
     }
 
-    if ( checkCommandFile( command ) ) exit( errno );
+    if (checkCommandFile(childExec)) exit(errno);
 
     struct sigaction sig;
     memset(&sig, 0, sizeof(sig));
@@ -525,7 +539,7 @@ int main(int argc,char * argv[])
             // This call returns NULL if the process item lives
             if (processFactoryNeedsRestart())
             {
-                npi= processFactory(argc-optind-2,argv+optind+1);
+                npi= processFactory(childExec, childArgv);
                 if (npi) AddConnection(npi);
             }
         } else if (-1 == ready) {             // Error

@@ -1,6 +1,6 @@
 // Process server for soft ioc
 // David H. Thompson 8/29/2003
-// Ralph Lange 02/24/2012
+// Ralph Lange 02/27/2012
 // GNU Public License (GPLv3) applies - see www.gnu.org
 
 #include <unistd.h>
@@ -48,7 +48,7 @@ bool processFactoryNeedsRestart()
     return true;
 }
 
-connectionItem * processFactory(int argc, char *argv[])
+connectionItem * processFactory(char *exe, char *argv[])
 {
     char buf[512];
     time(&IOCStart); // Remember when we did this
@@ -63,7 +63,7 @@ connectionItem * processFactory(int argc, char *argv[])
             SendToAll( buf, strlen(buf), 0 );
         }
 
-        connectionItem *ci = new processClass( argc, argv );
+        connectionItem *ci = new processClass(exe, argv);
         PRINTF("Created new child connection (processClass %p)\n", ci);
 	return ci;
     }
@@ -111,8 +111,8 @@ processClass::~processClass()
 // This forks and
 //    parent: sets the minimum time for the next restart
 //    child:  sets the coresize, becomes a process group leader,
-//            and does an execv() with the command
-processClass::processClass(int argc,char * argv[])
+//            and does an execvp() with the command
+processClass::processClass(char *exe, char *argv[])
 {
     _runningItem=this;
     struct rlimit corelimit;
@@ -152,7 +152,7 @@ processClass::processClass(int argc,char * argv[])
             fprintf( stderr, "%s: child could not chdir to %s, %s\n",
                      procservName, chDir, strerror(errno) );
         } else {
-            execvp(*argv,argv);                         // execv()
+            execvp(exe, argv);              // execvp()
         }
 
 	// This shouldn't return, but did...
