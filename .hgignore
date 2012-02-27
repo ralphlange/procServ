@@ -5,6 +5,8 @@ configure
 build-aux
 aclocal.m4
 autom4te.cache
+docbook-xsl\.css
+pid\.txt
 procServ.(1|xml|fo|html|pdf)
 ^QtC-
 .*\.o$
