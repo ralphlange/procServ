@@ -1,6 +1,6 @@
 // Process server for soft ioc
 // David H. Thompson 8/29/2003
-// Ralph Lange 02/24/2012
+// Ralph Lange 02/27/2012
 // GNU Public License (GPLv3) applies - see www.gnu.org
 
 
@@ -139,33 +139,35 @@ void clientItem::readFromFd(void)
     int  len;
 
     len = read(_fd, buf, sizeof(buf)-1);
-    if (len < 1) {
-        PRINTF("clientItem:: Got error reading input connection\n");
-        _markedForDeletion = true;
-    } else if (len == 0) {
+
+    if (len == 0) {
         PRINTF("clientItem:: Got EOF reading input connection\n");
-        _markedForDeletion=true;
-    } else if (len > 0 && _readonly == false ) {
+        _markedForDeletion = true;
+    } else if (len < 0) {
+        PRINTF("clientItem:: Got error reading input connection: %s\n", strerror(errno));
+        _markedForDeletion = true;
+    } else if (false == _readonly) {
         len = _telnet.OnReceive(buf,len);
+        if (len > 0) {
+            if (false == processClass::exists()) {  // We're in child shut down mode
+                buf[len]='\0';
+                int i;
 
-        if (processClass::exists() == false) {  // We're in child shut down mode
-            buf[len]='\0';
-            int i;
-
-            // Scan input for commands
-            for ( i = 0; i < len; i++ ) {
-                if ( restartChar && buf[i] == restartChar ) {
-                    PRINTF ("Got a restart command\n");
-                    waitForManualStart = false;
-                    processClass::restartOnce();
-                }
-                if ( quitChar && buf[i] == quitChar ) {
-                    PRINTF ("Got a shutdown command\n");
-                    shutdownServer = true;
+                // Scan input for commands
+                for ( i = 0; i < len; i++ ) {
+                    if ( restartChar && buf[i] == restartChar ) {
+                        PRINTF ("Got a restart command\n");
+                        waitForManualStart = false;
+                        processClass::restartOnce();
+                    }
+                    if ( quitChar && buf[i] == quitChar ) {
+                        PRINTF ("Got a shutdown command\n");
+                        shutdownServer = true;
+                    }
                 }
             }
+            SendToAll(&buf[0], len, this);
         }
-        SendToAll(&buf[0], len, this);
     }
 }
 
