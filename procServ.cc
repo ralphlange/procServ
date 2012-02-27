@@ -29,6 +29,7 @@ const bool enableAllow = false;  // Default: NO
 #endif
 
 bool   inDebugMode;              // This enables a lot of printfs
+bool   inFgMode = false;         // This keeps child in the foreground, tty connected
 bool   logPortLocal;             // This restricts log port access to localhost
 bool   ctlPortLocal = true;      // Restrict control connections to localhost
 bool   autoRestart = true;       // Enables instant restart of exiting child
@@ -77,6 +78,7 @@ void forkAndGo();
 // Checks the command file (existence and access rights)
 int checkCommandFile(const char *command);
 void openLogFile();
+void ttySetCharNoEcho(bool save);
 
 // Signal handlers
 void OnSigPipe(int);
@@ -133,6 +135,7 @@ void printHelp()
            "    --coresize <n>      sets maximum core size for child to <n>\n"
            " -c --chdir <dir>       change directory to <dir> before starting child\n"
            " -d --debug             enable debug mode (keeps child in foreground)\n"
+           " -f --foreground        keeps child in foreground (interactive)\n"
            " -h --help              print this message\n"
            "    --holdoff <n>       set holdoff time between child restarts\n"
            " -i --ignore <str>      ignore all chars in <str> (^ for ctrl)\n"
@@ -186,6 +189,7 @@ int main(int argc,char * argv[])
             {"coresize",       required_argument, 0, 'C'},
             {"chdir",          required_argument, 0, 'c'},
             {"debug",          no_argument,       0, 'd'},
+            {"foreground",     no_argument,       0, 'f'},
             {"help",           no_argument,       0, 'h'},
             {"holdoff",        required_argument, 0, 'H'},
             {"ignore",         required_argument, 0, 'i'},
@@ -193,7 +197,7 @@ int main(int argc,char * argv[])
             {"killsig",        required_argument, 0, 'K'},
             {"logport",        required_argument, 0, 'l'},
             {"logfile",        required_argument, 0, 'L'},
-            {"logstamp",       optional_argument, 0, 'f'},
+            {"logstamp",       optional_argument, 0, 'S'},
             {"name",           required_argument, 0, 'n'},
             {"noautorestart",  no_argument,       0, 'N'},
             {"pidfile",        required_argument, 0, 'p'},
@@ -208,7 +212,7 @@ int main(int argc,char * argv[])
         /* getopt_long stores the option index here. */
         int option_index = 0;
 
-        c = getopt_long (argc, argv, "+c:dhi:k:l:L:n:p:qVw",
+        c = getopt_long (argc, argv, "+c:dfhi:k:l:L:n:p:qVw",
                          long_options, &option_index);
 
         /* Detect the end of the options. */
@@ -239,11 +243,15 @@ int main(int argc,char * argv[])
             inDebugMode = true;
             break;
 
+        case 'f':                                 // Foreground mode
+            inFgMode = true;
+            break;
+
         case 'F':                                 // Time string format
             timeFormat = strdup(optarg);
             break;
 
-        case 'f':                                 // Log time stamp format
+        case 'S':                                 // Log time stamp format
             stampLog = true;
             if (optarg)
                 stampFormat = strdup(optarg);
@@ -403,6 +411,12 @@ int main(int argc,char * argv[])
     sigaction(SIGHUP, &sig, NULL);
     sig.sa_handler = SIG_IGN;
     sigaction(SIGXFSZ, &sig, NULL);
+    if (inFgMode) {
+        sig.sa_handler = SIG_IGN;
+        sigaction(SIGINT, &sig, NULL);
+        sig.sa_handler = SIG_IGN;
+        sigaction(SIGQUIT, &sig, NULL);
+    }
 
     // Make an accept item to listen for control connections
     PRINTF("Creating control listener\n");
@@ -440,14 +454,19 @@ int main(int argc,char * argv[])
 
     openLogFile();
 
-    if ( inDebugMode == false )
+    if (false == inFgMode && false == inDebugMode)
     {
-	forkAndGo();
-	writePidFile();
+        forkAndGo();
+        writePidFile();
     }
     else
     {
         debugFD = 1;          // Enable debug messages
+    }
+
+    if (inFgMode) {
+        ttySetCharNoEcho(true);
+        AddConnection(clientFactory(0));
     }
 
     // Record some useful data for managers 
@@ -526,6 +545,7 @@ int main(int argc,char * argv[])
             OnPollTimeout();
         }
     }
+    ttySetCharNoEcho(false);
 }
 
 // Connection items call this to send messages to others
@@ -554,7 +574,7 @@ void SendToAll(const char * message,int count,const connectionItem * sender)
             if (stampLog) write(logFileFD, stamp, len);
             write(logFileFD, message, count);
         }
-        if ( debugFD > 0 ) write( debugFD, message, count );
+        if (false == inFgMode && debugFD > 0) write(debugFD, message, count);
     }
 
     while ( p ) {
@@ -764,6 +784,25 @@ void openLogFile()
         } else {
             PRINTF("Opened file %s for logging\n", logFile);
         }
+    }
+}
+
+void ttySetCharNoEcho(bool set) {
+    static struct termios org_mode;
+    static struct termios mode;
+    static bool saved = false;
+
+    if (set && !saved) {
+        tcgetattr(0, &mode);
+        org_mode = mode;
+        saved = true;
+        mode.c_iflag &= ~IXON;
+        mode.c_lflag &= ~ICANON;
+        mode.c_lflag &= ~ECHO;
+        mode.c_cc[VMIN] = 1;
+        tcsetattr(0, TCSANOW, &mode);
+    } else if (saved) {
+        tcsetattr(0, TCSANOW, &org_mode);
     }
 }
 
