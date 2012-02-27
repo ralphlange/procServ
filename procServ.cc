@@ -743,7 +743,8 @@ void forkAndGo()
 int checkCommandFile(const char * command)
 {
     struct stat s;
-    mode_t min_permissions=S_IRUSR|S_IXUSR|S_IXGRP|S_IRGRP|S_IROTH|S_IXOTH;
+    mode_t must_perm   =         S_IXUSR        |S_IXGRP        |S_IXOTH;
+    mode_t should_perm = S_IRUSR|S_IXUSR|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH;
 
     PRINTF("Checking command file validity\n");
 
@@ -762,11 +763,21 @@ int checkCommandFile(const char * command)
         fprintf(stderr, "%s: %s is not a regular file\n", procservName, command);
         return -1;
     }
-    if (min_permissions == (s.st_mode & min_permissions)) return 0; // This is great!
-    // else
-    fprintf(stderr, "%s: Warning - Please change permissions on %s to at least -r-xr-xr-x\n"
-             "procServ may not be able to continue without execute permission!\n",
-             procservName, command);
+
+    if (must_perm != (s.st_mode & must_perm)) {
+        fprintf(stderr, "%s: Error - Please change permissions on %s to at least ---x--x--x\n"
+                "procServ is not able to continue without execute permission\n",
+                procservName, command);
+        return -1;
+    }
+
+    if (should_perm != (s.st_mode & should_perm)) {
+        fprintf(stderr, "%s: Warning - Please change permissions on %s to at least -r-xr-xr-x\n"
+                "procServ may not be able to continue without read and execute permissions\n",
+                procservName, command);
+        return 0;
+    }
+
     return 0;
 }
 
