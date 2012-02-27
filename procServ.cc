@@ -1,6 +1,6 @@
 // Process server for soft ioc
 // David H. Thompson 8/29/2003
-// Ralph Lange 02/24/2012
+// Ralph Lange 02/27/2012
 // GNU Public License (GPLv3) applies - see www.gnu.org
 
 
@@ -596,7 +596,6 @@ void OnPollTimeout()
         SendToAll(buf, strlen(buf), NULL);
 
         sprintf(buf, "@@@ Received a sigChild for process %ld.", (long) pid);
-        SendToAll(buf, strlen(buf), NULL);
 
         if (WIFEXITED(wstatus)) {
             sprintf(buf + strlen(buf), " Normal exit status = %d",
