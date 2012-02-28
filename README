@@ -5,6 +5,7 @@ Dependencies:
       NOTE: The distribution tar contains the doc in all available formats,
             so you don't need asciidoc to make and install procServ
 
+
 procServ is on Sourceforge:
 
    http://sourceforge.net/projects/procserv/
@@ -46,5 +47,14 @@ Building from procServ Mercurial repository
          option assumes the distribution behaviour, that
          the documentation should be installed, but doesn't
          need to be built.
+
+
+Using procServ to run EPICS soft IOCs in a production environment
+
+   Michael Davidsaver (BNL) has created SysV-style rc scripts to configure
+   and run EPICS soft IOCs using procServ.
+   See http://epics.nsls2.bnl.gov/debian/ for the Debian package or
+   http://epics.nsls2.bnl.gov/git/sysv-rc-softioc.git/ for the git repository.
+
 
 Enjoy!
