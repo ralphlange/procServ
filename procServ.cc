@@ -1,6 +1,6 @@
 // Process server for soft ioc
 // David H. Thompson 8/29/2003
-// Ralph Lange 02/27/2012
+// Ralph Lange 02/28/2012
 // GNU Public License (GPLv3) applies - see www.gnu.org
 
 
@@ -47,6 +47,7 @@ char   killChar = 0x18;          // Kill command character (default: ^X)
 char   toggleRestartChar = 0x14; // Toggle autorestart character (default: ^T)
 char   restartChar = 0x12;       // Restart character (default: ^R)
 char   quitChar = 0x11;          // Quit character (default: ^Q)
+char   logoutChar = 0x00;        // Logout client connection character (default: none)
 int    killSig = SIGKILL;        // Kill signal (default: SIGKILL)
 rlim_t coreSize;                 // Max core size for child
 char   *chDir;                   // Directory to change to before starting child
@@ -155,6 +156,7 @@ void printHelp()
            "    --timefmt <str>     set time format (strftime) to <str>\n"
            " -V --version           print program version\n"
            " -w --wait              wait for telnet cmd to manually start child\n"
+           " -x --logoutcmd <str>   command to logout client connection (^ for ctrl)\n"
         );
 }
 
@@ -183,7 +185,7 @@ int main(int argc,char * argv[])
     if ( !pidFile || strlen(pidFile) == 0 ) pidFile = defaultpidFile;
     if ( getenv("PROCSERV_DEBUG") != NULL ) inDebugMode = true;
 
-    const int ONE_CHAR_COMMANDS = 2;  // togglerestartcmd, killcmd
+    const int ONE_CHAR_COMMANDS = 3;  // togglerestartcmd, killcmd, logoutcmd
 
     while (1) {
         static struct option long_options[] = {
@@ -210,13 +212,14 @@ int main(int argc,char * argv[])
             {"timefmt",        required_argument, 0, 'F'},
             {"version",        no_argument,       0, 'V'},
             {"wait",           no_argument,       0, 'w'},
+            {"logoutcmd",      required_argument, 0, 'x'},
             {0, 0, 0, 0}
         };
 
         /* getopt_long stores the option index here. */
         int option_index = 0;
 
-        c = getopt_long (argc, argv, "+c:de:fhi:k:l:L:n:p:qVw",
+        c = getopt_long (argc, argv, "+c:de:fhi:k:l:L:n:p:qVwx:",
                          long_options, &option_index);
 
         /* Detect the end of the options. */
@@ -347,6 +350,10 @@ int main(int argc,char * argv[])
             waitForManualStart = true;
             break;
 
+        case 'x':                                 // Logout command
+            logoutChar = getOptionChar(optarg);
+            break;
+
         case 'T':                                 // Toggle auto restart command
             toggleRestartChar = getOptionChar ( optarg );
             break;
@@ -373,17 +380,20 @@ int main(int argc,char * argv[])
     }
 
     // Single command characters should be ignored, too
-    if (ignChars == NULL && (killChar || toggleRestartChar))
+    if (ignChars == NULL && (killChar || toggleRestartChar || logoutChar))
         ignChars = (char*) calloc(1 + ONE_CHAR_COMMANDS, 1);
     if (killChar)
         strncat (ignChars, &killChar, 1);
     if (toggleRestartChar)
         strncat (ignChars, &toggleRestartChar, 1);
+    if (logoutChar)
+        strncat (ignChars, &logoutChar, 1);
 
     // Set up available server commands message
     PRINTF("Setting up messages\n");
-    sprintf( infoMessage3, "@@@ Use %s%c or %s%c to restart the child now, %s%c to quit the server" NL,
-             CTL_SC(restartChar), CTL_SC(killChar), CTL_SC(quitChar));
+    sprintf(infoMessage3, "@@@ Use %s%c or %s%c to restart the child now, %s%c to quit the server," NL
+            "@@@ %s%c to log out (close this connection)" NL,
+            CTL_SC(restartChar), CTL_SC(killChar), CTL_SC(quitChar), CTL_SC(logoutChar));
 
     ctlPort = atoi(argv[optind]);
     command = argv[optind+1];

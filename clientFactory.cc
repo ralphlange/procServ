@@ -1,6 +1,6 @@
 // Process server for soft ioc
 // David H. Thompson 8/29/2003
-// Ralph Lange 02/27/2012
+// Ralph Lange 02/28/2012
 // GNU Public License (GPLv3) applies - see www.gnu.org
 
 
@@ -65,8 +65,7 @@ clientItem::clientItem(int socketIn, bool readonly)
     struct tm IOCStart_tm;      // Time when the current IOC was started
     char IOCStart_buf[32];      // Time when the current IOC was started - as string
     char buf1[512], buf2[512];
-    char greeting1[] = "@@@ Welcome to the procServ process server ("
-        PROCSERV_VERSION_STRING ")" NL;
+    char greeting1[] = "@@@ Welcome to procServ (" PROCSERV_VERSION_STRING ")" NL;
     char greeting2[256] = "";
 
     if ( killChar ) {
@@ -82,6 +81,10 @@ clientItem::clientItem(int socketIn, bool readonly)
     }
     strcat ( greeting2, buf1 );
     strcat ( greeting2, buf2 );
+    if (logoutChar) {
+        sprintf(buf2, "@@@ Use %s%c to logout from procServ server" NL, CTL_SC(logoutChar));
+        strcat(greeting2, buf2);
+    }
 
     localtime_r( &procServStart, &procServStart_tm );
     strftime( procServStart_buf, sizeof(procServStart_buf)-1,
@@ -143,24 +146,27 @@ void clientItem::readFromFd(void)
         PRINTF("clientItem:: Got error reading input connection: %s\n", strerror(errno));
         _markedForDeletion = true;
     } else if (false == _readonly) {
+        int i;
         len = _telnet.OnReceive(buf,len);
+        buf[len]='\0';
         if (len > 0) {
-            if (false == processClass::exists()) {  // We're in child shut down mode
-                buf[len]='\0';
-                int i;
-
                 // Scan input for commands
-                for ( i = 0; i < len; i++ ) {
+            for ( i = 0; i < len; i++ ) {
+                if (false == processClass::exists()) {  // We're in child shut down mode
                     if ((restartChar && buf[i] == restartChar)
                             || (killChar && buf[i] == killChar)) {
                         PRINTF ("Got a restart command\n");
                         waitForManualStart = false;
                         processClass::restartOnce();
                     }
-                    if ( quitChar && buf[i] == quitChar ) {
+                    if (quitChar && buf[i] == quitChar) {
                         PRINTF ("Got a shutdown command\n");
                         shutdownServer = true;
                     }
+                }
+                if (logoutChar && buf[i] == logoutChar) {
+                    PRINTF ("Got a logout command\n");
+                    _markedForDeletion = true;
                 }
             }
             SendToAll(&buf[0], len, this);

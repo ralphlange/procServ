@@ -1,6 +1,6 @@
 // Process server for soft ioc
 // David H. Thompson 8/29/2003
-// Ralph Lange 02/27/2012
+// Ralph Lange 02/28/2012
 // GNU Public License (GPLv3) applies - see www.gnu.org
 
 
@@ -37,6 +37,7 @@ extern char   killChar;
 extern char   toggleRestartChar;
 extern char   restartChar;
 extern char   quitChar;
+extern char   logoutChar;
 extern int    killSig;
 extern char   infoMessage1[];
 extern char   infoMessage2[];
