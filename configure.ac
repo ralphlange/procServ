@@ -1,14 +1,14 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 # Process Server (for soft IOCs)
-# Ralph Lange 02/24/2012
+# Ralph Lange 02/28/2012
 # GNU Public License (GPLv3) applies - see www.gnu.org
 
 
 AC_PREREQ([2.61])
 AC_INIT([procServ Process Server], [2.6.0.rc1], [tech-talk@aps.anl.gov], [procServ],
 	[http://sourceforge.net/projects/procserv/])
-AC_SUBST([PACKAGE_DATE],[02/24/2012])
+AC_SUBST([PACKAGE_DATE],[02/28/2012])
 
 AC_CONFIG_AUX_DIR([build-aux])
 AM_INIT_AUTOMAKE([1.10 -Wall])
@@ -70,9 +70,14 @@ AC_ARG_WITH([epics-top],
               [with_epics_top=no])
 AS_IF([test "x$with_epics_top" != xno],
       [if test "x$with_epics_top" = xyes; then
-          with_epics_top=../..
+         with_epics_top=../..
        fi
        use_epics_makefile=yes
+       a=`pwd`; b=`echo ${a##*/} | tr . -`; c=${a%/*}/${b%%App}App
+       if test "x$a" != "x$c"; then
+         echo "renaming directory to fit the EPICS build rules"
+         mv $a $c
+       fi
        AC_SUBST([EPICS_TOP],[$with_epics_top])
       ])
 AM_CONDITIONAL([WITH_EPICS], [test x$with_epics_top != xno])
