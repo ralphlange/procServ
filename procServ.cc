@@ -391,8 +391,8 @@ int main(int argc,char * argv[])
 
     // Set up available server commands message
     PRINTF("Setting up messages\n");
-    sprintf(infoMessage3, "@@@ Use %s%c or %s%c to restart the child now, %s%c to quit the server," NL
-            "@@@ %s%c to log out (close this connection)" NL,
+    sprintf(infoMessage3, "@@@ %s%c or %s%c restarts the child, %s%c quits the server,"
+            " %s%c closes this connection" NL,
             CTL_SC(restartChar), CTL_SC(killChar), CTL_SC(quitChar), CTL_SC(logoutChar));
 
     ctlPort = atoi(argv[optind]);
