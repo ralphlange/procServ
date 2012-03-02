@@ -1,6 +1,6 @@
 // Process server for soft ioc
 // David H. Thompson 8/29/2003
-// Ralph Lange 03/18/2010
+// Ralph Lange 03/02/2012
 // GNU Public License (GPLv3) applies - see www.gnu.org
 
 #ifndef telnetStateMachineH
@@ -26,7 +26,6 @@ public:
     }
     int OnReceive(char * buf,int len,bool priority=false);
 
-
 private:
     signed char _buf[128]; // Where to put data after an IAC
     int _count; // This is normally -1, after IAC it is 0 + chars received
@@ -45,15 +44,10 @@ private:
 
 private: // Methods
     void sendReply( int opt0, int opt1=-1,int opt2=-1, int opt3=-1,int opt4=-1);
-    void doCommand(); // The state is in _buf[]/_count;
     void sendInitialRequests();
-
+    void debugMsg(unsigned char c, unsigned char o);
+    void debugMsg(unsigned char c);
     bool onChar(unsigned char c);
-    void onDo(unsigned char opt);
-    void onDont(unsigned char opt);
-    void onWill(unsigned char opt);
-    void onWont(unsigned char opt);
-    void onOpt(unsigned char opt);
     
     enum state
     {

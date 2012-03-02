@@ -1,15 +1,13 @@
 // Process server for soft ioc
 // David H. Thompson 8/29/2003
-// Ralph Lange 04/22/2008
+// Ralph Lange 03/02/2012
 // GNU Public License (GPLv3) applies - see www.gnu.org
-
 
 #include "procServ.h"
 #define TELOPTS
 #define TELCMDS
 #include "telnetStateMachine.h"
 #include <arpa/telnet.h>
-
 
 // This interprets telnet commands 
 
@@ -42,14 +40,14 @@ int telnetStateMachine::OnReceive(char * buf,int len,bool priority)
     unsigned char * pi,*po; 
     pi=po=(unsigned char *) buf;
     
-    for(;len>0; len--,pi++)
-    {
-	if (onChar(*pi)) *po++=*pi; // copy the character
+    for (; len > 0; len--, pi++) {
+        if (onChar(*pi)) {
+            *po++ = *pi;
+        }
     }
 
     return (po-(unsigned char *) buf);
 }
-
 
 bool telnetStateMachine::onChar(unsigned char c)
 {
@@ -89,9 +87,9 @@ bool telnetStateMachine::onChar(unsigned char c)
 	    break;
 	case ON_DO:
 	    if (TELOPT_OK(c))
-	    {
+        {
 	        _myOpts[c]=DO;
-		onDo(c);
+            debugMsg(DO, c);
 	    }
 	    _myState=ON_START;	    
 	    break;
@@ -99,7 +97,7 @@ bool telnetStateMachine::onChar(unsigned char c)
 	    if (TELOPT_OK(c))
 	    {
 	        _myOpts[c]=DONT;
-		onDont(c);
+            debugMsg(DONT, c);
 	    }
 	    _myState=ON_START;	    
 	    break;
@@ -107,7 +105,7 @@ bool telnetStateMachine::onChar(unsigned char c)
 	    if (TELOPT_OK(c))
 	    {
 	        _otherOpts[c]=WILL;
-		onWill(c);
+            debugMsg(WILL, c);
 	    }
 	    _myState=ON_START;	    
 	    break;
@@ -115,14 +113,15 @@ bool telnetStateMachine::onChar(unsigned char c)
 	    if (TELOPT_OK(c))
 	    {
 	        _otherOpts[c]=WONT;
-		onWont(c);
+            debugMsg(WONT, c);
 	    }
 	    _myState=ON_START;	    
 	    break;
 	case ON_SB:
 	    if (TELOPT_OK(c))
 	    {
-	        _workingOpt=c;
+            debugMsg(SB);
+            _workingOpt=c;
 		_otherOptArgLen[_workingOpt]=0;
 		_myState=ON_DATA;
 		
@@ -137,41 +136,27 @@ bool telnetStateMachine::onChar(unsigned char c)
 	case ON_END:	
 	    // No matter what happens go to state ON_START
 	    // this should be an SE
-	    onOpt(c);
+        debugMsg(SE);
 	    _myState=ON_START;
 	    break;
 
 	default:
-	    PRINTF("telent state machine invalid state\n");
+        PRINTF("telnet(item %p) invalid state\n", _item);
 	    _myState=ON_START;
 	    break;	
 	}
 	return rv;
 }
 
+void telnetStateMachine::debugMsg(unsigned char c, unsigned char o)
+{
+    PRINTF("telnet(item %p) RCVD %s %s\n", _item, TELCMD(c), TELOPT(o));
+}
 
-
-void telnetStateMachine::onDo(unsigned char opt)
+void telnetStateMachine::debugMsg(unsigned char c)
 {
-    PRINTF("telnetStateMachine::onDo(%d)\n",opt);
+    PRINTF("telnet(item %p) RCVD %s\n", _item, TELCMD(c));
 }
-void telnetStateMachine::onDont(unsigned char opt)
-{
-    PRINTF("telnetStateMachine::onDont(%d)\n",opt);
-}
-void telnetStateMachine::onWill(unsigned char opt)
-{
-    PRINTF("telnetStateMachine::onWill(%d)\n",opt);
-}
-void telnetStateMachine::onWont(unsigned char opt)
-{
-    PRINTF("telnetStateMachine::onWont(%d)\n",opt);
-}
-void telnetStateMachine::onOpt(unsigned char opt)
-{
-    PRINTF("telnetStateMachine::onOpt(%d)\n",opt);
-}
-    
 
 void telnetStateMachine::sendReply(int opt0, int opt1,int opt2, int opt3,int opt4)
 {
@@ -189,59 +174,27 @@ void telnetStateMachine::sendReply(int opt0, int opt1,int opt2, int opt3,int opt
     { _item->Send((char *) buf,6); return; }
 }
 
-void telnetStateMachine::doCommand() // The state is in _buf[]/_count;
-{
-    if (TELCMD_OK(_buf[0]))
-    {
-	switch((unsigned char)_buf[0])
-	{
-	case WILL:
-	case WONT:
-	    PRINTF("telnetStateMachine::doCommand() %s %s \n",TELCMD(_buf[0]),TELOPT(_buf[1]) );
-	    _otherOpts[_buf[1]]=_buf[0];
-	    break;
-	case DO:
-	case DONT:
-	    PRINTF("telnetStateMachine::doCommand() %s %s \n",TELCMD(_buf[0]),TELOPT(_buf[1]) );
-	    _myOpts[_buf[1]]=_buf[0];
-	    break;
-	case SB:
-	    PRINTF("telnetStateMachine::doCommand() %s %s \n",TELCMD(_buf[0]),TELOPT(_buf[1]) );
-	    break;
-	default:
-	    PRINTF("telnetStateMachine::doCommand() %s\n",TELCMD(_buf[0])) ;
-	    break;
-
-	}
-    }
-    // This terminates the command.
-    _count=-1;
-}
 void telnetStateMachine::sendInitialRequests()
 {
 	int i;
-	for (i=0;i<NTELOPTS;i++)
-	{
-	    if (_otherOpts[i]==DO)
-	    {
-		sendReply(DO,i);
-	    }
-	    else if (_otherOpts[i]==DONT)
-	    {
-		sendReply( DONT,i);
-	    }
 
-	}
-	for (i=0;i<NTELOPTS;i++)
-	{
-	    if (_myOpts[i]==WILL)
-	    {
-		sendReply( WILL,i);
-	    }
-	    else if (_myOpts[i]==WONT)
-	    {
-		sendReply( WONT,i);
-	    }
+    for (i = 0; i < NTELOPTS; i++) {
+        if (DO == _otherOpts[i]) {
+            sendReply(DO, i);
+            PRINTF("telnet(item %p) SENT DO %s\n", _item, TELOPT(i));
+        } else if (DONT == _otherOpts[i]) {
+            sendReply(DONT, i);
+            PRINTF("telnet(item %p) SENT DONT %s\n", _item, TELOPT(i));
+        }
+    }
 
-	}
+    for (i = 0; i < NTELOPTS; i++) {
+        if (WILL == _myOpts[i]) {
+            sendReply(WILL, i);
+            PRINTF("telnet(item %p) SENT WILL %s\n", _item, TELOPT(i));
+        } else if (WONT == _myOpts[i]) {
+            sendReply(WONT, i);
+            PRINTF("telnet(item %p) SENT WONT %s\n", _item, TELOPT(i));
+        }
+    }
 }

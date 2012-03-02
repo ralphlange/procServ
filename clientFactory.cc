@@ -68,6 +68,7 @@ clientItem::clientItem(int socketIn, bool readonly)
     char greeting1[] = "@@@ Welcome to procServ (" PROCSERV_VERSION_STRING ")" NL;
     char greeting2[256] = "";
 
+    PRINTF("New clientItem %p\n", this);
     if ( killChar ) {
         sprintf(greeting2, "@@@ Use %s%c to kill the child, ", CTL_SC(killChar));
     } else {
