@@ -68,6 +68,7 @@ char   infoMessage3[128];        // Sign on message: available server commands
 
 char   *logFile = NULL;          // File name for log
 int    logFileFD=-1;             // FD for log file
+int    logPort;                  // Port no. for logger connections
 int    debugFD=-1;               // FD for debug output
 
 #define MAX_CONNECTIONS 64
@@ -123,7 +124,7 @@ char getOptionChar ( const char* buf )
 
 void printUsage()
 {
-    printf("Usage: %s [options] <port> <command args ... >    (-h for help)\n",
+    printf("Usage: %s [options] <port> <command args ...>    (-h for help)\n",
            procservName);
 }
 
@@ -170,7 +171,7 @@ int main(int argc,char * argv[])
     int c;
     unsigned int i, j;
     int k;
-    int ctlPort, logPort = 0;
+    int ctlPort = 0;
     char *command;
     bool wrongOption = false;
     char buff[512];
@@ -719,31 +720,23 @@ void forkAndGo()
 {
     pid_t p;
     int fh;
-    struct stat statBuf;
-
-    fstat(1, &statBuf);      // Find out what stdout is
 
     if ((p = fork()) < 0) {  // Fork failed
         perror("Could not fork daemon process");
         exit(errno);
-    } else if (p > 0) {      // I am the parent (foreground command)
+
+    } else if (p > 0) {      // I am the PARENT (foreground command)
         if (!quiet) {
             fprintf(stderr, "%s: spawning daemon process: %ld\n", procservName, (long) p);
-            if (logFileFD == -1) {
-                if (S_ISREG(statBuf.st_mode))
-                    fprintf(stderr, "The open file on stdout will be used as a log file. "
-                            "DEPRECATED: Use '-L' option instead.\n");
-                else
-                    fprintf(stderr, "No log file specified and stdout is not a file "
-                            "- no log will be kept.\n" );
+            if (-1 == logFileFD) {
+                fprintf(stderr, "Warning: No log file%s specified.\n",
+                        logPort ? "" : " and no port for log connections");
             }
         }
         exit(0);
-    } else {                 // I am the child (background daemon)
-        procservPid = getpid();
 
-        // Use stdout as log file, if no file is set and stdout is a file
-        if (logFileFD == -1 && S_ISREG(statBuf.st_mode)) logFileFD = dup(1);
+    } else {                 // I am the CHILD (background daemon)
+        procservPid = getpid();
 
         // Redirect stdin, stdout, stderr to /dev/null
         char buf[] = "/dev/null";
