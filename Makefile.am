@@ -1,5 +1,5 @@
 # Process Server (for soft IOCs)
-# Ralph Lange 03/18/2010
+# Ralph Lange 03/05/2012
 # GNU Public License (GPLv3) applies - see www.gnu.org
 
 bin_PROGRAMS = procServ
@@ -7,8 +7,9 @@ bin_PROGRAMS = procServ
 procServ_SOURCES = procServ.cc procServ.h \
                    connectionItem.cc acceptFactory.cc clientFactory.cc \
                    processFactory.cc processClass.h \
-                   telnetStateMachine.cc telnetStateMachine.h \
                    procServ.txt
+
+procServ_SOURCES += libtelnet.c libtelnet.h
 
 LDADD = $(LIBOBJS)
 

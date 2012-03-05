@@ -1,8 +1,7 @@
 // Process server for soft ioc
 // David H. Thompson 8/29/2003
-// Ralph Lange 02/28/2012
+// Ralph Lange 03/05/2012
 // GNU Public License (GPLv3) applies - see www.gnu.org
-
 
 #include <unistd.h>
 #include <stdio.h>
@@ -18,8 +17,14 @@
 
 #include "procServ.h"
 #include "processClass.h"
-#include "telnetStateMachine.h"
+#include "libtelnet.h"
 
+static const telnet_telopt_t my_telopts[] = {
+  { TELNET_TELOPT_ECHO,      TELNET_WILL,           0 },
+  { TELNET_TELOPT_LINEMODE,            0, TELNET_DO   },
+//  { TELNET_TELOPT_NAOCRD,    TELNET_WILL, 0           },
+  { -1, 0, 0 }
+};
 
 class clientItem : public connectionItem
 {
@@ -28,12 +33,17 @@ public:
     ~clientItem();
 
     void readFromFd(void);
-    int Send(const char *, int count);
+    int Send(const char *buf, int len);
 
 private:
-    telnetStateMachine _telnet;
+    static void telnet_eh(telnet_t *telnet, telnet_event_t *event, void *user_data);
+    void processInput(const char *buf, int len);
+    void writeToFd(const char *buf, int len);
+
+    telnet_t *_telnet;
     static int _users;
     static int _loggers;
+    static int _status;
 };
 
 // service and calls clientFactory when clients are accepted
@@ -53,13 +63,13 @@ clientItem::~clientItem()
     else _users--;
 }
 
-
 // Client item constructor
 // This sets KEEPALIVE on the socket and displays the greeting
 clientItem::clientItem(int socketIn, bool readonly)
 {
     assert(socketIn>=0);
     int optval = 1;
+    int i;
     struct tm procServStart_tm; // Time when this procServ started
     char procServStart_buf[32]; // Time when this procServ started - as string
     struct tm IOCStart_tm;      // Time when the current IOC was started
@@ -127,7 +137,16 @@ clientItem::clientItem(int socketIn, bool readonly)
     if ( ! processClass::exists() )
         write( _fd, infoMessage3, strlen(infoMessage3) );
 
-    _telnet.SetConnectionItem( this );
+    _telnet = telnet_init(my_telopts, telnet_eh, 0, this);
+
+    for (i = 0; my_telopts[i].telopt >= 0; i++) {
+        if (my_telopts[i].him > 0) {
+            telnet_negotiate(_telnet, my_telopts[i].him, my_telopts[i].telopt);
+        }
+        if (my_telopts[i].us > 0) {
+            telnet_negotiate(_telnet, my_telopts[i].us, my_telopts[i].telopt);
+        }
+    }
 }
 
 // clientItem::readFromFd
@@ -147,46 +166,82 @@ void clientItem::readFromFd(void)
         PRINTF("clientItem:: Got error reading input connection: %s\n", strerror(errno));
         _markedForDeletion = true;
     } else if (false == _readonly) {
-        int i;
-        len = _telnet.OnReceive(buf,len);
-        buf[len]='\0';
-        if (len > 0) {
-                // Scan input for commands
-            for ( i = 0; i < len; i++ ) {
-                if (false == processClass::exists()) {  // We're in child shut down mode
-                    if ((restartChar && buf[i] == restartChar)
-                            || (killChar && buf[i] == killChar)) {
-                        PRINTF ("Got a restart command\n");
-                        waitForManualStart = false;
-                        processClass::restartOnce();
-                    }
-                    if (quitChar && buf[i] == quitChar) {
-                        PRINTF ("Got a shutdown command\n");
-                        shutdownServer = true;
-                    }
-                }
-                if (logoutChar && buf[i] == logoutChar) {
-                    PRINTF ("Got a logout command\n");
-                    _markedForDeletion = true;
-                }
-            }
-            SendToAll(&buf[0], len, this);
-        }
+        telnet_recv(_telnet, buf, len);
     }
 }
 
-// Send characters to client
-int clientItem::Send(const char * buf,int count)
+// clientItem::processInput
+// Scans for restart / quit char if in child shut down mode,
+// else sends the characters to the other connections
+void clientItem::processInput(const char *buf, int len)
+{
+    int i;
+    if (len > 0) {
+            // Scan input for commands
+        for (i = 0; i < len; i++) {
+            if (false == processClass::exists()) {  // We're in child shut down mode
+                if ((restartChar && buf[i] == restartChar)
+                        || (killChar && buf[i] == killChar)) {
+                    PRINTF ("Got a restart command\n");
+                    waitForManualStart = false;
+                    processClass::restartOnce();
+                }
+                if (quitChar && buf[i] == quitChar) {
+                    PRINTF ("Got a shutdown command\n");
+                    shutdownServer = true;
+                }
+            }
+            if (logoutChar && buf[i] == logoutChar) {
+                PRINTF ("Got a logout command\n");
+                _markedForDeletion = true;
+            }
+        }
+        SendToAll(buf, len, this);
+    }
+}
+
+// Send characters to telnet state machine
+int clientItem::Send(const char * buf, int len)
+{
+    if (!_markedForDeletion) {
+        _status = 0;
+        telnet_send(_telnet, buf, len);
+    }
+    return _status;
+}
+
+// Write characters to client FD
+void clientItem::writeToFd(const char * buf, int len)
 {
     int status = 0;
-
-    if (!_markedForDeletion)
-    {
-	while ( (status=write(_fd,buf,count)) == -1 && errno == EINTR);
+    while (-1 == (status = write(_fd, buf, len)) && errno == EINTR);
+    if (-1 == status) {
+        _markedForDeletion = true;
+        _status = status;
     }
-    if (status==-1) _markedForDeletion=true;
-    return status;
+}
+
+// Event handler for libtelnet
+// this is being called when libtelnet process an input buffer
+void clientItem::telnet_eh(telnet_t *telnet, telnet_event_t *event, void *user_data)
+{
+    clientItem *client = (clientItem *)user_data;
+
+    switch (event->type) {
+    case TELNET_EV_DATA:
+        client->processInput(event->data.buffer, event->data.size);
+        break;
+    case TELNET_EV_SEND:
+        client->writeToFd(event->data.buffer, event->data.size);
+        break;
+    case TELNET_EV_ERROR:
+        fprintf(stderr, "TELNET error: %s", event->error.msg);
+        break;
+    default:
+        break;
+    }
 }
 
 int clientItem::_users;
 int clientItem::_loggers;
+int clientItem::_status;
