@@ -1,3 +1,18 @@
+V 2.6.0.rc1 03/05/2012 Ralph Lange <Ralph.Lange@gmx.de>
+Fixed resource leak on Solaris (Trac #18).
+Replaced buggy telnet state machine with libtelnet (Trac #1, #27).
+Added option to keep child in foreground (Trac #16).
+Fixed several logfile issues (Trac #20, #22, #25).
+Improved README pointing to Michael Davidsaver's SysV scripts (Trac #13).
+Fixed several autoconf issues (Trac #19, #26).
+Added option to print formatted timestamps to log (Trac #21).
+Added option to specify the executable separately (Trac #23).
+Improve access bit checks on the executable (Trac #24).
+Added option to specify logout command character (Trac #28).
+Allow kill command to restart the child in wait mode (Trac #29).
+Remove deprecated option to specify logfile by output redirect (Trac #30).
+Changes to compile under Cygwin.
+
 V 2.5.1 03/23/2010 Ralph Lange <Ralph.Lange@bessy.de>
 Made procServ kill child using killsig on termination (by Matthieu Bec) (Trac #14).
 Added changes to compile on Solaris (Trac #11).
