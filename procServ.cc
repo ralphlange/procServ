@@ -1,6 +1,6 @@
 // Process server for soft ioc
 // David H. Thompson 8/29/2003
-// Ralph Lange 02/28/2012
+// Ralph Lange 03/05/2012
 // GNU Public License (GPLv3) applies - see www.gnu.org
 
 
@@ -392,9 +392,14 @@ int main(int argc,char * argv[])
 
     // Set up available server commands message
     PRINTF("Setting up messages\n");
-    sprintf(infoMessage3, "@@@ %s%c or %s%c restarts the child, %s%c quits the server,"
-            " %s%c closes this connection" NL,
-            CTL_SC(restartChar), CTL_SC(killChar), CTL_SC(quitChar), CTL_SC(logoutChar));
+    sprintf(infoMessage3, "@@@ %s%c or %s%c restarts the child, %s%c quits the server",
+            CTL_SC(restartChar), CTL_SC(killChar), CTL_SC(quitChar));
+    if (logoutChar) {
+        sprintf(buff, ", %s%c closes this connection",
+                CTL_SC(logoutChar));
+        strcat(infoMessage3, buff);
+    }
+    strcat(infoMessage3, NL);
 
     ctlPort = atoi(argv[optind]);
     command = argv[optind+1];
@@ -624,7 +629,7 @@ void OnPollTimeout()
     pid_t pid;
     int wstatus;
     connectionItem *pc, *pn;
-    char buf[128];
+    char buf[128] = NL;
 
     pid = waitpid(-1, &wstatus, WNOHANG);
     if (pid > 0 ) {
@@ -634,6 +639,7 @@ void OnPollTimeout()
             pc=pc->next;
         }
 
+        SendToAll(buf, strlen(buf), NULL);
         strcpy(buf, "@@@ @@@ @@@ @@@ @@@" NL);
         SendToAll(buf, strlen(buf), NULL);
 

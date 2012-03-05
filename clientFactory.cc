@@ -177,7 +177,7 @@ void clientItem::processInput(const char *buf, int len)
 {
     int i;
     if (len > 0) {
-            // Scan input for commands
+        // Scan input for commands
         for (i = 0; i < len; i++) {
             if (false == processClass::exists()) {  // We're in child shut down mode
                 if ((restartChar && buf[i] == restartChar)

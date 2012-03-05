@@ -1,6 +1,6 @@
 // Process server for soft ioc
 // David H. Thompson 8/29/2003
-// Ralph Lange 02/27/2012
+// Ralph Lange 03/05/2012
 // GNU Public License (GPLv3) applies - see www.gnu.org
 
 #include <unistd.h>
@@ -189,18 +189,22 @@ int processClass::Send( const char * buf, int count )
     char buf3[LINEBUF_LENGTH+1];
     char *buf2 = buf3;
 
-    // Scan input for commands
-    for ( i = 0; i < count; i++ ) {
-        if ( toggleRestartChar && buf[i] == toggleRestartChar ) {
-            autoRestart = ! autoRestart;
-            char msg[128];
-            sprintf ( msg, NL "@@@ Toggled auto restart to %s" NL,
-                      ( autoRestart ? "ON" : "OFF" ) );
-            SendToAll ( msg, strlen ( msg ), this );
-        }
-        if ( killChar && buf[i] == killChar ) {
-            PRINTF ("Got a kill command\n");
-            processFactorySendSignal( killSig );
+    if (count > 0) {
+            // Scan input for commands
+        for (i = 0; i < count; i++) {
+            if (toggleRestartChar && buf[i] == toggleRestartChar) {
+                autoRestart = ! autoRestart;
+                char msg[128] = NL;
+                PRINTF ("Got a toggleAutoRestart command\n");
+                SendToAll(msg, strlen(msg), this);
+                sprintf(msg, "@@@ Toggled auto restart to %s" NL,
+                        autoRestart ? "ON" : "OFF");
+                SendToAll(msg, strlen(msg), this);
+            }
+            if (killChar && buf[i] == killChar) {
+                PRINTF ("Got a kill command\n");
+                processFactorySendSignal(killSig);
+            }
         }
     }
                                 // Create working copy of buffer

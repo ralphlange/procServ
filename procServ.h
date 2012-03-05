@@ -49,7 +49,7 @@ extern time_t holdoffTime;
 
 #define NL "\r\n"
 
-#define CTL_SC(c) c < 32 ? "^" : "", c < 32 ? c + 64 : c
+#define CTL_SC(c) c > 0 && c < 32 ? "^" : "", c > 0 && c < 32 ? c + 64 : c
 
 class connectionItem;
 
