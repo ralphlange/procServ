@@ -25,15 +25,17 @@ To facilitate running under a central console access management (like conserver)
 The *-r* (*\--restrict*) option restricts the log port to localhost, similar to the access port.
 
 Both access and log ports allow multiple connections, which are handled transparently: all input from access connections is forwarded to the child process, all output from the child is forwarded to all access and log connections (and written to the log file).
-All diagnostic messages from the server process start with "`@@@`" to be clearly distinguished from child process messages.
+All diagnostic messages from the server process start with "`@@@` " to be clearly distinguished from child process messages.
 A name specified by the *-n* (*\--name*) option will replace the command string in many messages for increased readability.
 
-The server will by default automatically respawn a child process when it dies.
+The server will by default automatically respawn the child process when it dies.
 To avoid spinning, a minimum time between child process restarts is honoured (default: 15 seconds, can be changed using the *\--holdoff* option).
 This behaviour can be toggled online using the toggle command `^T`, the default may be changed using the *\--noautorestart* option.
 You can restart a running child manually by sending a signal to the child process using the kill command `^X`.
-With the child process being shut down, the server accepts two commands: `^R` to restart the child and `^Q` to quit the server.
-The *-w* (*\--wait*) option starts the server in this shut down mode, waiting for the telnet connection to issue a manual start command to create the child.
+With the child process being shut down, the server accepts two commands: `^R` or `^X` to restart the child, and `^Q` to quit the server.
+The *-w* (*\--wait*) option starts the server in this shut down mode, waiting for a telnet connection to issue a manual start command to create the child.
+
+Any telnet connection (control or log) can be disconnected using the client's disconnect sequence. Control connections can also be disconnected by sending the logout command character, that can be specified using the *-x* (*\--logoutcmd*) option.
 
 To block input characters that are potentially dangerous to the child (e.g. `^D` and `^C` on soft IOCs), the *-i* (*\--ignore*) option can be used to specify characters that are silently ignored when coming from a console access port.
 
