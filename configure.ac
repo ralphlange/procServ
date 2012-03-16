@@ -1,7 +1,7 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 # Process Server (for soft IOCs)
-# Ralph Lange 03/05/2012
+# Ralph Lange 03/17/2012
 # GNU Public License (GPLv3) applies - see www.gnu.org
 
 
@@ -44,6 +44,7 @@ AC_FUNC_GETGROUPS
 AC_PROG_GCC_TRADITIONAL
 AC_PROG_RANLIB
 AC_FUNC_STRFTIME
+AC_CHECK_LIB([telnet], [telnet_recv],,[AC_LIBOBJ([libtelnet])])
 AC_SEARCH_LIBS([socket], [socket])
 AC_SEARCH_LIBS([setsockopt], [socket])
 AC_SEARCH_LIBS([inet_aton], [resolv])
