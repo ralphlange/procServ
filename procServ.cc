@@ -584,7 +584,7 @@ void SendToAll(const char * message,int count,const connectionItem * sender)
 {
     connectionItem * p = connectionItem::head;
     char stamp[64];
-    int len;
+    int len = 0;
     time_t now;
     struct tm now_tm;
 
