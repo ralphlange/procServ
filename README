@@ -57,4 +57,22 @@ Using procServ to run EPICS soft IOCs in a production environment
    http://epics.nsls2.bnl.gov/git/sysv-rc-softioc.git/ for the git repository.
 
 
+Using procServ on Windows
+
+   Under Windows, procServ compiles in a Cygwin environment. Configure with
+   '--enable-access-from-anywhere' and run with '--allow' to allow remote access
+   to the child console. The executable is available for download on SourceForge.
+
+   To run on a non-Cygwin Windows system, procServ only needs Cygwin1.dll,
+   e.g. in the same directory as the executable.
+
+   Caveats:
+   * Use Windows path delimiters '\' specifying the child executable, to avoid
+     permission bit warnings/errors.
+   * Under command.com, the caret sign '^' has to be escaped using '^^'.
+   * Forking the daemon currently does not exit the foregroud process, resulting
+     in an additional procServ process.
+     This is a known issue and currently being investigated.
+
+
 Enjoy!
