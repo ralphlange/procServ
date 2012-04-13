@@ -150,8 +150,7 @@ clientItem::clientItem(int socketIn, bool readonly)
 }
 
 // clientItem::readFromFd
-// Reads from the FD, scans for restart / quit char if in child shut down mode,
-// else sends the characters to the other connections
+// Reads from the FD, forwards to telnet state machine
 void clientItem::readFromFd(void)
 {
     char buf[1600];
@@ -194,6 +193,19 @@ void clientItem::processInput(const char *buf, int len)
             if (logoutChar && buf[i] == logoutChar) {
                 PRINTF ("Got a logout command\n");
                 _markedForDeletion = true;
+            }
+            if (toggleRestartChar && buf[i] == toggleRestartChar) {
+                autoRestart = ! autoRestart;
+                char msg[128] = NL;
+                PRINTF ("Got a toggleAutoRestart command\n");
+                SendToAll(msg, strlen(msg), NULL);
+                sprintf(msg, "@@@ Toggled auto restart to %s" NL,
+                        autoRestart ? "ON" : "OFF");
+                SendToAll(msg, strlen(msg), NULL);
+            }
+            if (killChar && buf[i] == killChar) {
+                PRINTF ("Got a kill command\n");
+                processFactorySendSignal(killSig);
             }
         }
         SendToAll(buf, len, this);

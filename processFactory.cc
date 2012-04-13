@@ -181,7 +181,7 @@ void processClass::readFromFd(void)
     }
 }
 
-// Send characters to clients
+// Sanitize buffer, then send characters to child
 int processClass::Send( const char * buf, int count )
 {
     int status = 0;
@@ -189,24 +189,6 @@ int processClass::Send( const char * buf, int count )
     char buf3[LINEBUF_LENGTH+1];
     char *buf2 = buf3;
 
-    if (count > 0) {
-            // Scan input for commands
-        for (i = 0; i < count; i++) {
-            if (toggleRestartChar && buf[i] == toggleRestartChar) {
-                autoRestart = ! autoRestart;
-                char msg[128] = NL;
-                PRINTF ("Got a toggleAutoRestart command\n");
-                SendToAll(msg, strlen(msg), this);
-                sprintf(msg, "@@@ Toggled auto restart to %s" NL,
-                        autoRestart ? "ON" : "OFF");
-                SendToAll(msg, strlen(msg), this);
-            }
-            if (killChar && buf[i] == killChar) {
-                PRINTF ("Got a kill command\n");
-                processFactorySendSignal(killSig);
-            }
-        }
-    }
                                 // Create working copy of buffer
     if ( count > LINEBUF_LENGTH ) buf2 = (char*) calloc (count + 1, 1);
     buf2[0] = '\0';
