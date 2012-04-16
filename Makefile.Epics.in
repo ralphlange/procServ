@@ -9,7 +9,7 @@ include $(TOP)/configure/CONFIG
 A2X = a2x
 A2X_FLAGS = -a revdate=@PACKAGE_DATE@ -a revnumber=@PACKAGE_VERSION@
 
-PROD = procServ
+PROD_HOST = procServ
 procServ_SRCS = procServ.cc connectionItem.cc acceptFactory.cc \
                 clientFactory.cc processFactory.cc
 procServ_OBJS = @LIBOBJS@
