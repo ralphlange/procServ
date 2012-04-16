@@ -1,9 +1,9 @@
 Source: procserv
 Section: utils
 Priority: optional
-Maintainer: Ralph Lange <Ralph.Lange@bessy.de>
-Build-Depends: debhelper (>= 7)
-Standards-Version: 3.8.4
+Maintainer: Ralph Lange <Ralph.Lange@gmx.de>
+Build-Depends: debhelper (>= 7.0.50~), libtelnet-dev
+Standards-Version: 3.9.3
 Vcs-Darcs: http://darcs.debian.org/darcs/collab-maint/procserv
 Vcs-Browser: http://darcs.debian.org/cgi-bin/darcsweb.cgi?r=collab-maint/procserv;a=summary
 Homepage: http://sourceforge.net/projects/procserv/
@@ -12,7 +12,7 @@ Package: procserv
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Suggests: telnet
-Description: A process server with telnet console and log access
+Description: Process server with telnet console and log access
  procServ is a wrapper that starts an arbitrary command as a child process in
  the background, connecting its standard input and output to a TCP port for
  telnet access. It supports logging, child restart (manual or automatic on
