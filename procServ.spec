@@ -1,12 +1,15 @@
-Summary: A process server with telnet console and log access
+Summary: Process server with telnet console and log access
 Name: procServ
-Version: 2.5.1
+Version: 2.6.0
 Release: 1%{?dist}
+
 License: GPLv3
 Group: Applications/System
 URL: http://sourceforge.net/projects/procserv
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 Source0: http://sourceforge.net/projects/procserv/files/%{version}/procServ-%{version}.tar.gz
+
+BuildRequires: libtelnet-devel
 
 %description
 procServ is a wrapper that starts an arbitrary command as a child process in
@@ -43,6 +46,10 @@ rm -rf $RPM_BUILD_ROOT
 %{_mandir}/man1/procServ.*
 
 %changelog
+* Fri Apr 13 2012 Ralph Lange <Ralph.Lange@gmx.de> 2.6.0-1
+- New upstream version
+- Added libtelnet dependency
+
 * Tue Mar 23 2010 Ralph Lange <Ralph.Lange@bessy.de> 2.5.1-1
 - New upstream version
 
