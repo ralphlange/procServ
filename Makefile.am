@@ -1,5 +1,5 @@
 # Process Server (for soft IOCs)
-# Ralph Lange 03/17/2012
+# Ralph Lange 04/16/2012
 # GNU Public License (GPLv3) applies - see www.gnu.org
 
 bin_PROGRAMS = procServ
@@ -11,7 +11,7 @@ procServ_SOURCES = procServ.cc procServ.h \
 
 LDADD = $(LIBOBJS)
 
-DISTCLEANFILES = *~ procServ.xml
+DISTCLEANFILES = *~ *.orig procServ.xml docbook-xsl.css pid.txt
 MAINTAINERCLEANFILES = procServ.pdf procServ.html procServ.1
 
 doc_DATA = AUTHORS COPYING ChangeLog NEWS README procServ.txt
