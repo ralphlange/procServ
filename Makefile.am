@@ -21,7 +21,7 @@ if INSTALL_DOC
 dist_man1_MANS = procServ.1
 
 doc_DATA += procServ.pdf procServ.html
-EXTRA_DIST = $(doc_DATA) Makefile.Epics.in forkpty.c procServ.spec libtelnet.c libtelnet.h
+EXTRA_DIST = $(doc_DATA) Makefile.Epics.in forkpty.c libtelnet.c libtelnet.h
 
 endif # INSTALL_DOC
 

@@ -1,4 +1,4 @@
-V 2.6.0.rc1 03/05/2012 Ralph Lange <Ralph.Lange@gmx.de>
+V 2.6.0 04/16/2012 Ralph Lange <Ralph.Lange@gmx.de>
 Fixed resource leak on Solaris (Trac #18).
 Replaced buggy telnet state machine with libtelnet (Trac #1, #27).
 Added option to keep child in foreground (Trac #16).
@@ -11,6 +11,8 @@ Improve access bit checks on the executable (Trac #24).
 Added option to specify logout command character (Trac #28).
 Allow kill command to restart the child in wait mode (Trac #29).
 Remove deprecated option to specify logfile by output redirect (Trac #30).
+Properly test for and depend on libtelnet (Trac #31).
+Make toggle auto-restart command work when child is stopped (Trac #32).
 Changes to compile under Cygwin.
 
 V 2.5.1 03/23/2010 Ralph Lange <Ralph.Lange@bessy.de>
