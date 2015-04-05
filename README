@@ -5,23 +5,15 @@ Dependencies:
       NOTE: The distribution tar contains the doc in all available formats,
             so you don't need asciidoc to make and install procServ.
 
-   -- libtelnet, http://github.com/elanthis/libtelnet (package: libtelnet)
+   -- libtelnet, http://github.com/seanmiddleditch/libtelnet (package: libtelnet)
       NOTE: The distribution tar contains the libtelnet sources, so it
             will be compiled into procServ automatically, if not found.
 
 
-procServ is on Sourceforge:
+procServ is on GitHub, distribution also through SourceForge:
 
+   https://github.com/ralphlange/procServ
    http://sourceforge.net/projects/procserv/
-
-   Read-only access to the source code repository (Mercurial) is available at:
-
-   http://procserv.hg.sourceforge.net:8000/hgroot/procserv/procserv
-
-   For a wiki, and to create bug reports, feature or support requests,
-   use procServ's Trac instance at:
-
-   http://sourceforge.net/apps/trac/procserv/
 
 
 procServ is part of official Linux distributions:
@@ -29,7 +21,7 @@ procServ is part of official Linux distributions:
    Debian/Ubuntu -- apt-get install procserv
    Fedora/RHEL   -- yum install procServ
 
-   The Mercurial repository contains the packaging extras, which are not part
+   The Git source repository contains the packaging extras, which are not part
    of the distribution tar.
 
 
@@ -43,13 +35,13 @@ Building within an EPICS build system
    path to specify to configure - which is the default.)
 
 
-Building from procServ Mercurial repository
+Building from procServ Git repository
 
    Requires autoconf >=2.61, automake >= 1.10
 
    Optional asciidoc >= 8.4, FOP >= 0.95, xsltproc >= 1.1.24
 
-   $ hg clone http://procserv.hg.sourceforge.net:8000/hgroot/procserv/procserv
+   $ git clone https://github.com/ralphlange/procServ.git
    $ cd procserv
    $ make
    $ ./configure --enable-doc
