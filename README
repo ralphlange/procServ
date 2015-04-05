@@ -16,6 +16,11 @@ procServ is on GitHub, distribution also through SourceForge:
    http://sourceforge.net/projects/procserv/
 
 
+Continuous Integration builds provided by CloudBees:
+
+   https://openepics.ci.cloudbees.com/view/procServ/
+
+
 procServ is part of official Linux distributions:
 
    Debian/Ubuntu -- apt-get install procserv
