@@ -1,0 +1,53 @@
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+procServ
+
+# Automake generated files
+Makefile
+Makefile.in
+Makefile.Automake.in
+configure
+build-aux
+aclocal.m4
+autom4te.cache
+config.log
+config.status
+
+# Generated docs
+docbook-xsl.css
+pid.txt
+procServ.1
+procServ.xml
+procServ.fo
+procServ.html
+procServ.pdf
+
+# IDE configuration
+/QtC-*
+.deps
