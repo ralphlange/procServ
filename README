@@ -64,7 +64,7 @@ Using procServ to run EPICS soft IOCs in a production environment
    Michael Davidsaver (BNL) has created SysV-style rc scripts to configure
    and run EPICS soft IOCs using procServ.
    See http://epics.nsls2.bnl.gov/debian/ for the Debian package or
-   http://epics.nsls2.bnl.gov/git/sysv-rc-softioc.git/ for the git repository.
+   https://github.com/epicsdeb/sysv-rc-softioc for the git repository.
 
 
 Using procServ on Windows
