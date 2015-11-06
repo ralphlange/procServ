@@ -6,9 +6,9 @@
 
 
 AC_PREREQ([2.61])
-AC_INIT([procServ Process Server], [2.6.0], [tech-talk@aps.anl.gov], [procServ],
+AC_INIT([procServ Process Server], [2.6.1-DEV], [tech-talk@aps.anl.gov], [procServ],
 	[http://sourceforge.net/projects/procserv/])
-AC_SUBST([PACKAGE_DATE],[04/16/2012])
+AC_SUBST([PACKAGE_DATE],[05/19/2015])
 
 AC_CONFIG_AUX_DIR([build-aux])
 AM_INIT_AUTOMAKE([1.10 -Wall])

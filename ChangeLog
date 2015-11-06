@@ -1,3 +1,8 @@
+V 2.6.1 05/19/2015 Ralph Lange <Ralph.Lange@gmx.de>
+Moved upstream project to GitHub.
+Fixed URL for sysv-scripts in README.
+Fixed memory leak in ClientItem wrt libtelnet use (Issue #2).
+
 V 2.6.0 04/16/2012 Ralph Lange <Ralph.Lange@gmx.de>
 Fixed resource leak on Solaris (Trac #18).
 Replaced buggy telnet state machine with libtelnet (Trac #1, #27).
