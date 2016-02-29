@@ -88,8 +88,10 @@ void ttySetCharNoEcho(bool save);
 void OnSigPipe(int);
 void OnSigTerm(int);
 void OnSigHup(int);
-// Counter used for communication between sig handler and main()
+// Flags used for communication between sig handler and main()
 int sigPipeSet;
+int sigTermSet;
+int sigHupSet;
 
 void writePidFile()
 {
@@ -430,6 +432,24 @@ int main(int argc,char * argv[])
     memset(&sig, 0, sizeof(sig));
 
     PRINTF("Installing signal handlers\n");
+    
+    // SIGPIPE, SIGTERM and SIGHUP will be handled in the main loop
+    // with the assistance of pselect. This means that we have them
+    // blocked outside of pselect call, but unblocked atomically
+    // within pselect. Each time pselect returns, we safely check if
+    // any of the signals were received.
+    
+    // Block the signals that we bill be handling in the main loop.
+    // At the same time, retrieve the original signal mask before
+    // blocking, to be passed to pselect.
+    sigset_t sigset_block;
+    sigset_t sigset_pselect;
+    sigemptyset(&sigset_block);
+    sigaddset(&sigset_block, SIGPIPE);
+    sigaddset(&sigset_block, SIGTERM);
+    sigaddset(&sigset_block, SIGHUP);
+    sigprocmask(SIG_BLOCK, &sigset_block, &sigset_pselect);
+    
     sig.sa_handler = &OnSigPipe;              // sigaction() needed for Solaris
     sigaction(SIGPIPE, &sig, NULL);
     sig.sa_handler = &OnSigTerm;
@@ -521,13 +541,7 @@ int main(int argc,char * argv[])
         fd_set fdset;              // FD stuff for select()
         int fd, nFd;
         int ready;                 // select() return value
-        struct timeval timeout;
-
-        if (sigPipeSet > 0) {
-            sprintf( buf, "@@@ Got a sigPipe signal: Did the child close its tty?" NL);
-            SendToAll( buf, strlen(buf), NULL );
-            sigPipeSet--;
-        }
+        struct timespec timeout;
 
         // Prepare FD set for select()
         p = connectionItem::head;
@@ -542,10 +556,31 @@ int main(int argc,char * argv[])
         }
         nFd++;
         timeout.tv_sec = 0;                   // select() timeout: 0.5 sec
-        timeout.tv_usec = 500000;
+        timeout.tv_nsec = 500000000l;
 
-        ready = select(nFd, &fdset, NULL, NULL, &timeout);
+        ready = pselect(nFd, &fdset, NULL, NULL, &timeout, &sigset_pselect);
+        
+        // Handle signals for which signal handlers were called while in pselect.
+        
+        if (sigPipeSet) {
+            sigPipeSet = 0;
+            sprintf( buf, "@@@ Got a sigPipe signal: Did the child close its tty?" NL);
+            SendToAll( buf, strlen(buf), NULL );
+        }
+        
+        if (sigTermSet) {
+            sigTermSet = 0;
+            PRINTF("SigTerm received\n");
+            processFactorySendSignal(killSig);
+            shutdownServer = true;
+        }
 
+        if (sigHupSet) {
+            sigHupSet = 0;
+            PRINTF("SigHup received\n");
+            openLogFile();
+        }
+        
         if (0 == ready) {                     // Timeout
             // Go clean up dead connections
             OnPollTimeout();
@@ -704,21 +739,17 @@ void DeleteConnection(connectionItem *ci)
 
 void OnSigPipe(int)
 {
-    PRINTF("SigPipe received\n");
-    sigPipeSet++;
+    sigPipeSet = 1;
 }
 
 void OnSigTerm(int)
 {
-    PRINTF("SigTerm received\n");
-    processFactorySendSignal(killSig);
-    shutdownServer = true;
+    sigTermSet = 1;
 }
 
 void OnSigHup(int)
 {
-    PRINTF("SigHup received\n");
-    openLogFile();
+    sigHupSet = 1;
 }
 
 // Fork the daemon and exit the parent
