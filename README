@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/ralphlange/procServ.svg?branch=master)](https://travis-ci.org/ralphlange/procServ)
+
 Dependencies:
 
    -- asciidoc, http://www.methods.co.nz/asciidoc (package: asciidoc),
