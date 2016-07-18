@@ -4,6 +4,9 @@
 *.o
 *.obj
 
+# Object file directors with EPICS builf
+O.*
+
 # Precompiled Headers
 *.gch
 *.pch
