@@ -14,10 +14,6 @@
 #include <arpa/inet.h>
 #include <string.h>
 
-#ifndef SO_REUSEPORT               // Linux doesn't know SO_REUSEPORT
-#define SO_REUSEPORT SO_REUSEADDR
-#endif
-
 #include "procServ.h"
 
 class acceptItem : public connectionItem
@@ -61,7 +57,13 @@ acceptItem::acceptItem(int port, bool local, bool readonly)
     _fd = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
     assert(_fd>0);
 
-    setsockopt(_fd, SOL_SOCKET, SO_REUSEPORT, &optval, sizeof(optval));
+    setsockopt(_fd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
+#ifdef SOLARIS
+    setsockopt(_fd, SOL_SOCKET, SO_EXCLBIND, &optval, sizeof(optval));
+#endif
+#ifdef _WIN32
+    setsockopt(_fd, SOL_SOCKET, SO_EXCLUSIVEADDRUSE, &optval, sizeof(optval));
+#endif
 
     memset(&addr, 0, sizeof(addr));
     addr.sin_family = AF_INET;
