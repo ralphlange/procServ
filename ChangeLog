@@ -1,3 +1,8 @@
+V 2.6.2 07/18/2016 Mark Rivers <rivers@cars.uchicago.edu>
+Fix setsockopt in acceptFactory.cc to use SO_REUSEADDR rather than SO_REUSEPORT on all platforms.
+Fix setsockopt in acceptFactory.cc to use SO_EXCLUSIVEADDRUSE on WIN32 and SO_EXCLBIND on Solaris 
+See this article for information: http://stackoverflow.com/questions/14388706/socket-options-so-reuseaddr-and-so-reuseport-how-do-they-differ-do-they-mean-t
+
 V 2.6.1 05/19/2015 Ralph Lange <Ralph.Lange@gmx.de>
 Moved upstream project to GitHub.
 Fixed URL for sysv-scripts in README.
