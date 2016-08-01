@@ -5,6 +5,7 @@ Fix memory leak in ClientItem wrt libtelnet use (#2).
 Fix setsockopt in acceptFactory.cc to use SO_REUSEADDR rather than SO_REUSEPORT on all platforms. (by Mark Rivers)
 Fix setsockopt in acceptFactory.cc to use SO_EXCLUSIVEADDRUSE on WIN32 and SO_EXCLBIND on Solaris  (by Mark Rivers)
    See this article for information: http://stackoverflow.com/questions/14388706/socket-options-so-reuseaddr-and-so-reuseport-how-do-they-differ-do-they-mean-t
+Fix buffer overflow vulnerabilities by replacing sprintf->snprintf, strcat->strncat (#6).
 
 V 2.6.0 04/16/2012 Ralph Lange <Ralph.Lange@gmx.de>
 Fixed resource leak on Solaris (Trac #18).

@@ -63,9 +63,13 @@ char   defaulttimeFormat[] = "%c";    // default
 bool   stampLog = false;         // Prefix log lines with time stamp
 char   *stampFormat;             // Log time stamp format string
 
-char   infoMessage1[512];        // Sign on message: server PID, child pwd and command line
-char   infoMessage2[128];        // Sign on message: child PID
-char   infoMessage3[128];        // Sign on message: available server commands
+const size_t INFO1LEN = 512;
+const size_t INFO2LEN = 128;
+const size_t INFO3LEN = 128;
+
+char   infoMessage1[INFO1LEN];   // Sign on message: server PID, child pwd and command line
+char   infoMessage2[INFO2LEN];   // Sign on message: child PID
+char   infoMessage3[INFO3LEN];   // Sign on message: available server commands
 
 char   *logFile = NULL;          // File name for log
 int    logFileFD=-1;             // FD for log file
@@ -177,7 +181,8 @@ int main(int argc,char * argv[])
     int ctlPort = 0;
     char *command;
     bool wrongOption = false;
-    char buff[512];
+#define BUFFLEN 512
+    char buff[BUFFLEN];
 
     time(&procServStart);             // remember start time
     procservName = argv[0];
@@ -395,14 +400,15 @@ int main(int argc,char * argv[])
 
     // Set up available server commands message
     PRINTF("Setting up messages\n");
-    sprintf(infoMessage3, "@@@ %s%c or %s%c restarts the child, %s%c quits the server",
+    snprintf(infoMessage3, INFO3LEN,\
+            "@@@ %s%c or %s%c restarts the child, %s%c quits the server",
             CTL_SC(restartChar), CTL_SC(killChar), CTL_SC(quitChar));
     if (logoutChar) {
-        sprintf(buff, ", %s%c closes this connection",
+        snprintf(buff, BUFFLEN, ", %s%c closes this connection",
                 CTL_SC(logoutChar));
-        strcat(infoMessage3, buff);
+        strncat(infoMessage3, buff, INFO3LEN-strlen(infoMessage3)-1);
     }
-    strcat(infoMessage3, NL);
+    strncat(infoMessage3, NL, INFO3LEN-strlen(infoMessage3)-1);
 
     ctlPort = atoi(argv[optind]);
     command = argv[optind+1];
@@ -424,7 +430,11 @@ int main(int argc,char * argv[])
 
     if (stampLog && !stampFormat) {
         stampFormat = (char*) calloc(strlen(timeFormat)+4, 1);
-        sprintf(stampFormat, "[%s] ", timeFormat);
+        if (stampFormat) {
+            sprintf(stampFormat, "[%s] ", timeFormat);
+        } else {
+            stampFormat = timeFormat;
+        }
     }
 
     if (checkCommandFile(childExec)) exit(errno);
@@ -518,26 +528,27 @@ int main(int argc,char * argv[])
     }
 
     // Record some useful data for managers 
-    sprintf( infoMessage1, "@@@ procServ server PID: %ld" NL
+    snprintf(infoMessage1, INFO1LEN,
+             "@@@ procServ server PID: %ld" NL
              "@@@ Server startup directory: %s" NL
              "@@@ Child startup directory: %s" NL,
              (long) getpid(),
              myDir,
              chDir);
     if ( strcmp( childName, command ) )
-        sprintf( buff, "@@@ Child \"%s\" started as: %s" NL,
+        snprintf(buff, BUFFLEN, "@@@ Child \"%s\" started as: %s" NL,
                  childName, command );
     else
-        sprintf( buff, "@@@ Child started as: %s" NL,
+        snprintf(buff, BUFFLEN, "@@@ Child started as: %s" NL,
                  command );
-    if ( strlen(infoMessage1) + strlen(buff) + 1 < sizeof(infoMessage1) )
-        strcat( infoMessage1, buff);
-    sprintf( infoMessage2, "@@@ Child \"%s\" is SHUT DOWN" NL, childName );
+    strncat(infoMessage1, buff, INFO1LEN-strlen(infoMessage1)-1);
+    snprintf(infoMessage2, INFO2LEN, "@@@ Child \"%s\" is SHUT DOWN" NL, childName);
 
     // Run here until something makes it die
     while ( ! shutdownServer )
     {
-        char buf[100];
+#define BUFLEN 100
+        char buf[BUFLEN];
         connectionItem * p;
         fd_set fdset;              // FD stuff for select()
         int fd, nFd;
@@ -665,7 +676,8 @@ void OnPollTimeout()
     pid_t pid;
     int wstatus;
     connectionItem *pc, *pn;
-    char buf[128] = NL;
+    const size_t BUFLEN = 128;
+    char buf[BUFLEN] = NL;
 
     pid = waitpid(-1, &wstatus, WNOHANG);
     if (pid > 0 ) {
@@ -679,18 +691,20 @@ void OnPollTimeout()
         strcpy(buf, "@@@ @@@ @@@ @@@ @@@" NL);
         SendToAll(buf, strlen(buf), NULL);
 
-        sprintf(buf, "@@@ Received a sigChild for process %ld.", (long) pid);
+        snprintf(buf, BUFLEN, "@@@ Received a sigChild for process %ld.", (long) pid);
 
         if (WIFEXITED(wstatus)) {
-            sprintf(buf + strlen(buf), " Normal exit status = %d",
-                    WEXITSTATUS(wstatus));
+            snprintf(buf+strlen(buf), BUFLEN-strlen(buf),
+                     " Normal exit status = %d",
+                     WEXITSTATUS(wstatus));
         }
 
         if (WIFSIGNALED(wstatus)) {
-            sprintf(buf + strlen(buf), " The process was killed by signal %d",
-                    WTERMSIG(wstatus));
+            snprintf(buf+strlen(buf), BUFLEN-strlen(buf),
+                     " The process was killed by signal %d",
+                     WTERMSIG(wstatus));
         }
-        strcat(buf, NL);
+        strncat(buf, NL, BUFLEN-strlen(buf)-1);
         SendToAll(buf, strlen(buf), NULL);
     }
 

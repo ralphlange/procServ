@@ -50,16 +50,17 @@ bool processFactoryNeedsRestart()
 
 connectionItem * processFactory(char *exe, char *argv[])
 {
-    char buf[512];
+    const size_t BUFLEN = 512;
+    char buf[BUFLEN];
     time(&IOCStart); // Remember when we did this
 
     if (processFactoryNeedsRestart())
     {
-	sprintf( buf, "@@@ Restarting child \"%s\"" NL, childName );
+    snprintf(buf, BUFLEN, "@@@ Restarting child \"%s\"" NL, childName);
 	SendToAll( buf, strlen(buf), 0 );
 
         if ( strcmp( childName, argv[0] ) != 0 ) {
-            sprintf( buf, "@@@    (as %s)" NL, argv[0] );
+            snprintf(buf, BUFLEN, "@@@    (as %s)" NL, argv[0]);
             SendToAll( buf, strlen(buf), 0 );
         }
 
@@ -77,24 +78,27 @@ processClass::~processClass()
     struct tm now_tm;
     time_t now;
     size_t result;
-    char now_buf[128] = "@@@ Current time: ";
-    char goodbye[128];
+    const size_t NOWLEN = 128;
+    char now_buf[NOWLEN] = "@@@ Current time: ";
+    const size_t BYELEN = 128;
+    char goodbye[BYELEN];
 
     time( &now );
     localtime_r( &now, &now_tm );
     result = strftime( &now_buf[strlen(now_buf)], sizeof(now_buf) - strlen(now_buf) - 1,
                        timeFormat, &now_tm );
     if (result && (sizeof(now_buf) - strlen(now_buf) > 2)) {
-        strcat(now_buf, NL);
+        strncat(now_buf, NL, NOWLEN-strlen(now_buf)-1);
     } else {
-        strcpy(now_buf, "@@@ Current time: N/A");
+        strncpy(now_buf, "@@@ Current time: N/A", NOWLEN);
+        now_buf[NOWLEN-1] = '\0';
     }
-    sprintf ( goodbye, "@@@ Child process is shutting down, %s" NL,
+    snprintf (goodbye, BYELEN, "@@@ Child process is shutting down, %s" NL,
               autoRestart ? "a new one will be restarted shortly" :
-              "auto restart is disabled" );
+              "auto restart is disabled");
 
     // Update client connect message
-    sprintf( infoMessage2, "@@@ Child \"%s\" is SHUT DOWN" NL, childName );
+    snprintf(infoMessage2, INFO2LEN, "@@@ Child \"%s\" is SHUT DOWN" NL, childName);
 
     SendToAll( now_buf, strlen(now_buf), this );
     SendToAll( goodbye, strlen(goodbye), this );
@@ -116,7 +120,8 @@ processClass::processClass(char *exe, char *argv[])
 {
     _runningItem=this;
     struct rlimit corelimit;
-    char buf[128];
+    const size_t BUFLEN = 128;
+    char buf[BUFLEN];
 
     _pid = forkpty(&_fd, factoryName, NULL, NULL);
 
@@ -133,9 +138,9 @@ processClass::processClass(char *exe, char *argv[])
         _restartTime = holdoffTime + time(0);
 
         // Update client connect message
-        sprintf(infoMessage2, "@@@ Child \"%s\" PID: %ld" NL, childName, (long) _pid);
+        snprintf(infoMessage2, INFO2LEN, "@@@ Child \"%s\" PID: %ld" NL, childName, (long) _pid);
 
-        sprintf(buf, "@@@ The PID of new child \"%s\" is: %ld" NL, childName, (long) _pid);
+        snprintf(buf, BUFLEN, "@@@ The PID of new child \"%s\" is: %ld" NL, childName, (long) _pid);
         SendToAll( buf, strlen(buf), this );
         strcpy(buf, "@@@ @@@ @@@ @@@ @@@" NL);
         SendToAll( buf, strlen(buf), this );

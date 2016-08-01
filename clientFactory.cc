@@ -75,27 +75,29 @@ clientItem::clientItem(int socketIn, bool readonly)
     char procServStart_buf[32]; // Time when this procServ started - as string
     struct tm IOCStart_tm;      // Time when the current IOC was started
     char IOCStart_buf[32];      // Time when the current IOC was started - as string
-    char buf1[512], buf2[512];
+#define BUFLEN 512
+    char buf1[BUFLEN], buf2[BUFLEN];
     char greeting1[] = "@@@ Welcome to procServ (" PROCSERV_VERSION_STRING ")" NL;
-    char greeting2[256] = "";
+#define GREETLEN 256
+    char greeting2[GREETLEN] = "";
 
     PRINTF("New clientItem %p\n", this);
     if ( killChar ) {
-        sprintf(greeting2, "@@@ Use %s%c to kill the child, ", CTL_SC(killChar));
+        snprintf(greeting2, GREETLEN, "@@@ Use %s%c to kill the child, ", CTL_SC(killChar));
     } else {
-        sprintf( greeting2, "@@@ Kill command disabled, " );
+        snprintf(greeting2, GREETLEN, "@@@ Kill command disabled, ");
     }
-    sprintf( buf1, "auto restart is %s, ", autoRestart ? "ON" : "OFF" );
+    snprintf(buf1, BUFLEN, "auto restart is %s, ", autoRestart ? "ON" : "OFF");
     if ( toggleRestartChar ) {
-        sprintf(buf2, "use %s%c to toggle auto restart" NL, CTL_SC(toggleRestartChar));
+        snprintf(buf2, BUFLEN, "use %s%c to toggle auto restart" NL, CTL_SC(toggleRestartChar));
     } else {
-        sprintf( buf2, "auto restart toggle disabled" NL );
+        snprintf(buf2, BUFLEN, "auto restart toggle disabled" NL);
     }
-    strcat ( greeting2, buf1 );
-    strcat ( greeting2, buf2 );
+    strncat(greeting2, buf1, GREETLEN-strlen(greeting2)-1);
+    strncat(greeting2, buf2, GREETLEN-strlen(greeting2)-1);
     if (logoutChar) {
-        sprintf(buf2, "@@@ Use %s%c to logout from procServ server" NL, CTL_SC(logoutChar));
-        strcat(greeting2, buf2);
+        snprintf(buf2, BUFLEN, "@@@ Use %s%c to logout from procServ server" NL, CTL_SC(logoutChar));
+        strncat(greeting2, buf2, GREETLEN-strlen(greeting2)-1);
     }
 
     localtime_r( &procServStart, &procServStart_tm );
@@ -106,17 +108,17 @@ clientItem::clientItem(int socketIn, bool readonly)
     strftime( IOCStart_buf, sizeof(IOCStart_buf)-1,
               timeFormat, &IOCStart_tm );
 
-    sprintf( buf1, "@@@ procServ server started at: %s" NL,
+    snprintf(buf1, BUFLEN, "@@@ procServ server started at: %s" NL,
              procServStart_buf);
 
     if ( processClass::exists() ) {
-        sprintf( buf2, "@@@ Child \"%s\" started at: %s" NL,
+        snprintf(buf2, BUFLEN, "@@@ Child \"%s\" started at: %s" NL,
                  childName, IOCStart_buf );
-        strcat( buf1, buf2 );
+        strncat(buf1, buf2, BUFLEN-strlen(buf1)-1);
     }
 
-    sprintf( buf2, "@@@ %d user(s) and %d logger(s) connected (plus you)" NL,
-             _users, _loggers );
+    snprintf(buf2, BUFLEN, "@@@ %d user(s) and %d logger(s) connected (plus you)" NL,
+             _users, _loggers);
 
     setsockopt( socketIn, SOL_SOCKET, SO_KEEPALIVE, &optval, sizeof(optval) );
     _fd = socketIn;
@@ -200,7 +202,7 @@ void clientItem::processInput(const char *buf, int len)
                 char msg[128] = NL;
                 PRINTF ("Got a toggleAutoRestart command\n");
                 SendToAll(msg, strlen(msg), NULL);
-                sprintf(msg, "@@@ Toggled auto restart to %s" NL,
+                snprintf(msg, 128, "@@@ Toggled auto restart to %s" NL,
                         autoRestart ? "ON" : "OFF");
                 SendToAll(msg, strlen(msg), NULL);
             }
