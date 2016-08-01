@@ -1,12 +1,10 @@
-V 2.6.2 07/18/2016 Mark Rivers <rivers@cars.uchicago.edu>
-Fix setsockopt in acceptFactory.cc to use SO_REUSEADDR rather than SO_REUSEPORT on all platforms.
-Fix setsockopt in acceptFactory.cc to use SO_EXCLUSIVEADDRUSE on WIN32 and SO_EXCLBIND on Solaris 
-See this article for information: http://stackoverflow.com/questions/14388706/socket-options-so-reuseaddr-and-so-reuseport-how-do-they-differ-do-they-mean-t
-
-V 2.6.1 05/19/2015 Ralph Lange <Ralph.Lange@gmx.de>
-Moved upstream project to GitHub.
-Fixed URL for sysv-scripts in README.
-Fixed memory leak in ClientItem wrt libtelnet use (Issue #2).
+V 2.6.1 08/01/2016 Ralph Lange <ralph.lange@gmx.de>
+Move upstream project to GitHub.
+Fix URL for sysv-scripts in README.
+Fix memory leak in ClientItem wrt libtelnet use (#2).
+Fix setsockopt in acceptFactory.cc to use SO_REUSEADDR rather than SO_REUSEPORT on all platforms. (by Mark Rivers)
+Fix setsockopt in acceptFactory.cc to use SO_EXCLUSIVEADDRUSE on WIN32 and SO_EXCLBIND on Solaris  (by Mark Rivers)
+   See this article for information: http://stackoverflow.com/questions/14388706/socket-options-so-reuseaddr-and-so-reuseport-how-do-they-differ-do-they-mean-t
 
 V 2.6.0 04/16/2012 Ralph Lange <Ralph.Lange@gmx.de>
 Fixed resource leak on Solaris (Trac #18).
