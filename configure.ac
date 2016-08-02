@@ -11,7 +11,7 @@ AC_INIT([procServ Process Server], [2.6.1-DEV], [tech-talk@aps.anl.gov], [procSe
 AC_SUBST([PACKAGE_DATE],[05/19/2015])
 
 AC_CONFIG_AUX_DIR([build-aux])
-AM_INIT_AUTOMAKE([1.10 -Wall])
+AM_INIT_AUTOMAKE([1.10 -Wall foreign])
 
 AC_CONFIG_SRCDIR([connectionItem.cc])
 # we don't need config.h for now
