@@ -14,7 +14,7 @@ LDADD = $(LIBOBJS)
 DISTCLEANFILES = *~ *.orig procServ.xml docbook-xsl.css pid.txt
 MAINTAINERCLEANFILES = procServ.pdf procServ.html procServ.1
 
-doc_DATA = AUTHORS COPYING ChangeLog NEWS README procServ.txt
+doc_DATA = AUTHORS COPYING ChangeLog NEWS README.md procServ.txt
 
 if INSTALL_DOC
 
