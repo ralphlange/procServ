@@ -90,13 +90,14 @@ void openLogFile();
 void ttySetCharNoEcho(bool save);
 
 // Signal handlers
-void OnSigPipe(int);
-void OnSigTerm(int);
-void OnSigHup(int);
+static void OnSigPipe(int);
+static void OnSigTerm(int);
+static void OnSigHup(int);
+
 // Flags used for communication between sig handler and main()
-int sigPipeSet;
-int sigTermSet;
-int sigHupSet;
+static volatile sig_atomic_t sigPipeSet;
+static volatile sig_atomic_t sigTermSet;
+static volatile sig_atomic_t sigHupSet;
 
 void writePidFile()
 {
@@ -752,17 +753,17 @@ void DeleteConnection(connectionItem *ci)
 	assert(connectionNo>=0);
 }
 
-void OnSigPipe(int)
+static void OnSigPipe(int)
 {
     sigPipeSet = 1;
 }
 
-void OnSigTerm(int)
+static void OnSigTerm(int)
 {
     sigTermSet = 1;
 }
 
-void OnSigHup(int)
+static void OnSigHup(int)
 {
     sigHupSet = 1;
 }
