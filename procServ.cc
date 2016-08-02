@@ -39,7 +39,7 @@ bool   logPortLocal;             // This restricts log port access to localhost
 bool   ctlPortLocal = true;      // Restrict control connections to localhost
 bool   autoRestart = true;       // Enables instant restart of exiting child
 bool   waitForManualStart = false;  // Waits for telnet cmd to manually start child
-bool   shutdownServer = false;   // To keep the server from shutting down
+volatile bool shutdownServer = false;   // To keep the server from shutting down
 bool   quiet = false;            // Suppress info output (server)
 bool   setCoreSize = false;      // Set core size for child
 char   *procservName;            // The name of this beast (server)
