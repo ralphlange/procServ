@@ -187,8 +187,8 @@ int main(int argc,char * argv[])
     int ctlPort = 0;
     char *command;
     bool wrongOption = false;
-#define BUFFLEN 512
-    char buff[BUFFLEN];
+    const size_t BUFLEN = 512;
+    char buff[BUFLEN];
 
     time(&procServStart);             // remember start time
     procservName = argv[0];
@@ -410,7 +410,7 @@ int main(int argc,char * argv[])
             "@@@ %s%c or %s%c restarts the child, %s%c quits the server",
             CTL_SC(restartChar), CTL_SC(killChar), CTL_SC(quitChar));
     if (logoutChar) {
-        snprintf(buff, BUFFLEN, ", %s%c closes this connection",
+        snprintf(buff, BUFLEN, ", %s%c closes this connection",
                 CTL_SC(logoutChar));
         strncat(infoMessage3, buff, INFO3LEN-strlen(infoMessage3)-1);
     }
@@ -542,10 +542,10 @@ int main(int argc,char * argv[])
              myDir,
              chDir);
     if ( strcmp( childName, command ) )
-        snprintf(buff, BUFFLEN, "@@@ Child \"%s\" started as: %s" NL,
+        snprintf(buff, BUFLEN, "@@@ Child \"%s\" started as: %s" NL,
                  childName, command );
     else
-        snprintf(buff, BUFFLEN, "@@@ Child started as: %s" NL,
+        snprintf(buff, BUFLEN, "@@@ Child started as: %s" NL,
                  command );
     strncat(infoMessage1, buff, INFO1LEN-strlen(infoMessage1)-1);
     snprintf(infoMessage2, INFO2LEN, "@@@ Child \"%s\" is SHUT DOWN" NL, childName);
@@ -553,7 +553,7 @@ int main(int argc,char * argv[])
     // Run here until something makes it die
     while ( ! shutdownServer )
     {
-#define BUFLEN 100
+        const size_t BUFLEN = 100;
         char buf[BUFLEN];
         connectionItem * p;
         fd_set fdset;              // FD stuff for select()
