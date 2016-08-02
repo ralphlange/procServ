@@ -651,10 +651,29 @@ void SendToAll(const char * message,int count,const connectionItem * sender)
     if (sender==NULL || sender->isProcess())
     {
         if (logFileFD > 0) {
-            if (stampLog) write(logFileFD, stamp, len);
-            write(logFileFD, message, count);
+            if (stampLog) {
+                // Some OSs (Windows) do not support line buffering, so we can get parts of lines,
+                // hence need to track of when to send timestamp
+                static bool log_stamp_sent = false;
+                int i = 0, j = 0;
+                for (i = 0; i < count; ++i) {
+                    if (!log_stamp_sent) {
+                        write(logFileFD, stamp, len);
+                        log_stamp_sent = true;
+                    }
+                    if (message[i] == '\n') {
+                        write(logFileFD, message+j, i-j+1);
+                        j = i + 1;
+                        log_stamp_sent = false;
+                    }
+                }
+                write(logFileFD, message+j, count-j);  // finish off rest of line with no newline at end
+            } else {
+                write(logFileFD, message, count);
+            }
+            fsync(logFileFD);
         }
-        if (false == inFgMode && debugFD > 0) write(debugFD, message, count);
+        if (inFgMode == false && debugFD > 0) write(debugFD, message, count);
     }
 
     while ( p ) {
@@ -667,8 +686,26 @@ void SendToAll(const char * message,int count,const connectionItem * sender)
 	{
 	    // Null senders and processes can send to non-processes (ie connections)
         if (sender==NULL || sender->isProcess()) {
-            if (stampLog && p->isLogger()) p->Send(stamp, len);
-            p->Send(message, count);
+            if (stampLog && p->isLogger()) {
+                // Some OSs (Windows) do not support line buffering, so we can get parts of lines,
+                // hence need to track of when to send timestamp
+                static bool log_stamp_sent = false;
+                int i = 0, j = 0;
+                for (i = 0; i < count; ++i) {
+                    if (!log_stamp_sent) {
+                        p->Send(stamp, len);
+                        log_stamp_sent = true;
+                    }
+                    if (message[i] == '\n') {
+                        p->Send(message+j, i-j+1);
+                        j = i + 1;
+                        log_stamp_sent = false;
+                    }
+                }
+                p->Send(message+j, count-j);  // finish off rest of line with no newline at end
+            } else {
+                p->Send(message, count);
+            }
         }
 	}
 	p=p->next;
