@@ -6,7 +6,7 @@
 
 
 AC_PREREQ([2.61])
-AC_INIT([procServ Process Server], [2.6.1-DEV], [tech-talk@aps.anl.gov], [procServ],
+AC_INIT([procServ Process Server], [2.6.1-rc1], [tech-talk@aps.anl.gov], [procServ],
         [https://github.com/ralphlange/procServ])
 AC_SUBST([PACKAGE_DATE],[05/19/2015])
 
