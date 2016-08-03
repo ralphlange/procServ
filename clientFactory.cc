@@ -66,6 +66,7 @@ clientItem::~clientItem()
 
 // Client item constructor
 // This sets KEEPALIVE on the socket and displays the greeting
+// Also sets the socket SNDTIMEO
 clientItem::clientItem(int socketIn, bool readonly)
 {
     assert(socketIn>=0);
@@ -80,6 +81,9 @@ clientItem::clientItem(int socketIn, bool readonly)
     char greeting1[] = "@@@ Welcome to procServ (" PROCSERV_VERSION_STRING ")" NL;
 #define GREETLEN 256
     char greeting2[GREETLEN] = "";
+    struct timeval send_timeout;
+    send_timeout.tv_sec = 10;
+    send_timeout.tv_usec = 0;
 
     PRINTF("New clientItem %p\n", this);
     if ( killChar ) {
@@ -121,6 +125,8 @@ clientItem::clientItem(int socketIn, bool readonly)
              _users, _loggers);
 
     setsockopt( socketIn, SOL_SOCKET, SO_KEEPALIVE, &optval, sizeof(optval) );
+    setsockopt( socketIn, SOL_SOCKET, SO_SNDTIMEO, &send_timeout, sizeof(send_timeout) );
+
     _fd = socketIn;
     _readonly = readonly;
 
@@ -167,7 +173,8 @@ void clientItem::readFromFd(void)
     } else if (len < 0) {
         PRINTF("clientItem:: Got error reading input connection: %s\n", strerror(errno));
         _markedForDeletion = true;
-    } else if (false == _readonly) {
+    } else if (!_readonly) {
+        buf[len] = '\0';
         telnet_recv(_telnet, buf, len);
     }
 }
