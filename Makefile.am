@@ -1,5 +1,5 @@
 # Process Server (for soft IOCs)
-# Ralph Lange 04/16/2012
+# Ralph Lange <ralph.lange@gmx.de> 04/16/2012
 # GNU Public License (GPLv3) applies - see www.gnu.org
 
 bin_PROGRAMS = procServ

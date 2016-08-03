@@ -1,6 +1,6 @@
 // Process server for soft ioc
 // David H. Thompson 8/29/2003
-// Ralph Lange 03/05/2012
+// Ralph Lange <ralph.lange@gmx.de> 2007-2016
 // Ambroz Bizjak 02/29/2016
 // GNU Public License (GPLv3) applies - see www.gnu.org
 

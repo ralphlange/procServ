@@ -1,6 +1,6 @@
 # Process Server (for soft IOCs)
 # David H. Thompson 8/29/2003
-# Ralph Lange 03/17/2010
+# Ralph Lange <ralph.lange@gmx.de> 03/17/2010
 # GNU Public License (GPLv3) applies - see www.gnu.org
 
 TOP=@EPICS_TOP@

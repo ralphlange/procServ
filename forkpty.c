@@ -1,5 +1,5 @@
 /* Process server for soft ioc
- * Ralph Lange 03/25/2010
+// Ralph Lange <ralph.lange@gmx.de> 03/25/2010
  * GNU Public License (GPLv3) applies - see www.gnu.org */
 
 #include <unistd.h>
