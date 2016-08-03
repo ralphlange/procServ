@@ -19,12 +19,17 @@
 class acceptItem : public connectionItem
 {
 public:
-    acceptItem ( int port, bool local, bool readonly );
-    void readFromFd(void);
-    int Send ( const char *, int );
-
-public:
+    acceptItem(int port, bool local, bool readonly);
     virtual ~acceptItem();
+
+    void readFromFd(void);
+    int Send(const char *, int);
+
+private:
+    int _port;
+    bool _local;
+
+    void remakeConnection();
 };
 
 // service and calls clientFactory when clients are accepted
@@ -46,16 +51,25 @@ acceptItem::~acceptItem()
 // Accept item constructor
 // This opens a socket, binds it to the decided port,
 // and sets it to listen mode
-acceptItem::acceptItem(int port, bool local, bool readonly)
+acceptItem::acceptItem(int port, bool local, bool readonly) :
+    connectionItem(-1, readonly),
+    _port(port),
+    _local(local)
+{
+    remakeConnection();
+}
+
+void acceptItem::remakeConnection()
 {
     int optval = 1;
     struct sockaddr_in addr;
     int bindStatus;
 
-    _readonly = readonly;
-
     _fd = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
-    assert(_fd>0);
+    if (_fd < 0) {
+        PRINTF("Socket error: %s\n", strerror(errno));
+        throw errno;
+    }
 
     setsockopt(_fd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
 #ifdef SOLARIS
@@ -67,8 +81,8 @@ acceptItem::acceptItem(int port, bool local, bool readonly)
 
     memset(&addr, 0, sizeof(addr));
     addr.sin_family = AF_INET;
-    addr.sin_port = htons(port);
-    if ( local )
+    addr.sin_port = htons(_port);
+    if (_local)
         inet_aton( "127.0.0.1", &addr.sin_addr );
     else 
         addr.sin_addr.s_addr = htonl( INADDR_ANY );
@@ -82,8 +96,12 @@ acceptItem::acceptItem(int port, bool local, bool readonly)
     else
         PRINTF("Bind returned %d\n", bindStatus);
 
+    if (listen(_fd, 5) < 0) {
+        PRINTF("Listen error: %s\n", strerror(errno));
+        throw errno;
+    }
+
     PRINTF("Listening on fd %d\n", _fd);
-    listen(_fd, 5);
     return; 
 }
 
@@ -95,8 +113,13 @@ void acceptItem::readFromFd(void)
     socklen_t len = sizeof(addr);
 
     newFd = accept( _fd, &addr, &len );
-    PRINTF( "acceptItem: Accepted connection on handle %d\n", newFd );
-    AddConnection( clientFactory(newFd, _readonly) );
+    if (newFd >= 0) {
+        PRINTF("acceptItem: Accepted connection on handle %d\n", newFd);
+        AddConnection(clientFactory(newFd, _readonly));
+    } else {
+        PRINTF("Accept error: %s\n", strerror(errno)); // on Cygwin got error EINVAL
+        remakeConnection();
+    }
 }
 
 // Send characters to client
