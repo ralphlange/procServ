@@ -11,7 +11,7 @@ procServ_SOURCES = procServ.cc procServ.h \
 
 LDADD = $(LIBOBJS)
 
-DISTCLEANFILES = *~ *.orig procServ.xml docbook-xsl.css pid.txt
+DISTCLEANFILES = *~ *.orig procServ.xml docbook-xsl.css pid.txt procServ.map
 MAINTAINERCLEANFILES = procServ.pdf procServ.html procServ.1
 
 doc_DATA = AUTHORS COPYING ChangeLog NEWS README.md procServ.txt
