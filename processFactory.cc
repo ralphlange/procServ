@@ -16,6 +16,10 @@
 #include <string.h>
 #include <strings.h>
 
+#ifdef __CYGWIN__
+#include <sys/cygwin.h>
+#endif /* __CYGWIN__ */
+
 // forkpty()
 #ifdef HAVE_LIBUTIL_H      // FreeBSD
 #include <libutil.h>
@@ -106,6 +110,7 @@ processClass::~processClass()
 
                                 // Negative PID sends signal to all members of process group
     if ( _pid > 0 ) kill( -_pid, SIGKILL );
+    terminateJob();
     if ( _fd > 0 ) close( _fd );
     _runningItem = NULL;
 }
@@ -123,16 +128,56 @@ processClass::processClass(char *exe, char *argv[])
     const size_t BUFLEN = 128;
     char buf[BUFLEN];
 
+#ifdef __CYGWIN__
+    _hwinjob = CreateJobObject(NULL, NULL);
+    if (_hwinjob == NULL) {
+        fprintf(stderr, "CreateJobObject failed\n");
+    }
+    // Set processes assigned to a job to automatically terminate when the job handle object is closed.
+    // This is for additional security - we call TerminateJobObject() as well
+    JOBOBJECT_EXTENDED_LIMIT_INFORMATION job_limits;
+    if (QueryInformationJobObject(_hwinjob, JobObjectExtendedLimitInformation,
+                                  &job_limits, sizeof(JOBOBJECT_EXTENDED_LIMIT_INFORMATION), NULL) != 0) {
+        job_limits.BasicLimitInformation.LimitFlags |= JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE;
+        if (SetInformationJobObject(_hwinjob, JobObjectExtendedLimitInformation,
+                                    &job_limits, sizeof(JOBOBJECT_EXTENDED_LIMIT_INFORMATION)) == 0) {
+            fprintf(stderr, "SetInformationJobObject failed\n");
+        }
+    } else {
+        fprintf(stderr, "QueryInformationJobObject failed\n");
+    }
+#endif /* __CYGWIN__ */
+
     _pid = forkpty(&_fd, factoryName, NULL, NULL);
 
     _markedForDeletion = _pid <= 0;
-    if (_pid)                               // I am the parent
-    {
-	if(_pid < 0) {
+
+    if (_pid) {                              // I am the parent
+
+        if(_pid < 0) {
             fprintf(stderr, "Fork failed: %s\n", errno == ENOENT ? "No pty" : strerror(errno));
         } else {
             PRINTF("Created process %ld on %s\n", (long) _pid, factoryName);
         }
+
+#ifdef __CYGWIN__
+        int winpid = cygwin_internal(CW_CYGWIN_PID_TO_WINPID, _pid);
+        PRINTF("Created win process %ld on %s\n", (long) winpid, factoryName);
+
+        HANDLE hprocess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, winpid);
+        if (hprocess != NULL) {
+            if (AssignProcessToJobObject(_hwinjob, hprocess) != 0) {
+                PRINTF("Assigned win process %ld to job object\n", (long)winpid);
+            } else {
+                fprintf(stderr, "AssignProcessToJobObject failed\n");
+            }
+            if (CloseHandle(hprocess) == 0) {
+                fprintf(stderr, "CloseHandle(hprocess) failed\n");
+            }
+        } else {
+            fprintf(stderr, "OpenProcess failed for win process %ld\n", (long)winpid);
+        }
+#endif /* __CYGWIN__ */
 
         // Don't start a new one before this time:
         _restartTime = holdoffTime + time(0);
@@ -144,9 +189,13 @@ processClass::processClass(char *exe, char *argv[])
         SendToAll( buf, strlen(buf), this );
         strcpy(buf, "@@@ @@@ @@@ @@@ @@@" NL);
         SendToAll( buf, strlen(buf), this );
-    }
-    else                                    // I am the child
-    {
+
+    } else {                                   // I am the child
+
+#ifdef __CYGWIN__
+        sleep(1);   // to allow AssignProcessToJobObject() to happen - the process we spawn may spawn other processes so we want it to inherit
+#endif /* __CYGWIN__ */
+
         setsid();                                  // Become process group leader
         if ( setCoreSize ) {                       // Set core size limit?
             getrlimit( RLIMIT_CORE, &corelimit );
@@ -174,8 +223,8 @@ void processClass::readFromFd(void)
     char  buf[1600];
 
     int len = read(_fd, buf, sizeof(buf)-1);
-    if (len < 1) {
-        PRINTF("processItem: Got error reading input connection\n");
+    if (len < 0) {
+        PRINTF("processItem: Got error reading input connection: %s\n", strerror(errno));
         _markedForDeletion = true;
     } else if (len == 0) {
         PRINTF("processItem: Got EOF reading input connection\n");
@@ -223,15 +272,30 @@ int processClass::Send( const char * buf, int count )
 // client IOC
 void processFactorySendSignal(int signal)
 {
-    if (processClass::_runningItem)
-    {
-	PRINTF("Sending signal %d to pid %ld\n",
-		signal, (long) processClass::_runningItem->_pid);
-	kill(-processClass::_runningItem->_pid,signal);
+    if (processClass::_runningItem) {
+        PRINTF("Sending signal %d to pid %ld\n",
+               signal, (long) processClass::_runningItem->_pid);
+        kill(-processClass::_runningItem->_pid, signal);
+        if (signal == killSig) processClass::_runningItem->terminateJob();
     }
 }
 
 void processClass::restartOnce ()
 {
     _restartTime = 0;
+}
+
+void processClass::terminateJob()
+{
+#ifdef __CYGWIN__
+    if (_hwinjob != NULL) {
+        if (TerminateJobObject(_hwinjob, 1) == 0) {
+            fprintf(stderr, "TerminateJobObject failed\n");
+        }
+        if (CloseHandle(_hwinjob) == 0) {
+            fprintf(stderr, "CloseHandle(_hwinjob) failed\n");
+        }
+        _hwinjob = NULL;
+    }
+#endif /* __CYGWIN__ */
 }
