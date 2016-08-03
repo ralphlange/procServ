@@ -1,6 +1,7 @@
 // Process server for soft ioc
 // David H. Thompson 8/29/2003
 // Ralph Lange <ralph.lange@gmx.de> 2007-2016
+// Freddie Akeroyd 2016
 // GNU Public License (GPLv3) applies - see www.gnu.org
 
 #include <unistd.h>

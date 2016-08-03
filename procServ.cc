@@ -2,6 +2,7 @@
 // David H. Thompson 8/29/2003
 // Ralph Lange <ralph.lange@gmx.de> 2007-2016
 // Ambroz Bizjak 02/29/2016
+// Freddie Akeroyd 2016
 // GNU Public License (GPLv3) applies - see www.gnu.org
 
 
