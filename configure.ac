@@ -11,14 +11,21 @@ AC_INIT([procServ Process Server], [2.6.1-DEV], [tech-talk@aps.anl.gov], [procSe
 AC_SUBST([PACKAGE_DATE],[05/19/2015])
 
 AC_CONFIG_AUX_DIR([build-aux])
+AC_CANONICAL_HOST
 AM_INIT_AUTOMAKE([1.10 -Wall foreign])
 
 AC_CONFIG_SRCDIR([connectionItem.cc])
 # we don't need config.h for now
 #AC_CONFIG_HEADER([config.h])
 
-CFLAGS="$CFLAGS -Wall"
-CXXFLAGS="$CXXFLAGS -Wall"
+#DEBUG_TYPE="-g -O0 -fno-omit-frame-pointer" # -gcoff
+DEBUG_TYPE="-g" # -gcoff
+CFLAGS="$CFLAGS -Wall $DEBUG_TYPE"
+CXXFLAGS="$CXXFLAGS -Wall $DEBUG_TYPE"
+if test "$host_os" = "cygwin"; then
+    LDFLAGS="$LDFLAGS -static -Wl,-Map,procServ.map"
+fi
+LIBS="$LIBS"
 
 # Checks for programs.
 AC_PROG_CXX
