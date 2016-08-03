@@ -14,6 +14,7 @@ Distribution tars are also available through
 [SourceForge](http://sourceforge.net/projects/procserv/).
 
 ### Dependencies
+
 - [**asciidoc**](http://www.methods.co.nz/asciidoc/)
   (package: asciidoc), to create documentation in different formats 
   (man, pdf, html)
@@ -75,9 +76,33 @@ option assumes the distribution behaviour, that
 the documentation should be installed, but doesn't
 need to be built.
 
+### Building on Cygwin/Windows
+
+In general,
+
+    sh configure
+    make
+
+should be enough. If you have `autoconf` and `automake` packages,
+then for a really clean build type
+
+    autoreconf -fi
+    sh configure
+    make distclean
+    make
+
+If you plan to control procServ from a non-localhost address,
+you will need to use
+
+	sh configure --enable-access-from-anywhere
+
+as the configure step.
+
+The executable is also available for download on SourceForge.
+
 ## Using procServ
 
-### Running EPICS IOCs in a Production Environment
+### Running EPICS IOCs as Services on Unix
 
 Michael Davidsaver has created SysV-style rc scripts to configure
 and run EPICS IOCs using procServ.
@@ -85,19 +110,32 @@ and run EPICS IOCs using procServ.
 You can look at the [Debian package](http://epics.nsls2.bnl.gov/debian/) or 
 at the [upstream repository](https://github.com/epicsdeb/sysv-rc-softioc).
 
-### Using procServ on Windows
+### Using procServ on Cygwin/Windows
 
-Under Windows, procServ compiles in a Cygwin environment. Configure with
-`--enable-access-from-anywhere` and run with `--allow` to allow remote access
-to the child console. The executable is available for download on SourceForge.
+In the `.bat` file to launch procServ you should add
+
+    set CYGWIN=nodosfilewarning
+to suppress warnings about using windows style paths.
+
+If you plan to control procServ from a non-localhost address,
+you will need to run it with `--allow` to allow remote access
+to the child console.
 
 To run on a non-Cygwin Windows system, procServ only needs `Cygwin1.dll`,
 e.g. in the same directory as the executable.
 
-Caveats:
+Using Windows style paths ('`\`' delimiter) in arguments to procServ
+is usually OK and suggested under `command.com`.
+If you have problems try replacing them with Cygwin syntax,
+i.e. "`/cygdrive/c/my/path`" rather than "`C:\my\path`".
 
-- Use Windows path delimiters '`\`' specifying the child executable, to avoid
-  permission bit warnings/errors.
-- Under `command.com`, the caret sign '`^`' has to be escaped using '`^^`'.
+Under `command.com`, the caret sign '`^`' has to be escaped using '`^^`'.
+
+If you wish to run a `.bat` file rather than an executable as child under
+procServ, you should use something along the lines of
+
+    %ComSpec% /c runIOC.bat st.cmd
+
+as arguments to procServ to launch your `.bat` file.
 
 ## Enjoy!
