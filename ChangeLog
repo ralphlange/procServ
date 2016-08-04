@@ -13,7 +13,7 @@ Cygwin: add spawned process to a windows job object. (by Freddie Akeroyd)
    Killing the "process group" from Cygwin doesn't always clean everything up.
    E.g., if the CS Studio ArchiveEngine is being managed it is killed, but not the JVM it spawns.
    Job objects are inherited by spawned processes, so both are now killed automatically.
-Added remakeConnection() to acceptItem. (by Freddie Akeroyd)
+Add remakeConnection() to acceptItem. (by Freddie Akeroyd)
    Fix procServ stopping accepting connections after a lot of connect/disconnect calls.
 Fix log time stamp screw-up on OSs with no line buffering (#3). (by Freddie Akeroyd)
 

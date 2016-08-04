@@ -15,6 +15,7 @@ connectionItem::connectionItem(int fd, bool readonly)
     _fd = fd;
     _readonly = readonly;
     _markedForDeletion = false;
+    _log_stamp_sent = false;
 }
 
 connectionItem::~connectionItem()

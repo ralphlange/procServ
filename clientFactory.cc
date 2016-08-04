@@ -34,6 +34,8 @@ public:
 
     void readFromFd(void);
     int Send(const char *buf, int len);
+    int Send(const char * stamp, int stamp_len,
+             const char * message, int count);
 
 private:
     static void telnet_eh(telnet_t *telnet, telnet_event_t *event, void *user_data);
@@ -67,7 +69,8 @@ clientItem::~clientItem()
 // Client item constructor
 // This sets KEEPALIVE on the socket and displays the greeting
 // Also sets the socket SNDTIMEO
-clientItem::clientItem(int socketIn, bool readonly)
+clientItem::clientItem(int socketIn, bool readonly) :
+    connectionItem(socketIn, readonly)
 {
     assert(socketIn>=0);
     int optval = 1;
@@ -126,9 +129,6 @@ clientItem::clientItem(int socketIn, bool readonly)
 
     setsockopt( socketIn, SOL_SOCKET, SO_KEEPALIVE, &optval, sizeof(optval) );
     setsockopt( socketIn, SOL_SOCKET, SO_SNDTIMEO, &send_timeout, sizeof(send_timeout) );
-
-    _fd = socketIn;
-    _readonly = readonly;
 
     if ( _readonly ) {          // Logging client
         _loggers++;
@@ -230,6 +230,31 @@ int clientItem::Send(const char * buf, int len)
         telnet_send(_telnet, buf, len);
     }
     return _status;
+}
+
+// Send characters, printing time stamps at every new line
+int clientItem::Send(const char * stamp, int stamp_len,
+                     const char * message, int count)
+{
+    if (isLogger()) {
+        // Some OSs (Windows) do not support line buffering, so we can get parts of lines,
+        // hence need to track of when to send timestamp
+        int i = 0, j = 0;
+        for (i = 0; i < count; ++i) {
+            if (!_log_stamp_sent) {
+                Send(stamp, stamp_len);
+                _log_stamp_sent = true;
+            }
+            if (message[i] == '\n') {
+                Send(message+j, i-j+1);
+                j = i + 1;
+                _log_stamp_sent = false;
+            }
+        }
+        return Send(message+j, count-j);  // finish off rest of line with no newline at end
+    } else {
+        return Send(message, count);
+    }
 }
 
 // Write characters to client FD

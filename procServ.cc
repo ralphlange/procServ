@@ -634,7 +634,9 @@ int main(int argc,char * argv[])
 // // the sender's this pointer keeps it from getting its own
 // // messages.
 // //
-void SendToAll(const char * message,int count,const connectionItem * sender)
+void SendToAll(const char * message,
+               int count,
+               const connectionItem * sender)
 {
     connectionItem * p = connectionItem::head;
     char stamp[64];
@@ -642,12 +644,11 @@ void SendToAll(const char * message,int count,const connectionItem * sender)
     time_t now;
     struct tm now_tm;
 
-    if (stampLog) {
-        time(&now);
-        localtime_r(&now, &now_tm);
-        strftime(stamp, sizeof(stamp)-1, stampFormat, &now_tm);
-        len = strlen(stamp);
-    }
+    time(&now);
+    localtime_r(&now, &now_tm);
+    strftime(stamp, sizeof(stamp)-1, stampFormat, &now_tm);
+    len = strlen(stamp);
+
     // Log the traffic to file / stdout (debug)
     if (sender==NULL || sender->isProcess())
     {
@@ -677,39 +678,20 @@ void SendToAll(const char * message,int count,const connectionItem * sender)
         if (inFgMode == false && debugFD > 0) write(debugFD, message, count);
     }
 
-    while ( p ) {
-	if ( p->isProcess() )
-	{
-	    // Non-null senders that are not processes can send to processes
-        if (sender && !sender->isProcess()) p->Send(message, count);
-	}
-	else // Not a process
-	{
-	    // Null senders and processes can send to non-processes (ie connections)
-        if (sender==NULL || sender->isProcess()) {
-            if (stampLog && p->isLogger()) {
-                // Some OSs (Windows) do not support line buffering, so we can get parts of lines,
-                // hence need to track of when to send timestamp
-                static bool log_stamp_sent = false;
-                int i = 0, j = 0;
-                for (i = 0; i < count; ++i) {
-                    if (!log_stamp_sent) {
-                        p->Send(stamp, len);
-                        log_stamp_sent = true;
-                    }
-                    if (message[i] == '\n') {
-                        p->Send(message+j, i-j+1);
-                        j = i + 1;
-                        log_stamp_sent = false;
-                    }
-                }
-                p->Send(message+j, count-j);  // finish off rest of line with no newline at end
-            } else {
-                p->Send(message, count);
+    while (p) {
+        if (p->isProcess()) {
+            // Non-null senders that are not processes can send to processes
+            if (sender && !sender->isProcess()) p->Send(message, count);
+        } else {
+            // Null senders and processes can send to connections, with time stamp
+            if (!sender || sender->isProcess()) {
+                if (stampLog)
+                    p->Send(stamp, len, message, count);
+                else
+                    p->Send(message, count);
             }
         }
-	}
-	p=p->next;
+        p = p->next;
     }
 }
 
