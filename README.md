@@ -1,8 +1,8 @@
 # procServ
-[![Linux Autotools Build](https://openepics.ci.cloudbees.com/buildStatus/icon?job=procServ - automake build)](https://openepics.ci.cloudbees.com/view/procServ/job/procServ%20-%20automake%20build/)
-[![Linux EPICS Build](https://openepics.ci.cloudbees.com/buildStatus/icon?job=procServ - EPICS build)](https://openepics.ci.cloudbees.com/view/procServ/job/procServ%20-%20EPICS%20build/)
-[![Linux Build](https://travis-ci.org/ralphlange/procServ.svg?branch=master)](https://travis-ci.org/ralphlange/procServ)
-[![Windows Build](https://ci.appveyor.com/api/projects/status/github/ralphlange/procserv?svg=true)](https://ci.appveyor.com/project/ralphlange/procserv)
+
+| Automake Build | EPICS Build | Linux Build | Windows Build |
+|---|---|---|---|
+|[![CloudBees Autotools](https://openepics.ci.cloudbees.com/buildStatus/icon?job=procServ%20-%20automake%20build)](https://openepics.ci.cloudbees.com/view/procServ/job/procServ%20-%20automake%20build/)|[![CloudBees EPICS](https://openepics.ci.cloudbees.com/buildStatus/icon?job=procServ%20-%20EPICS%20build)](https://openepics.ci.cloudbees.com/view/procServ/job/procServ%20-%20EPICS%20build/)|[![Travis Build](https://travis-ci.org/ralphlange/procServ.svg?branch=master)](https://travis-ci.org/ralphlange/procServ)|[![Windows Build](https://ci.appveyor.com/api/projects/status/github/ralphlange/procserv?svg=true)](https://ci.appveyor.com/project/ralphlange/procserv)|
 
 A wrapper to start arbitrary interactive commands in the background,
 with telnet access to stdin/stdout.
@@ -35,8 +35,9 @@ Distribution tars are also available through
 ### Continuous Integration
 
 Automated builds are provided by
-[CloudBees](https://openepics.ci.cloudbees.com/view/procServ/) and 
-[Travis](https://travis-ci.org/ralphlange/procServ).
+[CloudBees](https://openepics.ci.cloudbees.com/view/procServ/),
+[Travis](https://travis-ci.org/ralphlange/procServ) and
+[AppVeyor](https://ci.appveyor.com/project/ralphlange/procserv).
 
 ### Linux Packages
 
