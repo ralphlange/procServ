@@ -4,4 +4,4 @@ environment:
 build_script:
   - sh autoreconf -fi
   - sh configure --disable-doc
-  make
+  - make
