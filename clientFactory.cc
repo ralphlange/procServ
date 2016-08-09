@@ -1,6 +1,6 @@
 // Process server for soft ioc
 // David H. Thompson 8/29/2003
-// Ralph Lange 05/19/2015
+// Ralph Lange <ralph.lange@gmx.de> 2007-2016
 // GNU Public License (GPLv3) applies - see www.gnu.org
 
 #include <unistd.h>
@@ -34,6 +34,8 @@ public:
 
     void readFromFd(void);
     int Send(const char *buf, int len);
+    int Send(const char * stamp, int stamp_len,
+             const char * message, int count);
 
 private:
     static void telnet_eh(telnet_t *telnet, telnet_event_t *event, void *user_data);
@@ -66,7 +68,9 @@ clientItem::~clientItem()
 
 // Client item constructor
 // This sets KEEPALIVE on the socket and displays the greeting
-clientItem::clientItem(int socketIn, bool readonly)
+// Also sets the socket SNDTIMEO
+clientItem::clientItem(int socketIn, bool readonly) :
+    connectionItem(socketIn, readonly)
 {
     assert(socketIn>=0);
     int optval = 1;
@@ -75,27 +79,32 @@ clientItem::clientItem(int socketIn, bool readonly)
     char procServStart_buf[32]; // Time when this procServ started - as string
     struct tm IOCStart_tm;      // Time when the current IOC was started
     char IOCStart_buf[32];      // Time when the current IOC was started - as string
-    char buf1[512], buf2[512];
+#define BUFLEN 512
+    char buf1[BUFLEN], buf2[BUFLEN];
     char greeting1[] = "@@@ Welcome to procServ (" PROCSERV_VERSION_STRING ")" NL;
-    char greeting2[256] = "";
+#define GREETLEN 256
+    char greeting2[GREETLEN] = "";
+    struct timeval send_timeout;
+    send_timeout.tv_sec = 10;
+    send_timeout.tv_usec = 0;
 
     PRINTF("New clientItem %p\n", this);
     if ( killChar ) {
-        sprintf(greeting2, "@@@ Use %s%c to kill the child, ", CTL_SC(killChar));
+        snprintf(greeting2, GREETLEN, "@@@ Use %s%c to kill the child, ", CTL_SC(killChar));
     } else {
-        sprintf( greeting2, "@@@ Kill command disabled, " );
+        snprintf(greeting2, GREETLEN, "@@@ Kill command disabled, ");
     }
-    sprintf( buf1, "auto restart is %s, ", autoRestart ? "ON" : "OFF" );
+    snprintf(buf1, BUFLEN, "auto restart is %s, ", autoRestart ? "ON" : "OFF");
     if ( toggleRestartChar ) {
-        sprintf(buf2, "use %s%c to toggle auto restart" NL, CTL_SC(toggleRestartChar));
+        snprintf(buf2, BUFLEN, "use %s%c to toggle auto restart" NL, CTL_SC(toggleRestartChar));
     } else {
-        sprintf( buf2, "auto restart toggle disabled" NL );
+        snprintf(buf2, BUFLEN, "auto restart toggle disabled" NL);
     }
-    strcat ( greeting2, buf1 );
-    strcat ( greeting2, buf2 );
+    strncat(greeting2, buf1, GREETLEN-strlen(greeting2)-1);
+    strncat(greeting2, buf2, GREETLEN-strlen(greeting2)-1);
     if (logoutChar) {
-        sprintf(buf2, "@@@ Use %s%c to logout from procServ server" NL, CTL_SC(logoutChar));
-        strcat(greeting2, buf2);
+        snprintf(buf2, BUFLEN, "@@@ Use %s%c to logout from procServ server" NL, CTL_SC(logoutChar));
+        strncat(greeting2, buf2, GREETLEN-strlen(greeting2)-1);
     }
 
     localtime_r( &procServStart, &procServStart_tm );
@@ -106,21 +115,20 @@ clientItem::clientItem(int socketIn, bool readonly)
     strftime( IOCStart_buf, sizeof(IOCStart_buf)-1,
               timeFormat, &IOCStart_tm );
 
-    sprintf( buf1, "@@@ procServ server started at: %s" NL,
+    snprintf(buf1, BUFLEN, "@@@ procServ server started at: %s" NL,
              procServStart_buf);
 
     if ( processClass::exists() ) {
-        sprintf( buf2, "@@@ Child \"%s\" started at: %s" NL,
+        snprintf(buf2, BUFLEN, "@@@ Child \"%s\" started at: %s" NL,
                  childName, IOCStart_buf );
-        strcat( buf1, buf2 );
+        strncat(buf1, buf2, BUFLEN-strlen(buf1)-1);
     }
 
-    sprintf( buf2, "@@@ %d user(s) and %d logger(s) connected (plus you)" NL,
-             _users, _loggers );
+    snprintf(buf2, BUFLEN, "@@@ %d user(s) and %d logger(s) connected (plus you)" NL,
+             _users, _loggers);
 
     setsockopt( socketIn, SOL_SOCKET, SO_KEEPALIVE, &optval, sizeof(optval) );
-    _fd = socketIn;
-    _readonly = readonly;
+    setsockopt( socketIn, SOL_SOCKET, SO_SNDTIMEO, &send_timeout, sizeof(send_timeout) );
 
     if ( _readonly ) {          // Logging client
         _loggers++;
@@ -165,7 +173,8 @@ void clientItem::readFromFd(void)
     } else if (len < 0) {
         PRINTF("clientItem:: Got error reading input connection: %s\n", strerror(errno));
         _markedForDeletion = true;
-    } else if (false == _readonly) {
+    } else if (!_readonly) {
+        buf[len] = '\0';
         telnet_recv(_telnet, buf, len);
     }
 }
@@ -200,7 +209,7 @@ void clientItem::processInput(const char *buf, int len)
                 char msg[128] = NL;
                 PRINTF ("Got a toggleAutoRestart command\n");
                 SendToAll(msg, strlen(msg), NULL);
-                sprintf(msg, "@@@ Toggled auto restart to %s" NL,
+                snprintf(msg, 128, "@@@ Toggled auto restart to %s" NL,
                         autoRestart ? "ON" : "OFF");
                 SendToAll(msg, strlen(msg), NULL);
             }
@@ -221,6 +230,31 @@ int clientItem::Send(const char * buf, int len)
         telnet_send(_telnet, buf, len);
     }
     return _status;
+}
+
+// Send characters, printing time stamps at every new line
+int clientItem::Send(const char * stamp, int stamp_len,
+                     const char * message, int count)
+{
+    if (isLogger()) {
+        // Some OSs (Windows) do not support line buffering, so we can get parts of lines,
+        // hence need to track of when to send timestamp
+        int i = 0, j = 0;
+        for (i = 0; i < count; ++i) {
+            if (!_log_stamp_sent) {
+                Send(stamp, stamp_len);
+                _log_stamp_sent = true;
+            }
+            if (message[i] == '\n') {
+                Send(message+j, i-j+1);
+                j = i + 1;
+                _log_stamp_sent = false;
+            }
+        }
+        return Send(message+j, count-j);  // finish off rest of line with no newline at end
+    } else {
+        return Send(message, count);
+    }
 }
 
 // Write characters to client FD

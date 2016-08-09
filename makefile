@@ -1,6 +1,6 @@
 # Process Server (for soft IOCs)
 # David H. Thompson 8/29/2003
-# Ralph Lange 02/29/2012
+# Ralph Lange <ralph.lange@gmx.de> 02/29/2012
 # GNU Public License (GPLv3) applies - see www.gnu.org
 
 # Last resort rules if Makefile is not present

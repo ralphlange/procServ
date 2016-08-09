@@ -1,6 +1,6 @@
 // Process server for soft ioc
 // David H. Thompson 8/29/2003
-// Ralph Lange 02/28/2012
+// Ralph Lange <ralph.lange@gmx.de> 2007-2016
 // GNU Public License (GPLv3) applies - see www.gnu.org
 
 
@@ -27,7 +27,7 @@ extern bool   inDebugMode;
 extern bool   logPortLocal;
 extern bool   autoRestart;
 extern bool   waitForManualStart;
-extern bool   shutdownServer;
+extern volatile bool shutdownServer;
 extern bool   setCoreSize;
 extern char   *procservName;
 extern char   *childName;
@@ -39,6 +39,9 @@ extern char   restartChar;
 extern char   quitChar;
 extern char   logoutChar;
 extern int    killSig;
+extern const size_t INFO1LEN;
+extern const size_t INFO2LEN;
+extern const size_t INFO3LEN;
 extern char   infoMessage1[];
 extern char   infoMessage2[];
 extern char   infoMessage3[];
@@ -60,8 +63,10 @@ extern time_t IOCStart;      // Time when the current IOC was started
 // This is a party line system, messages go to everyone
 // the sender's this pointer keeps it from getting its own
 // messages.
-//
-void SendToAll(const char * message,int count,const connectionItem * sender);
+void SendToAll(const char * message,
+               int count,
+               const connectionItem * sender);
+
 // Call this to add the item to the list of connections
 void AddConnection(connectionItem *);
 void DeleteConnection(connectionItem *ci);
@@ -98,7 +103,9 @@ public:
     virtual void readFromFd(void) = 0;
 
     // Send characters to this client.
-    virtual int Send(const char *, int count) = 0;
+    virtual int Send(const char * message, int count) = 0;
+    virtual int Send(const char * stamp, int stamp_len,
+                     const char * message, int count) { return Send(message, count); }
 
     virtual void markDeadIfChildIs(pid_t pid);   // called if parent receives sig child
 
@@ -114,6 +121,7 @@ protected:
     int _fd;                 // File descriptor of this connection
     bool _markedForDeletion; // True if this connection is dead
     bool _readonly;          // True if input has to be ignored
+    bool _log_stamp_sent;    // Flag for timestamping log output
 
 public:
     connectionItem * next,*prev;

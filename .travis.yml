@@ -1,2 +1,7 @@
+os:
+  - linux
+  - osx
+
 language: cpp
+
 script: make && ./configure --disable-doc && make

@@ -1,7 +1,8 @@
 // Process server for soft ioc
 // David H. Thompson 8/29/2003
-// Ralph Lange 03/05/2012
+// Ralph Lange <ralph.lange@gmx.de> 2007-2016
 // Ambroz Bizjak 02/29/2016
+// Freddie Akeroyd 2016
 // GNU Public License (GPLv3) applies - see www.gnu.org
 
 
@@ -21,6 +22,10 @@
 #include <sys/select.h>
 #include <string.h>
 
+#ifdef __CYGWIN__
+    #include <windows.h>
+#endif /* __CYGWIN__ */
+
 #include "procServ.h"
 
 #ifdef ALLOW_FROM_ANYWHERE
@@ -35,7 +40,7 @@ bool   logPortLocal;             // This restricts log port access to localhost
 bool   ctlPortLocal = true;      // Restrict control connections to localhost
 bool   autoRestart = true;       // Enables instant restart of exiting child
 bool   waitForManualStart = false;  // Waits for telnet cmd to manually start child
-bool   shutdownServer = false;   // To keep the server from shutting down
+volatile bool shutdownServer = false;   // To keep the server from shutting down
 bool   quiet = false;            // Suppress info output (server)
 bool   setCoreSize = false;      // Set core size for child
 char   *procservName;            // The name of this beast (server)
@@ -63,9 +68,13 @@ char   defaulttimeFormat[] = "%c";    // default
 bool   stampLog = false;         // Prefix log lines with time stamp
 char   *stampFormat;             // Log time stamp format string
 
-char   infoMessage1[512];        // Sign on message: server PID, child pwd and command line
-char   infoMessage2[128];        // Sign on message: child PID
-char   infoMessage3[128];        // Sign on message: available server commands
+const size_t INFO1LEN = 512;
+const size_t INFO2LEN = 128;
+const size_t INFO3LEN = 128;
+
+char   infoMessage1[INFO1LEN];   // Sign on message: server PID, child pwd and command line
+char   infoMessage2[INFO2LEN];   // Sign on message: child PID
+char   infoMessage3[INFO3LEN];   // Sign on message: available server commands
 
 char   *logFile = NULL;          // File name for log
 int    logFileFD=-1;             // FD for log file
@@ -84,15 +93,17 @@ void forkAndGo();
 int checkCommandFile(const char *command);
 void openLogFile();
 void ttySetCharNoEcho(bool save);
+static void hideWindow();
 
 // Signal handlers
-void OnSigPipe(int);
-void OnSigTerm(int);
-void OnSigHup(int);
+static void OnSigPipe(int);
+static void OnSigTerm(int);
+static void OnSigHup(int);
+
 // Flags used for communication between sig handler and main()
-int sigPipeSet;
-int sigTermSet;
-int sigHupSet;
+static volatile sig_atomic_t sigPipeSet;
+static volatile sig_atomic_t sigTermSet;
+static volatile sig_atomic_t sigHupSet;
 
 void writePidFile()
 {
@@ -177,7 +188,8 @@ int main(int argc,char * argv[])
     int ctlPort = 0;
     char *command;
     bool wrongOption = false;
-    char buff[512];
+    const size_t BUFLEN = 512;
+    char buff[BUFLEN];
 
     time(&procServStart);             // remember start time
     procservName = argv[0];
@@ -395,14 +407,15 @@ int main(int argc,char * argv[])
 
     // Set up available server commands message
     PRINTF("Setting up messages\n");
-    sprintf(infoMessage3, "@@@ %s%c or %s%c restarts the child, %s%c quits the server",
+    snprintf(infoMessage3, INFO3LEN,\
+            "@@@ %s%c or %s%c restarts the child, %s%c quits the server",
             CTL_SC(restartChar), CTL_SC(killChar), CTL_SC(quitChar));
     if (logoutChar) {
-        sprintf(buff, ", %s%c closes this connection",
+        snprintf(buff, BUFLEN, ", %s%c closes this connection",
                 CTL_SC(logoutChar));
-        strcat(infoMessage3, buff);
+        strncat(infoMessage3, buff, INFO3LEN-strlen(infoMessage3)-1);
     }
-    strcat(infoMessage3, NL);
+    strncat(infoMessage3, NL, INFO3LEN-strlen(infoMessage3)-1);
 
     ctlPort = atoi(argv[optind]);
     command = argv[optind+1];
@@ -424,7 +437,11 @@ int main(int argc,char * argv[])
 
     if (stampLog && !stampFormat) {
         stampFormat = (char*) calloc(strlen(timeFormat)+4, 1);
-        sprintf(stampFormat, "[%s] ", timeFormat);
+        if (stampFormat) {
+            sprintf(stampFormat, "[%s] ", timeFormat);
+        } else {
+            stampFormat = timeFormat;
+        }
     }
 
     if (checkCommandFile(childExec)) exit(errno);
@@ -518,26 +535,27 @@ int main(int argc,char * argv[])
     }
 
     // Record some useful data for managers 
-    sprintf( infoMessage1, "@@@ procServ server PID: %ld" NL
+    snprintf(infoMessage1, INFO1LEN,
+             "@@@ procServ server PID: %ld" NL
              "@@@ Server startup directory: %s" NL
              "@@@ Child startup directory: %s" NL,
              (long) getpid(),
              myDir,
              chDir);
     if ( strcmp( childName, command ) )
-        sprintf( buff, "@@@ Child \"%s\" started as: %s" NL,
+        snprintf(buff, BUFLEN, "@@@ Child \"%s\" started as: %s" NL,
                  childName, command );
     else
-        sprintf( buff, "@@@ Child started as: %s" NL,
+        snprintf(buff, BUFLEN, "@@@ Child started as: %s" NL,
                  command );
-    if ( strlen(infoMessage1) + strlen(buff) + 1 < sizeof(infoMessage1) )
-        strcat( infoMessage1, buff);
-    sprintf( infoMessage2, "@@@ Child \"%s\" is SHUT DOWN" NL, childName );
+    strncat(infoMessage1, buff, INFO1LEN-strlen(infoMessage1)-1);
+    snprintf(infoMessage2, INFO2LEN, "@@@ Child \"%s\" is SHUT DOWN" NL, childName);
 
     // Run here until something makes it die
     while ( ! shutdownServer )
     {
-        char buf[100];
+        const size_t BUFLEN = 100;
+        char buf[BUFLEN];
         connectionItem * p;
         fd_set fdset;              // FD stuff for select()
         int fd, nFd;
@@ -616,7 +634,9 @@ int main(int argc,char * argv[])
 // // the sender's this pointer keeps it from getting its own
 // // messages.
 // //
-void SendToAll(const char * message,int count,const connectionItem * sender)
+void SendToAll(const char * message,
+               int count,
+               const connectionItem * sender)
 {
     connectionItem * p = connectionItem::head;
     char stamp[64];
@@ -624,37 +644,54 @@ void SendToAll(const char * message,int count,const connectionItem * sender)
     time_t now;
     struct tm now_tm;
 
-    if (stampLog) {
-        time(&now);
-        localtime_r(&now, &now_tm);
-        strftime(stamp, sizeof(stamp)-1, stampFormat, &now_tm);
-        len = strlen(stamp);
-    }
+    time(&now);
+    localtime_r(&now, &now_tm);
+    strftime(stamp, sizeof(stamp)-1, stampFormat, &now_tm);
+    len = strlen(stamp);
+
     // Log the traffic to file / stdout (debug)
     if (sender==NULL || sender->isProcess())
     {
         if (logFileFD > 0) {
-            if (stampLog) write(logFileFD, stamp, len);
-            write(logFileFD, message, count);
+            if (stampLog) {
+                // Some OSs (Windows) do not support line buffering, so we can get parts of lines,
+                // hence need to track of when to send timestamp
+                static bool log_stamp_sent = false;
+                int i = 0, j = 0;
+                for (i = 0; i < count; ++i) {
+                    if (!log_stamp_sent) {
+                        write(logFileFD, stamp, len);
+                        log_stamp_sent = true;
+                    }
+                    if (message[i] == '\n') {
+                        write(logFileFD, message+j, i-j+1);
+                        j = i + 1;
+                        log_stamp_sent = false;
+                    }
+                }
+                write(logFileFD, message+j, count-j);  // finish off rest of line with no newline at end
+            } else {
+                write(logFileFD, message, count);
+            }
+            fsync(logFileFD);
         }
-        if (false == inFgMode && debugFD > 0) write(debugFD, message, count);
+        if (inFgMode == false && debugFD > 0) write(debugFD, message, count);
     }
 
-    while ( p ) {
-	if ( p->isProcess() )
-	{
-	    // Non-null senders that are not processes can send to processes
-        if (sender && !sender->isProcess()) p->Send(message, count);
-	}
-	else // Not a process
-	{
-	    // Null senders and processes can send to non-processes (ie connections)
-        if (sender==NULL || sender->isProcess()) {
-            if (stampLog && p->isLogger()) p->Send(stamp, len);
-            p->Send(message, count);
+    while (p) {
+        if (p->isProcess()) {
+            // Non-null senders that are not processes can send to processes
+            if (sender && !sender->isProcess()) p->Send(message, count);
+        } else {
+            // Null senders and processes can send to connections, with time stamp
+            if (!sender || sender->isProcess()) {
+                if (stampLog)
+                    p->Send(stamp, len, message, count);
+                else
+                    p->Send(message, count);
+            }
         }
-	}
-	p=p->next;
+        p = p->next;
     }
 }
 
@@ -665,7 +702,8 @@ void OnPollTimeout()
     pid_t pid;
     int wstatus;
     connectionItem *pc, *pn;
-    char buf[128] = NL;
+    const size_t BUFLEN = 128;
+    char buf[BUFLEN] = NL;
 
     pid = waitpid(-1, &wstatus, WNOHANG);
     if (pid > 0 ) {
@@ -679,18 +717,20 @@ void OnPollTimeout()
         strcpy(buf, "@@@ @@@ @@@ @@@ @@@" NL);
         SendToAll(buf, strlen(buf), NULL);
 
-        sprintf(buf, "@@@ Received a sigChild for process %ld.", (long) pid);
+        snprintf(buf, BUFLEN, "@@@ Received a sigChild for process %ld.", (long) pid);
 
         if (WIFEXITED(wstatus)) {
-            sprintf(buf + strlen(buf), " Normal exit status = %d",
-                    WEXITSTATUS(wstatus));
+            snprintf(buf+strlen(buf), BUFLEN-strlen(buf),
+                     " Normal exit status = %d",
+                     WEXITSTATUS(wstatus));
         }
 
         if (WIFSIGNALED(wstatus)) {
-            sprintf(buf + strlen(buf), " The process was killed by signal %d",
-                    WTERMSIG(wstatus));
+            snprintf(buf+strlen(buf), BUFLEN-strlen(buf),
+                     " The process was killed by signal %d",
+                     WTERMSIG(wstatus));
         }
-        strcat(buf, NL);
+        strncat(buf, NL, BUFLEN-strlen(buf)-1);
         SendToAll(buf, strlen(buf), NULL);
     }
 
@@ -738,17 +778,17 @@ void DeleteConnection(connectionItem *ci)
 	assert(connectionNo>=0);
 }
 
-void OnSigPipe(int)
+static void OnSigPipe(int)
 {
     sigPipeSet = 1;
 }
 
-void OnSigTerm(int)
+static void OnSigTerm(int)
 {
     sigTermSet = 1;
 }
 
-void OnSigHup(int)
+static void OnSigHup(int)
 {
     sigHupSet = 1;
 }
@@ -786,6 +826,7 @@ void forkAndGo()
 
         // Make sure we are not attached to a terminal
         setsid();
+        hideWindow();
     }
 }
 
@@ -795,8 +836,6 @@ void forkAndGo()
 int checkCommandFile(const char * command)
 {
     struct stat s;
-    mode_t must_perm   =         S_IXUSR        |S_IXGRP        |S_IXOTH;
-    mode_t should_perm = S_IRUSR|S_IXUSR|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH;
 
     PRINTF("Checking command file validity\n");
 
@@ -816,6 +855,10 @@ int checkCommandFile(const char * command)
         return -1;
     }
 
+// On Cygwin, permission bits are meaningless
+#ifndef __CYGWIN__
+    mode_t must_perm   =         S_IXUSR        |S_IXGRP        |S_IXOTH;
+    mode_t should_perm = S_IRUSR|S_IXUSR|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH;
     if (must_perm != (s.st_mode & must_perm)) {
         fprintf(stderr, "%s: Error - Please change permissions on %s to at least ---x--x--x\n"
                 "procServ is not able to continue without execute permission\n",
@@ -829,6 +872,7 @@ int checkCommandFile(const char * command)
                 procservName, command);
         return 0;
     }
+#endif /* __CYGWIN__ */
 
     return 0;
 }
@@ -867,6 +911,17 @@ void ttySetCharNoEcho(bool set) {
     } else if (saved) {
         tcsetattr(0, TCSANOW, &org_mode);
     }
+}
+
+static void hideWindow()
+{
+#ifdef __CYGWIN__
+    HWND conwin = GetConsoleWindow();
+    if ( conwin != NULL )
+    {
+        ShowWindowAsync(conwin, SW_HIDE);
+    }
+#endif
 }
 
 connectionItem * connectionItem::head;

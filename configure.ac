@@ -6,19 +6,26 @@
 
 
 AC_PREREQ([2.61])
-AC_INIT([procServ Process Server], [2.6.1-DEV], [tech-talk@aps.anl.gov], [procServ],
-	[http://sourceforge.net/projects/procserv/])
-AC_SUBST([PACKAGE_DATE],[05/19/2015])
+AC_INIT([procServ Process Server], [2.6.1-rc1], [tech-talk@aps.anl.gov], [procServ],
+        [https://github.com/ralphlange/procServ])
+AC_SUBST([PACKAGE_DATE],[08/03/2016])
 
 AC_CONFIG_AUX_DIR([build-aux])
-AM_INIT_AUTOMAKE([1.10 -Wall])
+AC_CANONICAL_HOST
+AM_INIT_AUTOMAKE([1.10 -Wall foreign])
 
 AC_CONFIG_SRCDIR([connectionItem.cc])
 # we don't need config.h for now
 #AC_CONFIG_HEADER([config.h])
 
-CFLAGS="$CFLAGS -Wall"
-CXXFLAGS="$CXXFLAGS -Wall"
+#DEBUG_TYPE="-g -O0 -fno-omit-frame-pointer" # -gcoff
+DEBUG_TYPE="-g" # -gcoff
+CFLAGS="$CFLAGS -Wall $DEBUG_TYPE"
+CXXFLAGS="$CXXFLAGS -Wall $DEBUG_TYPE"
+if test "$host_os" = "cygwin"; then
+    LDFLAGS="$LDFLAGS -static -Wl,-Map,procServ.map"
+fi
+LIBS="$LIBS"
 
 # Checks for programs.
 AC_PROG_CXX

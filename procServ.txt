@@ -159,17 +159,18 @@ None so far.
 REPORTING BUGS
 --------------
 
-Report bugs on the procServ Trac at <http://sourceforge.net/apps/trac/procserv/> or to the authors.
+Report bugs using the issue tracker at <https://github.com/ralphlange/procServ/issues> or to the author.
 
 AUTHORS
 -------
 
-Written by David H. Thompson <thompsondh@ornl.gov> and Ralph Lange <Ralph.Lange@gmx.de>.
+Originally written by David H. Thompson <thompsondh@ornl.gov>.
+Current author: Ralph Lange <ralph.lange@gmx.de>.
 
 RESOURCES
 ---------
 
-SourceForge project: <http://sourceforge.net/projects/procserv/>
+GitHub project: <https://github.com/ralphlange/procServ>
 
 COPYING
 -------

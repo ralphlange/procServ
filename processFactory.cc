@@ -1,6 +1,7 @@
 // Process server for soft ioc
 // David H. Thompson 8/29/2003
-// Ralph Lange 04/13/2012
+// Ralph Lange <ralph.lange@gmx.de> 2007-2016
+// Freddie Akeroyd 2016
 // GNU Public License (GPLv3) applies - see www.gnu.org
 
 #include <unistd.h>
@@ -15,6 +16,10 @@
 #include <time.h>
 #include <string.h>
 #include <strings.h>
+
+#ifdef __CYGWIN__
+#include <sys/cygwin.h>
+#endif /* __CYGWIN__ */
 
 // forkpty()
 #ifdef HAVE_LIBUTIL_H      // FreeBSD
@@ -50,16 +55,17 @@ bool processFactoryNeedsRestart()
 
 connectionItem * processFactory(char *exe, char *argv[])
 {
-    char buf[512];
+    const size_t BUFLEN = 512;
+    char buf[BUFLEN];
     time(&IOCStart); // Remember when we did this
 
     if (processFactoryNeedsRestart())
     {
-	sprintf( buf, "@@@ Restarting child \"%s\"" NL, childName );
+    snprintf(buf, BUFLEN, "@@@ Restarting child \"%s\"" NL, childName);
 	SendToAll( buf, strlen(buf), 0 );
 
         if ( strcmp( childName, argv[0] ) != 0 ) {
-            sprintf( buf, "@@@    (as %s)" NL, argv[0] );
+            snprintf(buf, BUFLEN, "@@@    (as %s)" NL, argv[0]);
             SendToAll( buf, strlen(buf), 0 );
         }
 
@@ -77,24 +83,27 @@ processClass::~processClass()
     struct tm now_tm;
     time_t now;
     size_t result;
-    char now_buf[128] = "@@@ Current time: ";
-    char goodbye[128];
+    const size_t NOWLEN = 128;
+    char now_buf[NOWLEN] = "@@@ Current time: ";
+    const size_t BYELEN = 128;
+    char goodbye[BYELEN];
 
     time( &now );
     localtime_r( &now, &now_tm );
     result = strftime( &now_buf[strlen(now_buf)], sizeof(now_buf) - strlen(now_buf) - 1,
                        timeFormat, &now_tm );
     if (result && (sizeof(now_buf) - strlen(now_buf) > 2)) {
-        strcat(now_buf, NL);
+        strncat(now_buf, NL, NOWLEN-strlen(now_buf)-1);
     } else {
-        strcpy(now_buf, "@@@ Current time: N/A");
+        strncpy(now_buf, "@@@ Current time: N/A", NOWLEN);
+        now_buf[NOWLEN-1] = '\0';
     }
-    sprintf ( goodbye, "@@@ Child process is shutting down, %s" NL,
+    snprintf (goodbye, BYELEN, "@@@ Child process is shutting down, %s" NL,
               autoRestart ? "a new one will be restarted shortly" :
-              "auto restart is disabled" );
+              "auto restart is disabled");
 
     // Update client connect message
-    sprintf( infoMessage2, "@@@ Child \"%s\" is SHUT DOWN" NL, childName );
+    snprintf(infoMessage2, INFO2LEN, "@@@ Child \"%s\" is SHUT DOWN" NL, childName);
 
     SendToAll( now_buf, strlen(now_buf), this );
     SendToAll( goodbye, strlen(goodbye), this );
@@ -102,6 +111,7 @@ processClass::~processClass()
 
                                 // Negative PID sends signal to all members of process group
     if ( _pid > 0 ) kill( -_pid, SIGKILL );
+    terminateJob();
     if ( _fd > 0 ) close( _fd );
     _runningItem = NULL;
 }
@@ -116,32 +126,77 @@ processClass::processClass(char *exe, char *argv[])
 {
     _runningItem=this;
     struct rlimit corelimit;
-    char buf[128];
+    const size_t BUFLEN = 128;
+    char buf[BUFLEN];
+
+#ifdef __CYGWIN__
+    _hwinjob = CreateJobObject(NULL, NULL);
+    if (_hwinjob == NULL) {
+        fprintf(stderr, "CreateJobObject failed\n");
+    }
+    // Set processes assigned to a job to automatically terminate when the job handle object is closed.
+    // This is for additional security - we call TerminateJobObject() as well
+    JOBOBJECT_EXTENDED_LIMIT_INFORMATION job_limits;
+    if (QueryInformationJobObject(_hwinjob, JobObjectExtendedLimitInformation,
+                                  &job_limits, sizeof(JOBOBJECT_EXTENDED_LIMIT_INFORMATION), NULL) != 0) {
+        job_limits.BasicLimitInformation.LimitFlags |= JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE;
+        if (SetInformationJobObject(_hwinjob, JobObjectExtendedLimitInformation,
+                                    &job_limits, sizeof(JOBOBJECT_EXTENDED_LIMIT_INFORMATION)) == 0) {
+            fprintf(stderr, "SetInformationJobObject failed\n");
+        }
+    } else {
+        fprintf(stderr, "QueryInformationJobObject failed\n");
+    }
+#endif /* __CYGWIN__ */
 
     _pid = forkpty(&_fd, factoryName, NULL, NULL);
 
     _markedForDeletion = _pid <= 0;
-    if (_pid)                               // I am the parent
-    {
-	if(_pid < 0) {
+
+    if (_pid) {                              // I am the parent
+
+        if(_pid < 0) {
             fprintf(stderr, "Fork failed: %s\n", errno == ENOENT ? "No pty" : strerror(errno));
         } else {
             PRINTF("Created process %ld on %s\n", (long) _pid, factoryName);
         }
 
+#ifdef __CYGWIN__
+        int winpid = cygwin_internal(CW_CYGWIN_PID_TO_WINPID, _pid);
+        PRINTF("Created win process %ld on %s\n", (long) winpid, factoryName);
+
+        HANDLE hprocess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, winpid);
+        if (hprocess != NULL) {
+            if (AssignProcessToJobObject(_hwinjob, hprocess) != 0) {
+                PRINTF("Assigned win process %ld to job object\n", (long)winpid);
+            } else {
+                fprintf(stderr, "AssignProcessToJobObject failed\n");
+            }
+            if (CloseHandle(hprocess) == 0) {
+                fprintf(stderr, "CloseHandle(hprocess) failed\n");
+            }
+        } else {
+            fprintf(stderr, "OpenProcess failed for win process %ld\n", (long)winpid);
+        }
+#endif /* __CYGWIN__ */
+
         // Don't start a new one before this time:
         _restartTime = holdoffTime + time(0);
 
         // Update client connect message
-        sprintf(infoMessage2, "@@@ Child \"%s\" PID: %ld" NL, childName, (long) _pid);
+        snprintf(infoMessage2, INFO2LEN, "@@@ Child \"%s\" PID: %ld" NL, childName, (long) _pid);
 
-        sprintf(buf, "@@@ The PID of new child \"%s\" is: %ld" NL, childName, (long) _pid);
+        snprintf(buf, BUFLEN, "@@@ The PID of new child \"%s\" is: %ld" NL, childName, (long) _pid);
         SendToAll( buf, strlen(buf), this );
         strcpy(buf, "@@@ @@@ @@@ @@@ @@@" NL);
         SendToAll( buf, strlen(buf), this );
-    }
-    else                                    // I am the child
-    {
+
+    } else {                                   // I am the child
+
+#ifdef __CYGWIN__
+        sleep(1);   // to allow AssignProcessToJobObject() to happen - the process we spawn may spawn other processes so we want it to inherit
+#endif /* __CYGWIN__ */
+
         setsid();                                  // Become process group leader
         if ( setCoreSize ) {                       // Set core size limit?
             getrlimit( RLIMIT_CORE, &corelimit );
@@ -169,8 +224,8 @@ void processClass::readFromFd(void)
     char  buf[1600];
 
     int len = read(_fd, buf, sizeof(buf)-1);
-    if (len < 1) {
-        PRINTF("processItem: Got error reading input connection\n");
+    if (len < 0) {
+        PRINTF("processItem: Got error reading input connection: %s\n", strerror(errno));
         _markedForDeletion = true;
     } else if (len == 0) {
         PRINTF("processItem: Got EOF reading input connection\n");
@@ -218,15 +273,30 @@ int processClass::Send( const char * buf, int count )
 // client IOC
 void processFactorySendSignal(int signal)
 {
-    if (processClass::_runningItem)
-    {
-	PRINTF("Sending signal %d to pid %ld\n",
-		signal, (long) processClass::_runningItem->_pid);
-	kill(-processClass::_runningItem->_pid,signal);
+    if (processClass::_runningItem) {
+        PRINTF("Sending signal %d to pid %ld\n",
+               signal, (long) processClass::_runningItem->_pid);
+        kill(-processClass::_runningItem->_pid, signal);
+        if (signal == killSig) processClass::_runningItem->terminateJob();
     }
 }
 
 void processClass::restartOnce ()
 {
     _restartTime = 0;
+}
+
+void processClass::terminateJob()
+{
+#ifdef __CYGWIN__
+    if (_hwinjob != NULL) {
+        if (TerminateJobObject(_hwinjob, 1) == 0) {
+            fprintf(stderr, "TerminateJobObject failed\n");
+        }
+        if (CloseHandle(_hwinjob) == 0) {
+            fprintf(stderr, "CloseHandle(_hwinjob) failed\n");
+        }
+        _hwinjob = NULL;
+    }
+#endif /* __CYGWIN__ */
 }
