@@ -1,5 +1,5 @@
 environment:
-  PATH: "C:\cygwin\bin;%PATH%"
+  PATH: "C:\\cygwin\\bin;%PATH%"
 
 build_script:
   - sh autoreconf -fi
