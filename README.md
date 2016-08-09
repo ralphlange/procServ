@@ -1,4 +1,8 @@
-# procServ [![Build Status](https://travis-ci.org/ralphlange/procServ.svg?branch=master)](https://travis-ci.org/ralphlange/procServ)
+# procServ
+[![Linux Autotools Build](https://openepics.ci.cloudbees.com/buildStatus/icon?job=procServ - automake build)](https://openepics.ci.cloudbees.com/view/procServ/job/procServ%20-%20automake%20build/)
+[![Linux EPICS Build](https://openepics.ci.cloudbees.com/buildStatus/icon?job=procServ - EPICS build)](https://openepics.ci.cloudbees.com/view/procServ/job/procServ%20-%20EPICS%20build/)
+[![Linux Build](https://travis-ci.org/ralphlange/procServ.svg?branch=master)](https://travis-ci.org/ralphlange/procServ)
+[![Windows Build](https://ci.appveyor.com/api/projects/status/github/ralphlange/procserv?svg=true)](https://ci.appveyor.com/project/ralphlange/procserv)
 
 A wrapper to start arbitrary interactive commands in the background,
 with telnet access to stdin/stdout.

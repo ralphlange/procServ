@@ -1,7 +1,7 @@
-os: Windows Server 2012 R2
-
 environment:
-  PATH: "C:\\cygwin\bin;%PATH%"
+  PATH: "C:\cygwin\bin;%PATH%"
 
 build_script:
-  - make && ./configure --disable-doc && make
+  - sh autoreconf -fi
+  - sh configure --disable-doc
+  make
