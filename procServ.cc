@@ -435,7 +435,7 @@ int main(int argc,char * argv[])
         exit(1);
     }
 
-    if (stampLog && !stampFormat) {
+    if (!stampFormat) {
         stampFormat = (char*) calloc(strlen(timeFormat)+4, 1);
         if (stampFormat) {
             sprintf(stampFormat, "[%s] ", timeFormat);
