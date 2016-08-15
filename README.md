@@ -93,7 +93,7 @@ then for a really clean build type
 
     sh autoreconf -fi
     sh configure
-    make distclean
+    make clean
     make
 
 If you plan to control procServ from a non-localhost address,
