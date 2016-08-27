@@ -624,6 +624,7 @@ int main(int argc,char * argv[])
                 p = p->next;
             }
             OnPollTimeout();
+            hideWindow();
         }
     }
     ttySetCharNoEcho(false);
@@ -826,7 +827,6 @@ void forkAndGo()
 
         // Make sure we are not attached to a terminal
         setsid();
-        hideWindow();
     }
 }
 
