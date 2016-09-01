@@ -93,7 +93,6 @@ void forkAndGo();
 int checkCommandFile(const char *command);
 void openLogFile();
 void ttySetCharNoEcho(bool save);
-static void hideWindow();
 
 // Signal handlers
 static void OnSigPipe(int);
@@ -826,7 +825,6 @@ void forkAndGo()
 
         // Make sure we are not attached to a terminal
         setsid();
-        hideWindow();
     }
 }
 
@@ -911,17 +909,6 @@ void ttySetCharNoEcho(bool set) {
     } else if (saved) {
         tcsetattr(0, TCSANOW, &org_mode);
     }
-}
-
-static void hideWindow()
-{
-#ifdef __CYGWIN__
-    HWND conwin = GetConsoleWindow();
-    if ( conwin != NULL )
-    {
-        ShowWindowAsync(conwin, SW_HIDE);
-    }
-#endif
 }
 
 connectionItem * connectionItem::head;

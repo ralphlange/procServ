@@ -40,6 +40,8 @@ extern "C" int forkpty(int*, char*, void*, void*);
 
 #define LINEBUF_LENGTH 1024
 
+static void hideWindow();
+
 processClass * processClass::_runningItem=NULL;
 time_t processClass::_restartTime=0;
 
@@ -198,6 +200,7 @@ processClass::processClass(char *exe, char *argv[])
 #endif /* __CYGWIN__ */
 
         setsid();                                  // Become process group leader
+        hideWindow();                              // Close console window (on Cygwin)
         if ( setCoreSize ) {                       // Set core size limit?
             getrlimit( RLIMIT_CORE, &corelimit );
             corelimit.rlim_cur = coreSize;
@@ -299,4 +302,15 @@ void processClass::terminateJob()
         _hwinjob = NULL;
     }
 #endif /* __CYGWIN__ */
+}
+
+static void hideWindow()
+{
+#ifdef __CYGWIN__
+    HWND conwin = GetConsoleWindow();
+    if ( conwin != NULL )
+    {
+        ShowWindowAsync(conwin, SW_HIDE);
+    }
+#endif
 }
