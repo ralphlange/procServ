@@ -60,8 +60,19 @@ Allowable port specifications are:
     Bind  to the specified interface address and port.  Interface address must be given in numeric form.
 
 *unix:</path/to/socket>*::
+    An absolute or relative path where a named unix domain socket can be created.
+    The process must have permission to create files in the enclosing directory.
+    This socket file will be owned by the uid and primary gid of the procServ process
+    with permissions 0666 (equivalent to tcp bind to localhost.
+
+*unix:user:group:perm:</path/to/socket>*::
     An absolute or relative path where a unix domain socket can be created.
     The process must have permission to create files in the enclosing directory.
+    This socket file wil be owned by the specified user and group.
+    Any of user, group, and/or perm may be omitted.
+    eg "-P unix::grp:0660:/run/procServ/foo/control" will create the named socket
+    and allow the 'grp' group connect to it.
+    This requires that procServ be run as root or a member of 'grp'.
 
 OPTIONS
 -------

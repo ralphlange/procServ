@@ -8,11 +8,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h> 
-#include <sys/socket.h> 
+#include <sys/socket.h>
+#include <sys/stat.h>
 #include <netinet/in.h> 
 #include <errno.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <pwd.h>
+#include <grp.h>
 #include <string.h>
 
 #include "procServ.h"
@@ -52,6 +55,9 @@ struct acceptItemUNIX : public acceptItem
     virtual ~acceptItemUNIX();
 
     sockaddr_un addr;
+    uid_t uid;
+    gid_t gid;
+    unsigned perms;
 
     virtual void remakeConnection();
 
@@ -177,16 +183,62 @@ void acceptItemTCP::remakeConnection()
 #ifdef USOCKS
 acceptItemUNIX::acceptItemUNIX(const char *path, bool readonly)
     :acceptItem(readonly)
+    ,uid(getuid())
+    ,gid(getgid())
+    ,perms(0666) // default permissions equivalent to tcp bind to localhost
 {
+    /* must be one of
+     *  "/path/sock"
+     *  "user:grp:perm:/path/sock"
+     */
+    std::string spec(path);
+    size_t sep(spec.find_first_of(':'));
+
+    if(sep!=spec.npos) {
+        size_t sep2(spec.find_first_of(':', sep+1)),
+               sep3(spec.find_first_of(':', sep2+1));
+        if(sep2==spec.npos || sep3==spec.npos) {
+            fprintf(stderr, "Unix path+permissions spec unparsable '%s'\n", path);
+            exit(1);
+        }
+        std::string user(spec.substr(0,sep)),
+                    grp (spec.substr(sep+1, sep2-sep-1)),
+                    perm(spec.substr(sep2+1, sep3-sep2-1));
+
+        if(!user.empty()) {
+            struct passwd *uinfo = getpwnam(user.c_str());
+            if(!uinfo) {
+                fprintf(stderr, "Unknown user '%s'\n", user.c_str());
+                exit(1);
+            }
+            uid = uinfo->pw_uid;
+            gid = uinfo->pw_gid;
+        }
+
+        if(!grp.empty()) {
+            struct group *ginfo = getgrnam(grp.c_str());
+            if(!ginfo) {
+                fprintf(stderr, "Unknown group '%s'\n", grp.c_str());
+                exit(1);
+            }
+            gid =ginfo->gr_gid;
+        }
+
+        if(!perm.empty()) {
+            perms = strtoul(perm.c_str(), NULL, 8);
+        }
+
+        spec = spec.substr(sep3+1);
+    }
+
     memset(&addr, 0, sizeof(0));
     addr.sun_family = AF_UNIX;
-    size_t plen = strlen(path);
-    if(plen>=sizeof(addr.sun_path)) {
+    if(spec.size()>=sizeof(addr.sun_path)) {
         fprintf(stderr, "Unix path is too long (must be <%zu)\n", sizeof(addr.sun_path));
         exit(1);
     }
 
-    memcpy(addr.sun_path, path, plen+1);
+    memcpy(addr.sun_path, spec.c_str(), spec.size()+1);
 
     PRINTF("Created new telnet UNIX listener (acceptItem %p) at '%s' (read%s)\n",
            this, addr.sun_path, readonly?"only":"/write");
@@ -229,6 +281,15 @@ void acceptItemUNIX::remakeConnection()
         PRINTF("Listen error: %s\n", strerror(errno));
         throw errno;
     }
+
+    if(chmod(addr.sun_path, 0)<0)
+        PRINTF("Can't chmod %u unix socket : %s\n", 0, strerror(errno));
+
+    if(chown(addr.sun_path, uid, gid))
+        PRINTF("Can't chown %u:%u unix socket : %s\n", uid, gid, strerror(errno));
+
+    if(chmod(addr.sun_path, perms)<0)
+        PRINTF("Can't chmod %u unix socket : %s\n", perms, strerror(errno));
 
     PRINTF("Listening on fd %d\n", _fd);
     return;
