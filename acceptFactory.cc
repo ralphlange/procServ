@@ -17,29 +17,65 @@
 
 #include "procServ.h"
 
-class acceptItem : public connectionItem
+struct acceptItem : public connectionItem
 {
-public:
-    acceptItem(int port, bool local, bool readonly);
+    acceptItem(bool readonly) :connectionItem(-1, readonly) {}
     virtual ~acceptItem();
 
     void readFromFd(void);
     int Send(const char *, int);
 
-private:
-    int _port;
-    bool _local;
+    virtual void remakeConnection()=0;
+};
 
-    void remakeConnection();
+struct acceptItemTCP : public acceptItem
+{
+    acceptItemTCP(const sockaddr_in& addr, bool readonly);
+
+    sockaddr_in addr;
+
+    virtual void remakeConnection();
 };
 
 // service and calls clientFactory when clients are accepted
-connectionItem * acceptFactory ( int port, bool local, bool readonly )
+connectionItem * acceptFactory (const char *spec, bool local, bool readonly )
 {
-    connectionItem *ci = new acceptItem(port, local, readonly);
-    PRINTF("Created new telnet listener (acceptItem %p) on port %d (read%s)\n",
-           ci, port, readonly?"only":"/write");
-    return ci;
+    char junk;
+    unsigned port = 0;
+    unsigned A[4];
+    sockaddr_in inet_addr;
+
+    memset(&inet_addr, 0, sizeof(inet_addr));
+
+    if(sscanf(spec, "%u %c", &port, &junk)==1) {
+        // simple integer is TCP port number
+        inet_addr.sin_family = AF_INET;
+        inet_addr.sin_addr.s_addr = htonl(local ? INADDR_LOOPBACK : INADDR_ANY);
+        inet_addr.sin_port = htons(port);
+        if(port<1024 || port>0xffff) {
+            fprintf( stderr, "%s: invalid control port %d (<1024)\n",
+                     procservName, port );
+            exit(1);
+        }
+        connectionItem *ci = new acceptItemTCP(inet_addr, readonly);
+        return ci;
+    } else if(sscanf(spec, "%u . %u . %u . %u : %u %c",
+                     &A[0], &A[1], &A[2], &A[3], &port, &junk)==5) {
+        // bind to specific interface and port
+        inet_addr.sin_family = AF_INET;
+        inet_addr.sin_addr.s_addr = htonl(A[0]<<24 | A[1]<<16 | A[2]<<8 | A[3]);
+        inet_addr.sin_port = htons(port);
+        if(port<1024 || port>0xffff) {
+            fprintf( stderr, "%s: invalid control port %d (<1024)\n",
+                     procservName, port );
+            exit(1);
+        }
+        connectionItem *ci = new acceptItemTCP(inet_addr, readonly);
+        return ci;
+    } else {
+        fprintf(stderr, "Invalid socket spec '%s'\n", spec);
+        exit(1);
+    }
 }
 
 acceptItem::~acceptItem()
@@ -52,18 +88,23 @@ acceptItem::~acceptItem()
 // Accept item constructor
 // This opens a socket, binds it to the decided port,
 // and sets it to listen mode
-acceptItem::acceptItem(int port, bool local, bool readonly) :
-    connectionItem(-1, readonly),
-    _port(port),
-    _local(local)
+acceptItemTCP::acceptItemTCP(const sockaddr_in &addr, bool readonly)
+    :acceptItem(readonly)
+    ,addr(addr)
 {
+    char myname[128] = "<unknown>\0";
+
+    inet_ntop(AF_INET, &addr.sin_addr, myname, sizeof(myname)-1);
+    myname[sizeof(myname)-1] = '\0';
+
+    PRINTF("Created new telnet TCP listener (acceptItem %p) at %s:%d (read%s)\n",
+           this, myname, ntohs(addr.sin_port), readonly?"only":"/write");
     remakeConnection();
 }
 
-void acceptItem::remakeConnection()
+void acceptItemTCP::remakeConnection()
 {
     int optval = 1;
-    struct sockaddr_in addr;
     int bindStatus;
 
     _fd = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
@@ -79,14 +120,6 @@ void acceptItem::remakeConnection()
 #ifdef _WIN32
     setsockopt(_fd, SOL_SOCKET, SO_EXCLUSIVEADDRUSE, &optval, sizeof(optval));
 #endif
-
-    memset(&addr, 0, sizeof(addr));
-    addr.sin_family = AF_INET;
-    addr.sin_port = htons(_port);
-    if (_local)
-        inet_aton( "127.0.0.1", &addr.sin_addr );
-    else 
-        addr.sin_addr.s_addr = htonl( INADDR_ANY );
 
     bindStatus = bind(_fd, (struct sockaddr *) &addr, sizeof(addr));
     if (bindStatus < 0)

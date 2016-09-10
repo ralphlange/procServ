@@ -86,7 +86,7 @@ connectionItem * clientFactory(int ioSocket, bool readonly=false);
 // service and calls clientFactory when clients are accepted
 // local: restrict to localhost (127.0.0.1)
 // readonly: discard any input from the client
-connectionItem * acceptFactory( int port, bool local=true, bool readonly=false );
+connectionItem * acceptFactory( const char *spec, bool local=true, bool readonly=false );
 
 extern connectionItem * processItem; // Set if it exists
  

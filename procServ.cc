@@ -78,7 +78,7 @@ char   infoMessage3[INFO3LEN];   // Sign on message: available server commands
 
 char   *logFile = NULL;          // File name for log
 int    logFileFD=-1;             // FD for log file
-int    logPort;                  // Port no. for logger connections
+char  *logPort;                  // address for logger connections
 int    debugFD=-1;               // FD for debug output
 
 #define MAX_CONNECTIONS 64
@@ -184,7 +184,7 @@ int main(int argc,char * argv[])
     int c;
     unsigned int i, j;
     int k;
-    int ctlPort = 0;
+    char *ctlSpec = NULL;
     char *command;
     bool wrongOption = false;
     const size_t BUFLEN = 512;
@@ -324,13 +324,7 @@ int main(int argc,char * argv[])
             break;
 
         case 'l':                                 // Log port
-            logPort = abs ( atoi( optarg ) );
-            if ( logPort < 1024 ) {
-                fprintf( stderr,
-                         "%s: invalid log port %d (<1024) - disabling log port\n",
-                         procservName, logPort );
-                logPort = 0;
-            }
+            logPort = strdup ( optarg );
             break;
 
         case 'L':                                 // Log file
@@ -416,7 +410,7 @@ int main(int argc,char * argv[])
     }
     strncat(infoMessage3, NL, INFO3LEN-strlen(infoMessage3)-1);
 
-    ctlPort = atoi(argv[optind]);
+    ctlSpec = strdup(argv[optind]);
     command = argv[optind+1];
 
     if (childName == NULL) childName = command;
@@ -424,14 +418,6 @@ int main(int argc,char * argv[])
     if (childExec == NULL) {
         childArgv++;
         childExec = command;
-    }
-
-    if ( ctlPort < 1024 )
-    {
-        fprintf( stderr,
-                 "%s: invalid control port %d (<1024)\n",
-                 procservName, ctlPort );
-        exit(1);
     }
 
     if (!stampFormat) {
@@ -486,7 +472,7 @@ int main(int argc,char * argv[])
     PRINTF("Creating control listener\n");
     try
     {
-	connectionItem *acceptItem = acceptFactory( ctlPort, ctlPortLocal );
+    connectionItem *acceptItem = acceptFactory( ctlSpec, ctlPortLocal );
 	AddConnection(acceptItem);
     }
     catch (int error)
