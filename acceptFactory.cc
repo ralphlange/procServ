@@ -31,6 +31,7 @@ struct acceptItem : public connectionItem
 struct acceptItemTCP : public acceptItem
 {
     acceptItemTCP(const sockaddr_in& addr, bool readonly);
+    virtual ~acceptItemTCP() {}
 
     sockaddr_in addr;
 
@@ -41,6 +42,7 @@ struct acceptItemTCP : public acceptItem
 struct acceptItemUNIX : public acceptItem
 {
     acceptItemUNIX(const char* path, bool readonly);
+    virtual ~acceptItemUNIX();
 
     sockaddr_un addr;
 
@@ -175,6 +177,12 @@ acceptItemUNIX::acceptItemUNIX(const char *path, bool readonly)
     PRINTF("Created new telnet UNIX listener (acceptItem %p) at '%s' (read%s)\n",
            this, addr.sun_path, readonly?"only":"/write");
     remakeConnection();
+}
+
+
+acceptItemUNIX::~acceptItemUNIX()
+{
+    unlink(addr.sun_path);
 }
 
 void acceptItemUNIX::remakeConnection()

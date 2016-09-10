@@ -623,6 +623,14 @@ int main(int argc,char * argv[])
         }
     }
     ttySetCharNoEcho(false);
+
+    PRINTF("Close sockets\n");
+
+    while(connectionItem::head) {
+        connectionItem *p = connectionItem::head;
+        connectionItem::head = p->next;
+        delete p;
+    }
 }
 
 // Connection items call this to send messages to others
