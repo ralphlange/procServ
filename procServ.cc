@@ -146,7 +146,7 @@ void printUsage()
 void printHelp()
 {
     printUsage();
-    printf("<port>              use telnet <port> for command connections\n"
+    printf("<port>|<iface>:<port>|unix:<path>  use telnet <port> for command connections\n"
            "<command args ...>  command line to start child process\n"
            "Options:\n"
            "    --allow             allow control connections from anywhere\n"
@@ -167,7 +167,7 @@ void printHelp()
            " -n --name <str>        set child's name (default: arg0 of <command>)\n"
            "    --noautorestart     do not restart child on exit by default\n"
            " -p --pidfile <str>     name of PID file (for server PID)\n"
-           " -P --port-spec <port>  Bind the an additional port\n"
+           " -P --port-spec <port>  Bind the an additional port specification\n"
            " -q --quiet             suppress informational output (server)\n"
            "    --restrict          restrict log connections to localhost\n"
            "    --timefmt <str>     set time format (strftime) to <str>\n"

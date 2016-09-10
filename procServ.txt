@@ -12,6 +12,10 @@ SYNOPSIS
 --------
 *procServ* ['OPTIONS'] 'port' 'command' 'args...'
 
+*procServ* ['OPTIONS'] 'ifaceaddr:port' 'command' 'args...'
+
+*procServ* ['OPTIONS'] 'unix:/path/to/socket' 'command' 'args...'
+
 DESCRIPTION
 -----------
 
@@ -42,6 +46,22 @@ To block input characters that are potentially dangerous to the child (e.g. `^D`
 To facilitate being started and stopped as a standard system service, the *-p* (*\--pidfile*) option tells the server to create a standard PID file containing the PID of the server process.
 
 The *-d* (*\--debug*) option runs the server in debug mode: the daemon process stays in the foreground, printing all regular log content plus additional debug messages to stdout.
+
+PORT SPECIFICATION
+------------------
+
+Both telnet and log servers may be bound to either TCP or UNIX sockets (where supported).
+Allowable port specifications are:
+
+*<port#>*::
+    Bind to either 0.0.0.0:<port#> or 127.0.0.1:<port#> depending on the *-r* (*\--restrict*) option.
+
+*<interface>:<port#>*::
+    Bind  to the specified interface address and port.  Interface address must be given in numeric form.
+
+*unix:</path/to/socket>*::
+    An absolute or relative path where a unix domain socket can be created.
+    The process must have permission to create files in the enclosing directory.
 
 OPTIONS
 -------
@@ -83,6 +103,8 @@ OPTIONS
     In all server messages, use 'title' instead of the full command line to increase readability.
 *\--noautorestart*::
     Do not automatically restart child process on exit.
+*-P, \--port-spec=<port>*::
+    Bind telnet server to an additional port.  See PORT SPECIFICATION above.
 *-p, \--pidfile*='file'::
     Write the PID of the server process into 'file' to facilitate integration into regular system service administration mechanisms.
 *\--timefmt*='fmt'::
