@@ -38,7 +38,7 @@ extern bool   setCoreSize;
 extern char   *procservName;
 extern char   *childName;
 extern char   *ignChars;
-extern char   *timeFormat;
+extern const char   *timeFormat;
 extern char   killChar;
 extern char   toggleRestartChar;
 extern char   restartChar;

@@ -65,10 +65,10 @@ time_t holdoffTime = 15;         // Holdoff time between child restarts (in seco
 pid_t  procservPid;              // PID of server (daemon if not in debug mode)
 char   *pidFile;                 // File name for server PID
 char   defaultpidFile[] = "pid.txt";  // default
-char   *timeFormat;              // Time format string
+const char   *timeFormat = "%c";       // Time format string
 char   defaulttimeFormat[] = "%c";    // default
 bool   stampLog = false;         // Prefix log lines with time stamp
-char   *stampFormat;             // Log time stamp format string
+const char   *stampFormat;             // Log time stamp format string
 
 const size_t INFO1LEN = 512;
 const size_t INFO2LEN = 128;
@@ -429,9 +429,10 @@ int main(int argc,char * argv[])
     }
 
     if (!stampFormat) {
-        stampFormat = (char*) calloc(strlen(timeFormat)+4, 1);
         if (stampFormat) {
-            sprintf(stampFormat, "[%s] ", timeFormat);
+            char *tmp = (char*) calloc(strlen(timeFormat)+4, 1);
+            sprintf(tmp, "[%s] ", timeFormat);
+            stampFormat = tmp;
         } else {
             stampFormat = timeFormat;
         }
