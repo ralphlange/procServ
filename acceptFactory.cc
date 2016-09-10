@@ -36,6 +36,13 @@ struct acceptItemTCP : public acceptItem
     sockaddr_in addr;
 
     virtual void remakeConnection();
+
+    virtual void writeAddress(std::ostream& fp) {
+        char buf[40] = "";
+        inet_ntop(addr.sin_family, &addr.sin_addr, buf, sizeof(buf));
+        buf[sizeof(buf)-1] = '\0';
+        fp<<"tcp:"<<buf<<":"<<ntohs(addr.sin_port)<<"\n";
+    }
 };
 
 #ifdef USOCKS
@@ -47,6 +54,10 @@ struct acceptItemUNIX : public acceptItem
     sockaddr_un addr;
 
     virtual void remakeConnection();
+
+    virtual void writeAddress(std::ostream& fp) {
+        fp<<"unix:"<<addr.sun_path<<"\n";
+    }
 };
 #endif
 
@@ -65,7 +76,7 @@ connectionItem * acceptFactory (const char *spec, bool local, bool readonly )
         inet_addr.sin_family = AF_INET;
         inet_addr.sin_addr.s_addr = htonl(local ? INADDR_LOOPBACK : INADDR_ANY);
         inet_addr.sin_port = htons(port);
-        if(port<1024 || port>0xffff) {
+        if(port>0xffff) {
             fprintf( stderr, "%s: invalid control port %d (<1024)\n",
                      procservName, port );
             exit(1);
@@ -78,7 +89,7 @@ connectionItem * acceptFactory (const char *spec, bool local, bool readonly )
         inet_addr.sin_family = AF_INET;
         inet_addr.sin_addr.s_addr = htonl(A[0]<<24 | A[1]<<16 | A[2]<<8 | A[3]);
         inet_addr.sin_port = htons(port);
-        if(port<1024 || port>0xffff) {
+        if(port>0xffff) {
             fprintf( stderr, "%s: invalid control port %d (<1024)\n",
                      procservName, port );
             exit(1);
@@ -118,9 +129,9 @@ acceptItemTCP::acceptItemTCP(const sockaddr_in &addr, bool readonly)
     inet_ntop(AF_INET, &addr.sin_addr, myname, sizeof(myname)-1);
     myname[sizeof(myname)-1] = '\0';
 
+    remakeConnection();
     PRINTF("Created new telnet TCP listener (acceptItem %p) at %s:%d (read%s)\n",
            this, myname, ntohs(addr.sin_port), readonly?"only":"/write");
-    remakeConnection();
 }
 
 void acceptItemTCP::remakeConnection()
@@ -155,6 +166,9 @@ void acceptItemTCP::remakeConnection()
         PRINTF("Listen error: %s\n", strerror(errno));
         throw errno;
     }
+
+    socklen_t slen = sizeof(addr);
+    getsockname(_fd, (struct sockaddr *) &addr, &slen);
 
     PRINTF("Listening on fd %d\n", _fd);
     return; 

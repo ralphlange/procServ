@@ -7,6 +7,8 @@
 #ifndef procServH
 #define procServH
 
+#include <ostream>
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/time.h>
@@ -122,6 +124,7 @@ public:
     virtual bool isProcess() const { return false; }
     virtual bool isLogger() const { return _readonly; }
 
+    virtual void writeAddress(std::ostream& fp) {}
 protected:
     connectionItem ( int fd = -1, bool readonly = false );
     int _fd;                 // File descriptor of this connection

@@ -7,6 +7,7 @@
 
 #include <vector>
 #include <string>
+#include <fstream>
 
 #include <stdio.h>
 #include <assert.h>
@@ -94,6 +95,7 @@ void forkAndGo();
 // Checks the command file (existence and access rights)
 int checkCommandFile(const char *command);
 void openLogFile();
+void writeInfoFile(const std::string& infofile);
 void ttySetCharNoEcho(bool save);
 
 // Signal handlers
@@ -159,6 +161,7 @@ void printHelp()
            " -h --help              print this message\n"
            "    --holdoff <n>       set holdoff time between child restarts\n"
            " -i --ignore <str>      ignore all chars in <str> (^ for ctrl)\n"
+           " -I --info-file <file>  Write instance information to this file\n"
            " -k --killcmd <str>     command to kill (reboot) the child (^ for ctrl)\n"
            "    --killsig <n>       signal to send to child when killing\n"
            " -l --logport <n>       allow log connections through telnet port <n>\n"
@@ -192,6 +195,7 @@ int main(int argc,char * argv[])
     bool wrongOption = false;
     const size_t BUFLEN = 512;
     char buff[BUFLEN];
+    std::string infofile;
 
     time(&procServStart);             // remember start time
     procservName = argv[0];
@@ -217,6 +221,7 @@ int main(int argc,char * argv[])
             {"help",           no_argument,       0, 'h'},
             {"holdoff",        required_argument, 0, 'H'},
             {"ignore",         required_argument, 0, 'i'},
+            {"info-file",      required_argument, 0, 'I'},
             {"killcmd",        required_argument, 0, 'k'},
             {"killsig",        required_argument, 0, 'K'},
             {"logport",        required_argument, 0, 'l'},
@@ -238,7 +243,7 @@ int main(int argc,char * argv[])
         /* getopt_long stores the option index here. */
         int option_index = 0;
 
-        c = getopt_long (argc, argv, "+c:de:fhi:k:l:L:n:p:P:qVwx:",
+        c = getopt_long (argc, argv, "+c:de:fhi:I:k:l:L:n:p:P:qVwx:",
                          long_options, &option_index);
 
         /* Detect the end of the options. */
@@ -310,6 +315,10 @@ int main(int argc,char * argv[])
                     ignChars[j++] = optarg[i++];
                 }
             }
+            break;
+
+        case 'I':
+            infofile = optarg;
             break;
 
         case 'k':                                 // Kill command
@@ -523,6 +532,10 @@ int main(int argc,char * argv[])
     else
     {
         debugFD = 1;          // Enable debug messages
+    }
+
+    if (!infofile.empty()) {
+        writeInfoFile(infofile);
     }
 
     if (inFgMode) {
@@ -895,6 +908,14 @@ void openLogFile()
             PRINTF("Opened file %s for logging\n", logFile);
         }
     }
+}
+
+void writeInfoFile(const std::string& infofile)
+{
+    std::ofstream info(infofile.c_str());
+    info<<"pid:"<<getpid()<<"\n";
+    for(connectionItem *it = connectionItem::head; it; it=it->next)
+        it->writeAddress(info);
 }
 
 void ttySetCharNoEcho(bool set) {
