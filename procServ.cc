@@ -644,6 +644,13 @@ int main(int argc,char * argv[])
         connectionItem::head = p->next;
         delete p;
     }
+
+    PRINTF("Cleanup pid and info files\n");
+
+    if(!infofile.empty())
+        unlink(infofile.c_str());
+    if(pidFile)
+        unlink(pidFile);
 }
 
 // Connection items call this to send messages to others
