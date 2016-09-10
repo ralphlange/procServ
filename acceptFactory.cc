@@ -37,6 +37,17 @@ struct acceptItemTCP : public acceptItem
     virtual void remakeConnection();
 };
 
+#ifdef USOCKS
+struct acceptItemUNIX : public acceptItem
+{
+    acceptItemUNIX(const char* path, bool readonly);
+
+    sockaddr_un addr;
+
+    virtual void remakeConnection();
+};
+#endif
+
 // service and calls clientFactory when clients are accepted
 connectionItem * acceptFactory (const char *spec, bool local, bool readonly )
 {
@@ -72,6 +83,14 @@ connectionItem * acceptFactory (const char *spec, bool local, bool readonly )
         }
         connectionItem *ci = new acceptItemTCP(inet_addr, readonly);
         return ci;
+    } else if(strncmp(spec, "unix:", 5)==0) {
+#ifdef USOCKS
+        connectionItem *ci = new acceptItemUNIX(spec+5, readonly);
+        return ci;
+#else
+        fprintf(stderr, "Unix sockets not supported on this host\n");
+        exit(1);
+#endif
     } else {
         fprintf(stderr, "Invalid socket spec '%s'\n", spec);
         exit(1);
@@ -138,6 +157,62 @@ void acceptItemTCP::remakeConnection()
     PRINTF("Listening on fd %d\n", _fd);
     return; 
 }
+
+#ifdef USOCKS
+acceptItemUNIX::acceptItemUNIX(const char *path, bool readonly)
+    :acceptItem(readonly)
+{
+    memset(&addr, 0, sizeof(0));
+    addr.sun_family = AF_UNIX;
+    size_t plen = strlen(path);
+    if(plen>=sizeof(addr.sun_path)) {
+        fprintf(stderr, "Unix path is too long (must be <%zu)\n", sizeof(addr.sun_path));
+        exit(1);
+    }
+
+    memcpy(addr.sun_path, path, plen+1);
+
+    PRINTF("Created new telnet UNIX listener (acceptItem %p) at '%s' (read%s)\n",
+           this, addr.sun_path, readonly?"only":"/write");
+    remakeConnection();
+}
+
+void acceptItemUNIX::remakeConnection()
+{
+    int bindStatus;
+
+    if(unlink(addr.sun_path) < 0) {
+        if(errno!=ENOENT) {
+            PRINTF("Failed to remove unix socket at '%s' : %s\n", addr.sun_path, strerror(errno));
+            throw errno; // Nooooo!
+        }
+    }
+
+    _fd = socket(AF_UNIX, SOCK_STREAM, 0);
+    if (_fd < 0) {
+        PRINTF("Socket error: %s\n", strerror(errno));
+        throw errno;
+    }
+
+    bindStatus = bind(_fd, (struct sockaddr *) &addr, sizeof(addr));
+    if (bindStatus < 0)
+    {
+        PRINTF("Bind error: %s\n", strerror(errno));
+        throw errno;
+    }
+    else
+        PRINTF("Bind returned %d\n", bindStatus);
+
+    if (listen(_fd, 5) < 0) {
+        PRINTF("Listen error: %s\n", strerror(errno));
+        throw errno;
+    }
+
+    PRINTF("Listening on fd %d\n", _fd);
+    return;
+}
+
+#endif
 
 // Accept connection and create a new connectionItem for it.
 void acceptItem::readFromFd(void)

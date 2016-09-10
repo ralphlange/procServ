@@ -17,6 +17,12 @@
 #include <stdio.h>
 #include <time.h>
 
+/* whether to enable UNIX domain sockets */
+#ifdef __unix__
+#include <sys/un.h>
+# define USOCKS
+#endif
+
 #ifndef PRINTF
 #define PRINTF if (inDebugMode) printf
 #endif
