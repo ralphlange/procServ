@@ -5,6 +5,8 @@
 // Freddie Akeroyd 2016
 // GNU Public License (GPLv3) applies - see www.gnu.org
 
+#include <vector>
+#include <string>
 
 #include <stdio.h>
 #include <assert.h>
@@ -165,6 +167,7 @@ void printHelp()
            " -n --name <str>        set child's name (default: arg0 of <command>)\n"
            "    --noautorestart     do not restart child on exit by default\n"
            " -p --pidfile <str>     name of PID file (for server PID)\n"
+           " -P --port-spec <port>  Bind the an additional port\n"
            " -q --quiet             suppress informational output (server)\n"
            "    --restrict          restrict log connections to localhost\n"
            "    --timefmt <str>     set time format (strftime) to <str>\n"
@@ -184,7 +187,7 @@ int main(int argc,char * argv[])
     int c;
     unsigned int i, j;
     int k;
-    char *ctlSpec = NULL;
+    std::vector<std::string> ctlSpecs;
     char *command;
     bool wrongOption = false;
     const size_t BUFLEN = 512;
@@ -222,6 +225,7 @@ int main(int argc,char * argv[])
             {"name",           required_argument, 0, 'n'},
             {"noautorestart",  no_argument,       0, 'N'},
             {"pidfile",        required_argument, 0, 'p'},
+            {"port",           required_argument, 0, 'P'},
             {"quiet",          no_argument,       0, 'q'},
             {"restrict",       no_argument,       0, 'R'},
             {"timefmt",        required_argument, 0, 'F'},
@@ -234,7 +238,7 @@ int main(int argc,char * argv[])
         /* getopt_long stores the option index here. */
         int option_index = 0;
 
-        c = getopt_long (argc, argv, "+c:de:fhi:k:l:L:n:p:qVwx:",
+        c = getopt_long (argc, argv, "+c:de:fhi:k:l:L:n:p:P:qVwx:",
                          long_options, &option_index);
 
         /* Detect the end of the options. */
@@ -347,6 +351,10 @@ int main(int argc,char * argv[])
             pidFile = strdup( optarg );
             break;
 
+        case 'P':
+            ctlSpecs.push_back(optarg);
+            break;
+
         case 'q':                                 // Quiet
             quiet = true;
             break;
@@ -410,7 +418,7 @@ int main(int argc,char * argv[])
     }
     strncat(infoMessage3, NL, INFO3LEN-strlen(infoMessage3)-1);
 
-    ctlSpec = strdup(argv[optind]);
+    ctlSpecs.push_back(argv[optind]);
     command = argv[optind+1];
 
     if (childName == NULL) childName = command;
@@ -472,15 +480,17 @@ int main(int argc,char * argv[])
     PRINTF("Creating control listener\n");
     try
     {
-    connectionItem *acceptItem = acceptFactory( ctlSpec, ctlPortLocal );
-	AddConnection(acceptItem);
+        for(size_t i=0; i<ctlSpecs.size(); i++) {
+            connectionItem *acceptItem = acceptFactory( ctlSpecs[i].c_str(), ctlPortLocal );
+            AddConnection(acceptItem);
+        }
     }
     catch (int error)
     {
-	perror("Caught an exception creating the initial control telnet port");
-	fprintf(stderr, "%s: Exiting with error code: %d\n",
+        perror("Caught an exception creating the initial control telnet port");
+        fprintf(stderr, "%s: Exiting with error code: %d\n",
                 procservName, error);
-	exit(error);
+        exit(error);
     }
 
     if ( logPort ) {
