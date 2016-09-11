@@ -81,7 +81,7 @@ def addproc(conf, args):
     # ensure chdir is an absolute path
     args.chdir = os.path.abspath(os.path.join(os.getcwd(), args.chdir))
 
-    args.command[0] = os.path.abspath(os.path.join(args.chdir, args.chdir))
+    args.command[0] = os.path.abspath(os.path.join(args.chdir, args.command[0]))
 
     opts = {
         'name':args.name,

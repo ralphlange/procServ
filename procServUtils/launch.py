@@ -17,6 +17,7 @@ def getargs():
                    help='Consider user config')
     A.add_argument('--system', dest='user', action='store_false',
                    help='Consider system config')
+    A.add_argument('-d','--debug', action='count', default=0)
     return A.parse_args()
 
 def main(args):
@@ -48,17 +49,25 @@ def main(args):
     }
     env.update(os.environ)
 
-    cmd = [
+    toexec = [
         procServ,
         '--foreground',
         '--name', name,
         '--ignore','^D^C^]',
         '--chdir',chdir,
-        '--info-file',os.path.join(rundir, 'procServ', name, 'info'), #/run/procServ/$NAME/info
-        '--port-spec', 'unix:%s/procServ/%s/control'%(rundir,name),
-        port,
-    ]+shlex.split(cmd)
+        '--info-file',os.path.join(rundir, 'procserv-%s'%name, 'info'), #/run/procserv-$NAME/info
+        '--port', 'unix:%s/procserv-%s/control'%(rundir,name),
+    ]
+
+    if args.debug>1:
+        toexec.append('--debug')
+
+    toexec.append(port)
+    toexec.extend(shlex.split(cmd))
+
+    if args.debug>0:
+        sys.stderr.write('in %s exec: %s\n'%(chdir, ' '.join(map(shlex.quote, toexec))))
 
     os.chdir(chdir)
-    os.execve(cmd[0], cmd, env)
+    os.execve(toexec[0], toexec, env)
     sys.exit(2) # never reached

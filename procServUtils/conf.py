@@ -47,9 +47,9 @@ def getconf(user=False):
 
     C = ConfigParser({
         'user':'nobody',
-        'group':'',
+        'group':'nogroup',
         'chdir':'/',
-        'port':'-1',
+        'port':'0',
         'instance':'1',
     })
 

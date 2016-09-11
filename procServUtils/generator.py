@@ -8,7 +8,7 @@ def write_service(F, conf, sect, user=False):
         'user':conf.get(sect, 'user'),
         'group':conf.get(sect, 'group'),
         'chdir':conf.get(sect, 'chdir'),
-        'user':'--user' if user else '--system',
+        'userarg':'--user' if user else '--system',
     }
 
     F.write("""
@@ -24,8 +24,8 @@ ConditionPathIsDirectory=%(chdir)s
     F.write("""
 [Service]
 Type=simple
-ExecStart=/usr/bin/procServ-launcher %(user)s %(name)s
-RuntimeDirectory=procServ/%(name)s
+ExecStart=/usr/bin/procServ-launcher %(userarg)s %(name)s
+RuntimeDirectory=procserv-%(name)s
 """%opts)
 
     if not user:
@@ -45,7 +45,7 @@ def run(outdir, user=False):
     for sect in conf.sections():
         if not conf.getboolean(sect, 'instance'):
             continue
-        service = 'procserv@%s.service'%sect
+        service = 'procserv-%s.service'%sect
         ofile = os.path.join(outdir, service)
         with open(ofile+'.tmp', 'w') as F:
             write_service(F, conf, sect, user=user)
