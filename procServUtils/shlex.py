@@ -1,17 +1,24 @@
 """A lexical analyzer class for simple shell-like syntaxes."""
 
+# This is a copy of shlex.py taken from 3.4.2 and adapted
+# for use with python 2.7 strings (not unicode).
+# As such it is licensed under the Python Software
+# Foundation license v2.
+
 # Module and documentation by Eric S. Raymond, 21 Dec 1998
 # Input stacking and error message cleanup added by ESR, March 2000
 # push_source() and pop_source() made explicit by ESR, January 2001.
 # Posix compliance, split(), string arguments, and
 # iterator interface by Gustavo Niemeyer, April 2003.
 
+from __future__ import print_function
+
 import os
 import re
 import sys
 from collections import deque
 
-from io import StringIO
+from cStringIO import StringIO
 
 __all__ = ["shlex", "split", "quote"]
 
@@ -34,9 +41,6 @@ class shlex:
         self.commenters = '#'
         self.wordchars = ('abcdfeghijklmnopqrstuvwxyz'
                           'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_')
-        if self.posix:
-            self.wordchars += ('ßàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿ'
-                               'ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞ')
         self.whitespace = ' \t\r\n'
         self.whitespace_split = False
         self.quotes = '\'"'
@@ -267,6 +271,7 @@ class shlex:
         if token == self.eof:
             raise StopIteration
         return token
+    next = __next__
 
 def split(s, comments=False, posix=True):
     lex = shlex(s, posix=posix)
@@ -276,7 +281,7 @@ def split(s, comments=False, posix=True):
     return list(lex)
 
 
-_find_unsafe = re.compile(r'[^\w@%+=:,./-]', re.ASCII).search
+_find_unsafe = re.compile(r'[^\w@%+=:,./-]').search
 
 def quote(s):
     """Return a shell-escaped version of the string *s*."""
