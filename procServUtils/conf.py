@@ -3,6 +3,11 @@ import os
 from functools import reduce
 from glob import glob
 
+try:
+    from ConfigParser import SafeConfigParser as ConfigParser
+except ImportError:
+    from configparser import ConfigParser
+
 def getgendir(user=False):
     if user:
         return os.path.expanduser('~/.config/procServ.d')
@@ -36,22 +41,20 @@ def getconffiles(user=False):
     # reduce by concatination into a single list
     return reduce(list.__add__, map(glob, files), [])
 
+_defaults = {
+    'user':'nobody',
+    'group':'nogroup',
+    'chdir':'/',
+    'port':'0',
+    'instance':'1',
+}
+
 def getconf(user=False):
     """Return a ConfigParser with one section per procServ instance
     """
-    try:
-        from ConfigParser import SafeConfigParser as ConfigParser
-    except ImportError:
-        from configparser import ConfigParser
     from glob import glob
 
-    C = ConfigParser({
-        'user':'nobody',
-        'group':'nogroup',
-        'chdir':'/',
-        'port':'0',
-        'instance':'1',
-    })
+    C = ConfigParser(_defaults)
 
     C.read(getconffiles(user=user))
 
