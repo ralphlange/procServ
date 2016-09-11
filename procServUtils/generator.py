@@ -1,5 +1,5 @@
 
-import sys, os
+import sys, os, errno
 from .conf import getconf
 
 def write_service(F, conf, sect, user=False):
@@ -42,6 +42,15 @@ WantedBy=multi-user.target
 def run(outdir, user=False):
     conf = getconf(user=user)
 
+    wantsdir = os.path.join(outdir, 'multi-user.target.wants')
+    try:
+        os.makedirs(wantsdir)
+    except OSError as e:
+        if e.errno!=errno.EEXIST:
+            _log.exception('Creating directory "%s"', wantsdir)
+            raise
+
+
     for sect in conf.sections():
         if not conf.getboolean(sect, 'instance'):
             continue
@@ -51,8 +60,6 @@ def run(outdir, user=False):
             write_service(F, conf, sect, user=user)
 
         os.rename(ofile+'.tmp', ofile)
-
-        # TODO: is WantedBy enough, or do we need to create symlinks ourselves?
-        #os.makedirs(os.path.join(outdir, 'multi-user.target.wants'), exists_ok=True)
-        #os.symlink(ofile,
-        #           os.path.join(outdir, 'multi-user.target.wants', service))
+        
+        os.symlink(ofile,
+                   os.path.join(wantsdir, service))
