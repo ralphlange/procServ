@@ -1,0 +1,15 @@
+config * {
+}
+default full {
+	rw *;
+}
+default * {
+	logfile /var/log/conserver/&.log;
+	timestamp "";
+	include full;
+}
+#include /etc/conserver/procs.cf
+access * {
+	trusted 127.0.0.1;
+	allowed 127.0.0.1;
+}
