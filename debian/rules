@@ -29,8 +29,8 @@ override_dh_auto_install:
 	mv $(CURDIR)/debian/tmp/usr/share/doc/procServ $(CURDIR)/debian/tmp/usr/share/doc/procserv
 	install -d $(CURDIR)/debian/tmp/lib/systemd/system-generators
 	cp systemd-procserv-generator-system $(CURDIR)/debian/tmp/lib/systemd/system-generators/systemd-procserv-generator
-	install -d $(CURDIR)/debian/tmp/lib/systemd/user-generators
-	cp systemd-procserv-generator-user $(CURDIR)/debian/tmp/lib/systemd/user-generators/systemd-procserv-generator
+	install -d $(CURDIR)/debian/tmp/usr/lib/systemd/user-generators
+	cp systemd-procserv-generator-user $(CURDIR)/debian/tmp/usr/lib/systemd/user-generators/systemd-procserv-generator
 
 
 override_dh_install:

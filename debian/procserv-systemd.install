@@ -1,5 +1,5 @@
 usr/bin/manage-procs
 usr/bin/procServ-launcher
 lib/systemd/system-generators/systemd-procserv-generator
-lib/systemd/user-generators/systemd-procserv-generator
+usr/lib/systemd/user-generators/systemd-procserv-generator
 conserver.cf.example usr/share/doc/procserv-systemd
