@@ -1,0 +1,4 @@
+#!/usr/bin/python3
+
+from procServUtils.manage import getargs, main
+main(getargs())
