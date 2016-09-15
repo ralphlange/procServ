@@ -930,6 +930,8 @@ void ttySetCharNoEcho(bool set) {
     static struct termios mode;
     static bool saved = false;
 
+    if(isatty(0)!=1) return;
+
     if (set && !saved) {
         tcgetattr(0, &mode);
         org_mode = mode;
