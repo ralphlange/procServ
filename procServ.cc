@@ -538,7 +538,7 @@ int main(int argc,char * argv[])
         writeInfoFile(infofile);
     }
 
-    if (inFgMode) {
+    if (inFgMode && strcmp(logFile, "<stdout>")!=0) {
         ttySetCharNoEcho(true);
         AddConnection(clientFactory(0));
     }
@@ -902,9 +902,12 @@ int checkCommandFile(const char * command)
 
 void openLogFile()
 {
-    if (-1 != logFileFD) {
+    if (-1 != logFileFD && 1 != logFileFD) {
         close(logFileFD);
     }
+    if (logFile && strcmp(logFile, "<stdout>")==0) {
+        logFileFD = 1;
+    } else
     if (logFile) {
         logFileFD = open(logFile, O_CREAT|O_WRONLY|O_APPEND, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH);
         if (-1 == logFileFD) {         // Don't stop here - just go without
