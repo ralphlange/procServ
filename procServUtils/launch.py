@@ -52,6 +52,7 @@ def main(args):
     toexec = [
         procServ,
         '--foreground',
+        '--logfile', '<stdout>',
         '--name', name,
         '--ignore','^D^C^]',
         '--chdir',chdir,
