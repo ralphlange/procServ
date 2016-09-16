@@ -31,7 +31,8 @@ override_dh_auto_install:
 	cp systemd-procserv-generator-system $(CURDIR)/debian/tmp/lib/systemd/system-generators/systemd-procserv-generator
 	install -d $(CURDIR)/debian/tmp/usr/lib/systemd/user-generators
 	cp systemd-procserv-generator-user $(CURDIR)/debian/tmp/usr/lib/systemd/user-generators/systemd-procserv-generator
-
+	install -d $(CURDIR)/debian/procserv-rsyslog/etc/rsyslog.d
+	cp debian/procserv-rsyslog.rsyslog $(CURDIR)/debian/procserv-rsyslog/etc/rsyslog.d/procserv-rsyslog.conf
 
 override_dh_install:
 	dh_install --fail-missing

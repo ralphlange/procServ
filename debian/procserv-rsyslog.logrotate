@@ -1,0 +1,12 @@
+/var/log/procserv/*.log
+{
+    rotate 14
+    delaycompress
+    missingok
+    notifempty
+    size 10000000
+    sharedscripts
+    postrotate
+        invoke-rc.d rsyslog rotate > /dev/null
+    endscript
+}
