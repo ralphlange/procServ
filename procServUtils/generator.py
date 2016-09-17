@@ -28,7 +28,7 @@ ExecStart=/usr/bin/procServ-launcher %(userarg)s %(name)s
 RuntimeDirectory=procserv-%(name)s
 StandardOutput=syslog
 StandardError=inherit
-SyslogIdentifier=procServ-%(name)s
+SyslogIdentifier=procserv-%(name)s
 """%opts)
 
     if not user:
