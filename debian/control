@@ -35,6 +35,7 @@ Depends: ${shlibs:Depends}, ${misc:Depends},
          procserv (>= ${source:Version}), procserv (<< ${source:Version}.1~),
          python3-procserv (= ${source:Version}),
          procserv-rsyslog | procserv-manual-logging,
+         telnet,
          ${python3:Depends},
 Description: Process server with telnet console and log access
  procServ is a wrapper that starts an arbitrary command as a child process in

@@ -9,5 +9,6 @@ setup(
     scripts = [
         'manage-procs',
         'procServ-launcher',
+        'prtelnet',
     ],
 )
