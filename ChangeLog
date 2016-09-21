@@ -1,4 +1,4 @@
-V 2.6.1 08/03/2016 Ralph Lange <ralph.lange@gmx.de>
+V 2.6.1 09/21/2016 Ralph Lange <ralph.lange@gmx.de>
 Move upstream project to GitHub.
 Fix URL for sysv-scripts in README.
 Fix memory leak in ClientItem wrt libtelnet use (#2).
@@ -8,7 +8,7 @@ Fix setsockopt in acceptFactory.cc to use SO_EXCLUSIVEADDRUSE on WIN32 and SO_EX
    http://stackoverflow.com/questions/14388706/socket-options-so-reuseaddr-and-so-reuseport-how-do-they-differ-do-they-mean-t
 Fix buffer overflow vulnerabilities by replacing sprintf->snprintf, strcat->strncat (#6).
 Update embedded libtelnet.c to release 0.21.
-Cygwin: hide console command window that is being created. (by Freddie Akeroyd)
+Cygwin: hide console command window that is being created. (by Freddie Akeroyd, Alireza Panna)
 Cygwin: add spawned process to a windows job object. (by Freddie Akeroyd)
    Killing the "process group" from Cygwin doesn't always clean everything up.
    E.g., if the CS Studio ArchiveEngine is being managed it is killed, but not the JVM it spawns.
