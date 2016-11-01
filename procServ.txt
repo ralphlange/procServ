@@ -107,7 +107,7 @@ OPTIONS
 *-l, \--logport*='port'::
     Provide read-only access to the child's console on 'port'. By default all hosts can connect to 'port', use the *-r* (*\--restrict*) option to restrict access to localhost.
 *-L, \--logfile*='file'::
-    Write a console log of all in- and output to 'file'.
+    Write a console log of all in and output to 'file'.  '-' selects stdout.
 *\--logstamp*[='fmt']::
     Prefix lines in logs with a time stamp, setting the time stamp format string to 'fmt'. Default is "[<timefmt>] ". (See *\--timefmt* option.)
 *-n, \--name*='title'::
