@@ -16,6 +16,8 @@ SYNOPSIS
 
 *procServ* ['OPTIONS'] 'unix:/path/to/socket' 'command' 'args...'
 
+*procServ* ['OPTIONS'] 'unix:@/path/to/socket' 'command' 'args...'
+
 DESCRIPTION
 -----------
 
@@ -73,6 +75,12 @@ Allowable port specifications are:
     eg "-P unix::grp:0660:/run/procServ/foo/control" will create the named socket
     and allow the 'grp' group connect to it.
     This requires that procServ be run as root or a member of 'grp'.
+
+*unix:@</path/to/socket>*::
+    Bind to an abstract unix domain socket (Linux specific).
+    Abstract sockets do not exist on the filesystem, and have no permissions checks.
+    They are functionally similar to an IP socket bound to localhost,
+    but identified with a name string instead of a port number.
 
 OPTIONS
 -------

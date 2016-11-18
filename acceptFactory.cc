@@ -58,11 +58,16 @@ struct acceptItemUNIX : public acceptItem
     uid_t uid;
     gid_t gid;
     unsigned perms;
+    bool abstract;
 
     virtual void remakeConnection();
 
     virtual void writeAddress(std::ostream& fp) {
-        fp<<"unix:"<<addr.sun_path<<"\n";
+        if(abstract) {
+            fp<<"unix:@"<<&addr.sun_path[1]<<"\n";
+        } else {
+            fp<<"unix:"<<addr.sun_path<<"\n";
+        }
     }
 };
 #endif
@@ -186,10 +191,12 @@ acceptItemUNIX::acceptItemUNIX(const char *path, bool readonly)
     ,uid(getuid())
     ,gid(getgid())
     ,perms(0666) // default permissions equivalent to tcp bind to localhost
+    ,abstract(false)
 {
     /* must be one of
      *  "/path/sock"
      *  "user:grp:perm:/path/sock"
+     *  "@/path/of/sock"  # abstract socket
      */
     std::string spec(path);
     size_t sep(spec.find_first_of(':'));
@@ -231,6 +238,26 @@ acceptItemUNIX::acceptItemUNIX(const char *path, bool readonly)
         spec = spec.substr(sep3+1);
     }
 
+    if(spec.empty()) {
+        fprintf(stderr, "expected unix socket path spec.\n");
+        exit(1);
+    }
+
+    /* Abstract unix sockets are a linux specific feature whereby
+     * the socket has a "path" name associated with it, but no presence
+     * in the filesystem (and no associated permission check).
+     * Analogous to IP bound to localhost with a name string
+     * instead of a port number.
+     * We denote an abstract socket with a leading '@'.
+     */
+    abstract = spec[0]=='@';
+#ifndef __linux__
+    if(abstract) {
+        fprintf(stderr, "Abstract unix sockets not supported by this host\n");
+        exit(1);
+    }
+#endif
+
     memset(&addr, 0, sizeof(0));
     addr.sun_family = AF_UNIX;
     if(spec.size()>=sizeof(addr.sun_path)) {
@@ -242,20 +269,28 @@ acceptItemUNIX::acceptItemUNIX(const char *path, bool readonly)
 
     PRINTF("Created new telnet UNIX listener (acceptItem %p) at '%s' (read%s)\n",
            this, addr.sun_path, readonly?"only":"/write");
+
+    /* signal an abstract socket with a *leading* nil.
+     * We replace the '@'
+     */
+    if(abstract)
+        addr.sun_path[0] = '\0';
+
     remakeConnection();
 }
 
 
 acceptItemUNIX::~acceptItemUNIX()
 {
-    unlink(addr.sun_path);
+    if(!abstract)
+        unlink(addr.sun_path);
 }
 
 void acceptItemUNIX::remakeConnection()
 {
     int bindStatus;
 
-    if(unlink(addr.sun_path) < 0) {
+    if(!abstract && unlink(addr.sun_path) < 0) {
         if(errno!=ENOENT) {
             PRINTF("Failed to remove unix socket at '%s' : %s\n", addr.sun_path, strerror(errno));
             throw errno; // Nooooo!
@@ -282,14 +317,16 @@ void acceptItemUNIX::remakeConnection()
         throw errno;
     }
 
-    if(chmod(addr.sun_path, 0)<0)
-        PRINTF("Can't chmod %u unix socket : %s\n", 0, strerror(errno));
+    if(!abstract) {
+        if(chmod(addr.sun_path, 0)<0)
+            PRINTF("Can't chmod %u unix socket : %s\n", 0, strerror(errno));
 
-    if(chown(addr.sun_path, uid, gid))
-        PRINTF("Can't chown %u:%u unix socket : %s\n", uid, gid, strerror(errno));
+        if(chown(addr.sun_path, uid, gid))
+            PRINTF("Can't chown %u:%u unix socket : %s\n", uid, gid, strerror(errno));
 
-    if(chmod(addr.sun_path, perms)<0)
-        PRINTF("Can't chmod %u unix socket : %s\n", perms, strerror(errno));
+        if(chmod(addr.sun_path, perms)<0)
+            PRINTF("Can't chmod %u unix socket : %s\n", perms, strerror(errno));
+    }
 
     PRINTF("Listening on fd %d\n", _fd);
     return;
