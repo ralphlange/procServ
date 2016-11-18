@@ -538,7 +538,7 @@ int main(int argc,char * argv[])
         writeInfoFile(infofile);
     }
 
-    if (inFgMode && strcmp(logFile, "-")!=0) {
+    if (inFgMode && !(logFile && strcmp(logFile, "-")==0)) {
         ttySetCharNoEcho(true);
         AddConnection(clientFactory(0));
     }
