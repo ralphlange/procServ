@@ -53,26 +53,26 @@ PORT SPECIFICATION
 ------------------
 
 Both telnet and log servers may be bound to either TCP or UNIX sockets (where supported).
-Allowable port specifications are:
+Allowed port specifications are:
 
-*<port#>*::
-    Bind to either 0.0.0.0:<port#> or 127.0.0.1:<port#> depending on the *-r* (*\--restrict*) option.
+*<port>*::
+    Bind to either 0.0.0.0:<port> or 127.0.0.1:<port> depending on the *-r* (*\--restrict*) option.
 
-*<interface>:<port#>*::
-    Bind  to the specified interface address and port.  Interface address must be given in numeric form.
+*<interface>:<port>*::
+    Bind to the specified interface address and port.  Interface address must be given in numeric form.
 
 *unix:</path/to/socket>*::
     An absolute or relative path where a named unix domain socket can be created.
     The process must have permission to create files in the enclosing directory.
     This socket file will be owned by the uid and primary gid of the procServ process
-    with permissions 0666 (equivalent to tcp bind to localhost.
+    with permissions 0666 (equivalent to tcp bind to localhost).
 
 *unix:user:group:perm:</path/to/socket>*::
     An absolute or relative path where a unix domain socket can be created.
     The process must have permission to create files in the enclosing directory.
-    This socket file wil be owned by the specified user and group.
+    This socket file will be owned by the specified user and group.
     Any of user, group, and/or perm may be omitted.
-    eg "-P unix::grp:0660:/run/procServ/foo/control" will create the named socket
+    E.g. "-P unix::grp:0660:/run/procServ/foo/control" will create the named socket
     and allow the 'grp' group connect to it.
     This requires that procServ be run as root or a member of 'grp'.
 
@@ -108,6 +108,8 @@ OPTIONS
     Wait at least 'n' seconds between child restart attempts. Default is 15 seconds.
 *-i, \--ignore*='chars'::
     Ignore all characters in 'chars' on access connections. This can be used to shield the child process from input characters that are potentially dangerous, e.g. `^D` and `^C` characters that would shut down a soft IOC. Use `^` to specify control characters, `^^` to specify a single `^` character.
+*-I, \--info-file <file>::
+    Write instance information to this file.
 *-k, \--killcmd*='char'::
     Kill the child process (child will be restarted automatically by default) when 'char' is sent on an access connection. Use `^` to specify a control character, `""` for no kill command. Default is `^X`.
 *\--killsig*='signal'::
