@@ -260,7 +260,7 @@ acceptItemUNIX::acceptItemUNIX(const char *path, bool readonly)
     }
 #endif
 
-    memset(&addr, 0, sizeof(0));
+    memset(&addr, 0, sizeof(addr));
     addr.sun_family = AF_UNIX;
     if(spec.size()>=sizeof(addr.sun_path)) {
         fprintf(stderr, "Unix path is too long (must be <%zu)\n", sizeof(addr.sun_path));
