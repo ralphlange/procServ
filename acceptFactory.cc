@@ -4,6 +4,7 @@
 // Freddie Akeroyd 2016
 // GNU Public License (GPLv3) applies - see www.gnu.org
 
+#include <stddef.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -55,6 +56,7 @@ struct acceptItemUNIX : public acceptItem
     virtual ~acceptItemUNIX();
 
     sockaddr_un addr;
+    socklen_t addrlen;
     uid_t uid;
     gid_t gid;
     unsigned perms;
@@ -265,6 +267,9 @@ acceptItemUNIX::acceptItemUNIX(const char *path, bool readonly)
         exit(1);
     }
 
+    // see unix(7) man-page
+    addrlen = offsetof(struct sockaddr_un, sun_path) + spec.size() + 1;
+
     memcpy(addr.sun_path, spec.c_str(), spec.size()+1);
 
     PRINTF("Created new telnet UNIX listener (acceptItem %p) at '%s' (read%s)\n",
@@ -272,9 +277,14 @@ acceptItemUNIX::acceptItemUNIX(const char *path, bool readonly)
 
     /* signal an abstract socket with a *leading* nil.
      * We replace the '@'
+     * and reduce addrlen to *not* include the trailing nil.
+     * To quote unix(7) manpage
+     *   "Null  bytes in the name have no special significance."
      */
-    if(abstract)
+    if(abstract) {
         addr.sun_path[0] = '\0';
+        addrlen--;
+    }
 
     remakeConnection();
 }
@@ -303,7 +313,7 @@ void acceptItemUNIX::remakeConnection()
         throw errno;
     }
 
-    bindStatus = bind(_fd, (struct sockaddr *) &addr, sizeof(addr));
+    bindStatus = bind(_fd, (struct sockaddr *) &addr, addrlen);
     if (bindStatus < 0)
     {
         PRINTF("Bind error: %s\n", strerror(errno));
