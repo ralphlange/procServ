@@ -2,6 +2,7 @@
 // David H. Thompson 8/29/2003
 // Ralph Lange <ralph.lange@gmx.de> 2007-2016
 // Freddie Akeroyd 2016
+// Michael Davidsaver 2017
 // GNU Public License (GPLv3) applies - see www.gnu.org
 
 #include <stddef.h>
@@ -75,7 +76,7 @@ struct acceptItemUNIX : public acceptItem
 #endif
 
 // service and calls clientFactory when clients are accepted
-connectionItem * acceptFactory (const char *spec, bool local, bool readonly )
+connectionItem * acceptFactory (const char *spec, bool local, bool readonly)
 {
     char junk;
     unsigned port = 0;

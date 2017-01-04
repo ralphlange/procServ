@@ -3,6 +3,7 @@
 // Ralph Lange <ralph.lange@gmx.de> 2007-2016
 // Ambroz Bizjak 02/29/2016
 // Freddie Akeroyd 2016
+// Michael Davidsaver 2017
 // GNU Public License (GPLv3) applies - see www.gnu.org
 
 #include <vector>
@@ -66,10 +67,10 @@ time_t holdoffTime = 15;         // Holdoff time between child restarts (in seco
 pid_t  procservPid;              // PID of server (daemon if not in debug mode)
 char   *pidFile;                 // File name for server PID
 char   defaultpidFile[] = "pid.txt";  // default
-const char   *timeFormat = "%c";       // Time format string
+const char *timeFormat = "%c";       // Time format string
 char   defaulttimeFormat[] = "%c";    // default
 bool   stampLog = false;         // Prefix log lines with time stamp
-const char   *stampFormat;             // Log time stamp format string
+const char *stampFormat;             // Log time stamp format string
 
 const size_t INFO1LEN = 512;
 const size_t INFO2LEN = 128;
@@ -147,36 +148,40 @@ void printUsage()
 
 void printHelp()
 {
-    printUsage();
-    printf("<port>|<iface>:<port>|unix:<path>  use telnet <port> for command connections\n"
-           "<command args ...>  command line to start child process\n"
+    printf("Usage: %s [options] <endpoint> <command args ...>\n",
+           procservName);
+    printf("<endpoint>:          endpoint to use for control connections\n"
+           "    <port>           TCP <port> on local/all interfaces (see --allow/--restrict)\n"
+           "    <iface>:<port>   TCP <port> on specific IP <iface> (numeric)\n"
+           "    unix:<path>      UNIX domain socket at <path> (@... for abstract)\n"
+           "<command args ...>   command line to start child process\n"
            "Options:\n"
-           "    --allow             allow control connections from anywhere\n"
-           "    --autorestartcmd    command to toggle auto restart flag (^ for ctrl)\n"
-           "    --coresize <n>      set maximum core size for child to <n>\n"
-           " -c --chdir <dir>       change directory to <dir> before starting child\n"
-           " -d --debug             debug mode (keeps child in foreground)\n"
-           " -e --exec <str>        specify child executable (default: arg0 of <command>)\n"
-           " -f --foreground        keep child in foreground (interactive)\n"
-           " -h --help              print this message\n"
-           "    --holdoff <n>       set holdoff time between child restarts\n"
-           " -i --ignore <str>      ignore all chars in <str> (^ for ctrl)\n"
-           " -I --info-file <file>  write instance information to this file\n"
-           " -k --killcmd <str>     command to kill (reboot) the child (^ for ctrl)\n"
-           "    --killsig <n>       signal to send to child when killing\n"
-           " -l --logport <n>       allow log connections through telnet port <n>\n"
-           " -L --logfile <file>    write log to <file>, may be '-' to log to stdout\n"
-           "    --logstamp [<str>]  prefix log lines with timestamp [strftime format]\n"
-           " -n --name <str>        set child's name (default: arg0 of <command>)\n"
-           "    --noautorestart     do not restart child on exit by default\n"
-           " -p --pidfile <str>     name of PID file (for server PID)\n"
-           " -P --port <port>       Bind an additional port specification\n"
-           " -q --quiet             suppress informational output (server)\n"
-           "    --restrict          restrict log connections to localhost\n"
-           "    --timefmt <str>     set time format (strftime) to <str>\n"
-           " -V --version           print program version\n"
-           " -w --wait              wait for telnet cmd to manually start child\n"
-           " -x --logoutcmd <str>   command to logout client connection (^ for ctrl)\n"
+           "    --allow               allow control connections from anywhere\n"
+           "    --autorestartcmd      command to toggle auto restart flag (^ for ctrl)\n"
+           "    --coresize <n>        set maximum core size for child to <n>\n"
+           " -c --chdir <dir>         change directory to <dir> before starting child\n"
+           " -d --debug               debug mode (keeps child in foreground)\n"
+           " -e --exec <str>          specify child executable (default: arg0 of <command>)\n"
+           " -f --foreground          keep child in foreground (interactive)\n"
+           " -h --help                print this message\n"
+           "    --holdoff <n>         set holdoff time [sec] between child restarts\n"
+           " -i --ignore <str>        ignore all chars in <str> (^ for ctrl)\n"
+           " -I --info-file <file>    write instance information to this file\n"
+           " -k --killcmd <str>       command to kill (reboot) the child (^ for ctrl)\n"
+           "    --killsig <n>         signal to send to child when killing\n"
+           " -l --logport <endpoint>  allow log connections through telnet <endpoint>\n"
+           " -L --logfile <file>      write log to <file>, '-' logs to stdout\n"
+           "    --logstamp [<str>]    prefix log lines with timestamp [strftime format]\n"
+           " -n --name <str>          set child's name (default: arg0 of <command>)\n"
+           "    --noautorestart       do not restart child on exit by default\n"
+           " -p --pidfile <str>       write PID file (for server PID)\n"
+           " -P --port <endpoint>     allow control connections through telnet <endpoint>\n"
+           " -q --quiet               suppress informational output (server)\n"
+           "    --restrict            restrict log access to connections from localhost\n"
+           "    --timefmt <str>       set time format (strftime) to <str>\n"
+           " -V --version             print program version\n"
+           " -w --wait                wait for cmd on control connection to start child\n"
+           " -x --logoutcmd <str>     command to logout client connection (^ for ctrl)\n"
         );
 }
 
@@ -317,7 +322,7 @@ int main(int argc,char * argv[])
             }
             break;
 
-        case 'I':
+        case 'I':                                 // Info file
             infofile = optarg;
             break;
 
@@ -360,7 +365,7 @@ int main(int argc,char * argv[])
             pidFile = strdup( optarg );
             break;
 
-        case 'P':
+        case 'P':                                 // Control port
             ctlSpecs.push_back(optarg);
             break;
 
