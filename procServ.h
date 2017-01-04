@@ -7,6 +7,8 @@
 #ifndef procServH
 #define procServH
 
+#include <ostream>
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/time.h>
@@ -16,6 +18,12 @@
 #include <assert.h>
 #include <stdio.h>
 #include <time.h>
+
+/* whether to enable UNIX domain sockets */
+#ifdef __unix__
+#include <sys/un.h>
+# define USOCKS
+#endif
 
 #ifndef PRINTF
 #define PRINTF if (inDebugMode) printf
@@ -32,7 +40,7 @@ extern bool   setCoreSize;
 extern char   *procservName;
 extern char   *childName;
 extern char   *ignChars;
-extern char   *timeFormat;
+extern const char   *timeFormat;
 extern char   killChar;
 extern char   toggleRestartChar;
 extern char   restartChar;
@@ -86,7 +94,7 @@ connectionItem * clientFactory(int ioSocket, bool readonly=false);
 // service and calls clientFactory when clients are accepted
 // local: restrict to localhost (127.0.0.1)
 // readonly: discard any input from the client
-connectionItem * acceptFactory( int port, bool local=true, bool readonly=false );
+connectionItem * acceptFactory( const char *spec, bool local=true, bool readonly=false );
 
 extern connectionItem * processItem; // Set if it exists
  
@@ -116,6 +124,7 @@ public:
     virtual bool isProcess() const { return false; }
     virtual bool isLogger() const { return _readonly; }
 
+    virtual void writeAddress(std::ostream& fp) {}
 protected:
     connectionItem ( int fd = -1, bool readonly = false );
     int _fd;                 // File descriptor of this connection

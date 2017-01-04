@@ -12,6 +12,12 @@ SYNOPSIS
 --------
 *procServ* ['OPTIONS'] 'port' 'command' 'args...'
 
+*procServ* ['OPTIONS'] 'ifaceaddr:port' 'command' 'args...'
+
+*procServ* ['OPTIONS'] 'unix:/path/to/socket' 'command' 'args...'
+
+*procServ* ['OPTIONS'] 'unix:@/path/to/socket' 'command' 'args...'
+
 DESCRIPTION
 -----------
 
@@ -43,6 +49,39 @@ To facilitate being started and stopped as a standard system service, the *-p* (
 
 The *-d* (*\--debug*) option runs the server in debug mode: the daemon process stays in the foreground, printing all regular log content plus additional debug messages to stdout.
 
+PORT SPECIFICATION
+------------------
+
+Both telnet and log servers may be bound to either TCP or UNIX sockets (where supported).
+Allowed port specifications are:
+
+*<port>*::
+    Bind to either 0.0.0.0:<port> or 127.0.0.1:<port> depending on the *-r* (*\--restrict*) option.
+
+*<interface>:<port>*::
+    Bind to the specified interface address and port.  Interface address must be given in numeric form.
+
+*unix:</path/to/socket>*::
+    An absolute or relative path where a named unix domain socket can be created.
+    The process must have permission to create files in the enclosing directory.
+    This socket file will be owned by the uid and primary gid of the procServ process
+    with permissions 0666 (equivalent to tcp bind to localhost).
+
+*unix:user:group:perm:</path/to/socket>*::
+    An absolute or relative path where a unix domain socket can be created.
+    The process must have permission to create files in the enclosing directory.
+    This socket file will be owned by the specified user and group.
+    Any of user, group, and/or perm may be omitted.
+    E.g. "-P unix::grp:0660:/run/procServ/foo/control" will create the named socket
+    and allow the 'grp' group connect to it.
+    This requires that procServ be run as root or a member of 'grp'.
+
+*unix:@</path/to/socket>*::
+    Bind to an abstract unix domain socket (Linux specific).
+    Abstract sockets do not exist on the filesystem, and have no permissions checks.
+    They are functionally similar to an IP socket bound to localhost,
+    but identified with a name string instead of a port number.
+
 OPTIONS
 -------
 
@@ -69,6 +108,8 @@ OPTIONS
     Wait at least 'n' seconds between child restart attempts. Default is 15 seconds.
 *-i, \--ignore*='chars'::
     Ignore all characters in 'chars' on access connections. This can be used to shield the child process from input characters that are potentially dangerous, e.g. `^D` and `^C` characters that would shut down a soft IOC. Use `^` to specify control characters, `^^` to specify a single `^` character.
+*-I, \--info-file <file>::
+    Write instance information to this file.
 *-k, \--killcmd*='char'::
     Kill the child process (child will be restarted automatically by default) when 'char' is sent on an access connection. Use `^` to specify a control character, `""` for no kill command. Default is `^X`.
 *\--killsig*='signal'::
@@ -76,13 +117,15 @@ OPTIONS
 *-l, \--logport*='port'::
     Provide read-only access to the child's console on 'port'. By default all hosts can connect to 'port', use the *-r* (*\--restrict*) option to restrict access to localhost.
 *-L, \--logfile*='file'::
-    Write a console log of all in- and output to 'file'.
+    Write a console log of all in and output to 'file'.  '-' selects stdout.
 *\--logstamp*[='fmt']::
     Prefix lines in logs with a time stamp, setting the time stamp format string to 'fmt'. Default is "[<timefmt>] ". (See *\--timefmt* option.)
 *-n, \--name*='title'::
     In all server messages, use 'title' instead of the full command line to increase readability.
 *\--noautorestart*::
     Do not automatically restart child process on exit.
+*-P, \--port-spec=<port>*::
+    Bind telnet server to an additional port.  See PORT SPECIFICATION above.
 *-p, \--pidfile*='file'::
     Write the PID of the server process into 'file' to facilitate integration into regular system service administration mechanisms.
 *\--timefmt*='fmt'::

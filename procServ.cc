@@ -5,6 +5,9 @@
 // Freddie Akeroyd 2016
 // GNU Public License (GPLv3) applies - see www.gnu.org
 
+#include <vector>
+#include <string>
+#include <fstream>
 
 #include <stdio.h>
 #include <assert.h>
@@ -63,10 +66,10 @@ time_t holdoffTime = 15;         // Holdoff time between child restarts (in seco
 pid_t  procservPid;              // PID of server (daemon if not in debug mode)
 char   *pidFile;                 // File name for server PID
 char   defaultpidFile[] = "pid.txt";  // default
-char   *timeFormat;              // Time format string
+const char   *timeFormat = "%c";       // Time format string
 char   defaulttimeFormat[] = "%c";    // default
 bool   stampLog = false;         // Prefix log lines with time stamp
-char   *stampFormat;             // Log time stamp format string
+const char   *stampFormat;             // Log time stamp format string
 
 const size_t INFO1LEN = 512;
 const size_t INFO2LEN = 128;
@@ -78,7 +81,7 @@ char   infoMessage3[INFO3LEN];   // Sign on message: available server commands
 
 char   *logFile = NULL;          // File name for log
 int    logFileFD=-1;             // FD for log file
-int    logPort;                  // Port no. for logger connections
+char  *logPort;                  // address for logger connections
 int    debugFD=-1;               // FD for debug output
 
 #define MAX_CONNECTIONS 64
@@ -92,6 +95,7 @@ void forkAndGo();
 // Checks the command file (existence and access rights)
 int checkCommandFile(const char *command);
 void openLogFile();
+void writeInfoFile(const std::string& infofile);
 void ttySetCharNoEcho(bool save);
 
 // Signal handlers
@@ -144,7 +148,7 @@ void printUsage()
 void printHelp()
 {
     printUsage();
-    printf("<port>              use telnet <port> for command connections\n"
+    printf("<port>|<iface>:<port>|unix:<path>  use telnet <port> for command connections\n"
            "<command args ...>  command line to start child process\n"
            "Options:\n"
            "    --allow             allow control connections from anywhere\n"
@@ -157,14 +161,16 @@ void printHelp()
            " -h --help              print this message\n"
            "    --holdoff <n>       set holdoff time between child restarts\n"
            " -i --ignore <str>      ignore all chars in <str> (^ for ctrl)\n"
+           " -I --info-file <file>  write instance information to this file\n"
            " -k --killcmd <str>     command to kill (reboot) the child (^ for ctrl)\n"
            "    --killsig <n>       signal to send to child when killing\n"
            " -l --logport <n>       allow log connections through telnet port <n>\n"
-           " -L --logfile <file>    write log to <file>\n"
+           " -L --logfile <file>    write log to <file>, may be '-' to log to stdout\n"
            "    --logstamp [<str>]  prefix log lines with timestamp [strftime format]\n"
            " -n --name <str>        set child's name (default: arg0 of <command>)\n"
            "    --noautorestart     do not restart child on exit by default\n"
            " -p --pidfile <str>     name of PID file (for server PID)\n"
+           " -P --port <port>       Bind an additional port specification\n"
            " -q --quiet             suppress informational output (server)\n"
            "    --restrict          restrict log connections to localhost\n"
            "    --timefmt <str>     set time format (strftime) to <str>\n"
@@ -184,11 +190,12 @@ int main(int argc,char * argv[])
     int c;
     unsigned int i, j;
     int k;
-    int ctlPort = 0;
+    std::vector<std::string> ctlSpecs;
     char *command;
     bool wrongOption = false;
     const size_t BUFLEN = 512;
     char buff[BUFLEN];
+    std::string infofile;
 
     time(&procServStart);             // remember start time
     procservName = argv[0];
@@ -214,6 +221,7 @@ int main(int argc,char * argv[])
             {"help",           no_argument,       0, 'h'},
             {"holdoff",        required_argument, 0, 'H'},
             {"ignore",         required_argument, 0, 'i'},
+            {"info-file",      required_argument, 0, 'I'},
             {"killcmd",        required_argument, 0, 'k'},
             {"killsig",        required_argument, 0, 'K'},
             {"logport",        required_argument, 0, 'l'},
@@ -222,6 +230,7 @@ int main(int argc,char * argv[])
             {"name",           required_argument, 0, 'n'},
             {"noautorestart",  no_argument,       0, 'N'},
             {"pidfile",        required_argument, 0, 'p'},
+            {"port",           required_argument, 0, 'P'},
             {"quiet",          no_argument,       0, 'q'},
             {"restrict",       no_argument,       0, 'R'},
             {"timefmt",        required_argument, 0, 'F'},
@@ -234,7 +243,7 @@ int main(int argc,char * argv[])
         /* getopt_long stores the option index here. */
         int option_index = 0;
 
-        c = getopt_long (argc, argv, "+c:de:fhi:k:l:L:n:p:qVwx:",
+        c = getopt_long (argc, argv, "+c:de:fhi:I:k:l:L:n:p:P:qVwx:",
                          long_options, &option_index);
 
         /* Detect the end of the options. */
@@ -308,6 +317,10 @@ int main(int argc,char * argv[])
             }
             break;
 
+        case 'I':
+            infofile = optarg;
+            break;
+
         case 'k':                                 // Kill command
             killChar = getOptionChar ( optarg );
             break;
@@ -324,13 +337,7 @@ int main(int argc,char * argv[])
             break;
 
         case 'l':                                 // Log port
-            logPort = abs ( atoi( optarg ) );
-            if ( logPort < 1024 ) {
-                fprintf( stderr,
-                         "%s: invalid log port %d (<1024) - disabling log port\n",
-                         procservName, logPort );
-                logPort = 0;
-            }
+            logPort = strdup ( optarg );
             break;
 
         case 'L':                                 // Log file
@@ -351,6 +358,10 @@ int main(int argc,char * argv[])
 
         case 'p':                                 // PID file
             pidFile = strdup( optarg );
+            break;
+
+        case 'P':
+            ctlSpecs.push_back(optarg);
             break;
 
         case 'q':                                 // Quiet
@@ -416,7 +427,7 @@ int main(int argc,char * argv[])
     }
     strncat(infoMessage3, NL, INFO3LEN-strlen(infoMessage3)-1);
 
-    ctlPort = atoi(argv[optind]);
+    ctlSpecs.push_back(argv[optind]);
     command = argv[optind+1];
 
     if (childName == NULL) childName = command;
@@ -426,18 +437,11 @@ int main(int argc,char * argv[])
         childExec = command;
     }
 
-    if ( ctlPort < 1024 )
-    {
-        fprintf( stderr,
-                 "%s: invalid control port %d (<1024)\n",
-                 procservName, ctlPort );
-        exit(1);
-    }
-
     if (!stampFormat) {
-        stampFormat = (char*) calloc(strlen(timeFormat)+4, 1);
         if (stampFormat) {
-            sprintf(stampFormat, "[%s] ", timeFormat);
+            char *tmp = (char*) calloc(strlen(timeFormat)+4, 1);
+            sprintf(tmp, "[%s] ", timeFormat);
+            stampFormat = tmp;
         } else {
             stampFormat = timeFormat;
         }
@@ -486,15 +490,17 @@ int main(int argc,char * argv[])
     PRINTF("Creating control listener\n");
     try
     {
-	connectionItem *acceptItem = acceptFactory( ctlPort, ctlPortLocal );
-	AddConnection(acceptItem);
+        for(size_t i=0; i<ctlSpecs.size(); i++) {
+            connectionItem *acceptItem = acceptFactory( ctlSpecs[i].c_str(), ctlPortLocal );
+            AddConnection(acceptItem);
+        }
     }
     catch (int error)
     {
-	perror("Caught an exception creating the initial control telnet port");
-	fprintf(stderr, "%s: Exiting with error code: %d\n",
+        perror("Caught an exception creating the initial control telnet port");
+        fprintf(stderr, "%s: Exiting with error code: %d\n",
                 procservName, error);
-	exit(error);
+        exit(error);
     }
 
     if ( logPort ) {
@@ -528,7 +534,11 @@ int main(int argc,char * argv[])
         debugFD = 1;          // Enable debug messages
     }
 
-    if (inFgMode) {
+    if (!infofile.empty()) {
+        writeInfoFile(infofile);
+    }
+
+    if (inFgMode && !(logFile && strcmp(logFile, "-")==0)) {
         ttySetCharNoEcho(true);
         AddConnection(clientFactory(0));
     }
@@ -626,6 +636,21 @@ int main(int argc,char * argv[])
         }
     }
     ttySetCharNoEcho(false);
+
+    PRINTF("Close sockets\n");
+
+    while(connectionItem::head) {
+        connectionItem *p = connectionItem::head;
+        connectionItem::head = p->next;
+        delete p;
+    }
+
+    PRINTF("Cleanup pid and info files\n");
+
+    if(!infofile.empty())
+        unlink(infofile.c_str());
+    if(pidFile)
+        unlink(pidFile);
 }
 
 // Connection items call this to send messages to others
@@ -877,9 +902,12 @@ int checkCommandFile(const char * command)
 
 void openLogFile()
 {
-    if (-1 != logFileFD) {
+    if (-1 != logFileFD && 1 != logFileFD) {
         close(logFileFD);
     }
+    if (logFile && strcmp(logFile, "-")==0) {
+        logFileFD = 1;
+    } else
     if (logFile) {
         logFileFD = open(logFile, O_CREAT|O_WRONLY|O_APPEND, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH);
         if (-1 == logFileFD) {         // Don't stop here - just go without
@@ -892,10 +920,20 @@ void openLogFile()
     }
 }
 
+void writeInfoFile(const std::string& infofile)
+{
+    std::ofstream info(infofile.c_str());
+    info<<"pid:"<<getpid()<<"\n";
+    for(connectionItem *it = connectionItem::head; it; it=it->next)
+        it->writeAddress(info);
+}
+
 void ttySetCharNoEcho(bool set) {
     static struct termios org_mode;
     static struct termios mode;
     static bool saved = false;
+
+    if(isatty(0)!=1) return;
 
     if (set && !saved) {
         tcgetattr(0, &mode);
