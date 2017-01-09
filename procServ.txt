@@ -10,13 +10,9 @@ procServ - Process Server with Telnet Console and Log Access
 
 SYNOPSIS
 --------
-*procServ* ['OPTIONS'] 'port' 'command' 'args...'
+*procServ* ['OPTIONS'] -P 'endpoint'... 'command' 'args'...
 
-*procServ* ['OPTIONS'] 'ifaceaddr:port' 'command' 'args...'
-
-*procServ* ['OPTIONS'] 'unix:/path/to/socket' 'command' 'args...'
-
-*procServ* ['OPTIONS'] 'unix:@/path/to/socket' 'command' 'args...'
+*procServ* ['OPTIONS'] 'endpoint' 'command' 'args'...
 
 DESCRIPTION
 -----------
@@ -25,9 +21,19 @@ procServ(1) creates a run time environment for a command (e.g. a soft IOC).
 It forks a server run as a daemon into the background, which creates a child
 process running 'command' with all remaining 'args' from the command line.
 The server provides control access (stdin/stdout) to the child process
-console by offering a telnet connection at the specified endpoint.
-For security reasons, by default control access is restricted to connections
-from localhost (127.0.0.1), so that logging into the host machine is required.
+console by offering a telnet connection at the specified 'endpoint'(s).
+
+An 'endpoint' can either be a TCP server socket (specified by the port
+number) or a UNIX domain socket (where available).
+See ENDPOINT SPECIFICATION below for details.
+For security reasons, control access is restricted to connections from
+localhost (127.0.0.1), so that a prior login in to the host machine is
+required. (See *\--allow* option.)
+
+The first variant allows multiple 'endpoint' declarations and treats all
+non-option arguments as the command line for the child process.
+The second variant (provided for backward compatibility) declares one
+'endpoint' with its specification taken from the first non-option argument.
 
 procServ can be configured to write a console log of all in- and output of
 the child process into a file using the *-L* (*\--logfile*) option.

@@ -47,6 +47,7 @@ bool   waitForManualStart = false;  // Waits for telnet cmd to manually start ch
 volatile bool shutdownServer = false;   // To keep the server from shutting down
 bool   quiet = false;            // Suppress info output (server)
 bool   setCoreSize = false;      // Set core size for child
+bool   singleEndpointStyle = true;  // Compatibility style: first non-option is endpoint
 char   *procservName;            // The name of this beast (server)
 char   *childName;               // The name of that beast (child)
 char   *childExec;               // Exec to run as child
@@ -142,14 +143,14 @@ char getOptionChar ( const char* buf )
 
 void printUsage()
 {
-    printf("Usage: %s [options] <port> <command args ...>    (-h for help)\n",
-           procservName);
+    printf("Usage: %s [options] -P <endpoint>... <command args ...>    (-h for help)\n"
+           "       %s [options] <endpoint> <command args ...>\n",
+           procservName, procservName);
 }
 
 void printHelp()
 {
-    printf("Usage: %s [options] <endpoint> <command args ...>\n",
-           procservName);
+    printUsage();
     printf("<endpoint>:          endpoint to use for control connections\n"
            "    <port>           TCP <port> on local/all interfaces (see --allow/--restrict)\n"
            "    <iface>:<port>   TCP <port> on specific IP <iface> (numeric)\n"
@@ -197,7 +198,7 @@ int main(int argc,char * argv[])
     int k;
     std::vector<std::string> ctlSpecs;
     char *command;
-    bool wrongOption = false;
+    bool bailout = false;
     const size_t BUFLEN = 512;
     char buff[BUFLEN];
     std::string infofile;
@@ -367,6 +368,7 @@ int main(int argc,char * argv[])
 
         case 'P':                                 // Control port
             ctlSpecs.push_back(optarg);
+            singleEndpointStyle = false;
             break;
 
         case 'q':                                 // Quiet
@@ -391,7 +393,7 @@ int main(int argc,char * argv[])
 
         case '?':                                 // Error
             /* getopt_long already printed an error message */
-            wrongOption = true;
+            bailout = true;
             break;
 
         default:
@@ -399,15 +401,14 @@ int main(int argc,char * argv[])
         }
     }
 
-    if ( (argc-optind) < 2 )
-    {
-        fprintf( stderr, "%s: missing argument\n", procservName );
+    if ((argc - optind) < (singleEndpointStyle ? 2 : 1)) {
+        fprintf(stderr, "%s: missing argument\n", procservName);
+        bailout = true;
     }
 
-    if ( wrongOption || (argc-optind) < 2 )
-    {
-	printUsage();
-	exit(1);
+    if (bailout) {
+        printUsage();
+        exit(1);
     }
 
     // Single command characters should be ignored, too
@@ -432,11 +433,13 @@ int main(int argc,char * argv[])
     }
     strncat(infoMessage3, NL, INFO3LEN-strlen(infoMessage3)-1);
 
-    ctlSpecs.push_back(argv[optind]);
-    command = argv[optind+1];
+    if (singleEndpointStyle) {
+        ctlSpecs.push_back(argv[optind++]);
+    }
+    command = argv[optind];
 
     if (childName == NULL) childName = command;
-    childArgv = argv + optind;
+    childArgv = argv + optind - 1;
     if (childExec == NULL) {
         childArgv++;
         childExec = command;
