@@ -58,9 +58,12 @@ connectionItem * clientFactory(int socketIn, bool readonly)
 
 clientItem::~clientItem()
 {
-    if ( _fd >= 0 ) close( _fd );
+    if (_fd >= 0) {
+        shutdown(_fd, SHUT_RDWR);
+        close(_fd);
+    }
     if (_telnet) telnet_free(_telnet);
-    PRINTF("~clientItem()\n");
+    PRINTF("~clientItem(); handle %d closed\n", _fd);
     if (_readonly) _loggers--;
     else _users--;
 }
