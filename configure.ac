@@ -55,6 +55,7 @@ AC_CHECK_LIB([telnet], [telnet_recv],,[AC_LIBOBJ([libtelnet])])
 AC_SEARCH_LIBS([socket], [socket])
 AC_SEARCH_LIBS([setsockopt], [socket])
 AC_SEARCH_LIBS([inet_aton], [resolv])
+AC_SEARCH_LIBS([inet_ntop], [nsl])
 AC_SEARCH_LIBS([forkpty], [util])
 AC_REPLACE_FUNCS([forkpty])
 
