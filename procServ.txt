@@ -102,6 +102,8 @@ Allowed endpoint specifications are:
 *<ifaceaddr>:<port>*::
     Bind to the specified interface address and _<port>_. The interface
     IP address _<ifaceaddr>_ must be given in numeric form.
+    Uses 127.0.0.1 (localhost) for security reasons unless the *\--allow*
+    option is also used.
 
 *unix:</path/to/socket>*::
     Bind to a named unix domain socket that will be created at the specified

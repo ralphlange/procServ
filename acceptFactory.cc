@@ -101,7 +101,7 @@ connectionItem * acceptFactory (const char *spec, bool local, bool readonly)
                      &A[0], &A[1], &A[2], &A[3], &port, &junk)==5) {
         // bind to specific interface and port
         inet_addr.sin_family = AF_INET;
-        inet_addr.sin_addr.s_addr = htonl(A[0]<<24 | A[1]<<16 | A[2]<<8 | A[3]);
+        inet_addr.sin_addr.s_addr = htonl(local ? INADDR_LOOPBACK : (A[0]<<24 | A[1]<<16 | A[2]<<8 | A[3]));
         inet_addr.sin_port = htons(port);
         if(port>0xffff) {
             fprintf( stderr, "%s: invalid control port %d (<1024)\n",
