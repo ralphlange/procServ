@@ -1,3 +1,11 @@
+V 2.7.0 01/11/2017 Ralph Lange <ralph.lange@gmx.de>
+Add -P option allowing multiple endpoints. (by Michael Davidsaver)
+Allow UNIX domain sockets and TCP sockets bound to a specific IP:port. (by Michael Davidsaver)
+Add -I option to write info file with PID and list of endpoints. (by Michael Davidsaver)
+Fix client logout by command not working after a child restart (#4).
+Rework and streamline documentation.
+Fix compiler warnings (#12).
+
 V 2.6.1 09/21/2016 Ralph Lange <ralph.lange@gmx.de>
 Move upstream project to GitHub.
 Fix URL for sysv-scripts in README.
