@@ -6,9 +6,9 @@
 
 
 AC_PREREQ([2.61])
-AC_INIT([procServ Process Server], [2.7.0-dev], [tech-talk@aps.anl.gov], [procServ],
+AC_INIT([procServ Process Server], [2.7.0-rc1], [tech-talk@aps.anl.gov], [procServ],
         [https://github.com/ralphlange/procServ])
-AC_SUBST([PACKAGE_DATE],[01/04/2017])
+AC_SUBST([PACKAGE_DATE],[01/11/2017])
 
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CANONICAL_HOST
