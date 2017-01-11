@@ -18,6 +18,10 @@
 #include "processClass.h"
 #include "libtelnet.h"
 
+// Wrapper to ignore return values
+template<typename T>
+inline void ignore_result(T /* unused result */) {}
+
 static const telnet_telopt_t my_telopts[] = {
   { TELNET_TELOPT_ECHO,      TELNET_WILL,           0 },
   { TELNET_TELOPT_LINEMODE,            0, TELNET_DO   },
@@ -77,7 +81,6 @@ clientItem::clientItem(int socketIn, bool readonly) :
     assert(socketIn>=0);
     int optval = 1;
     int i;
-    ssize_t ign;
     struct tm procServStart_tm; // Time when this procServ started
     char procServStart_buf[32]; // Time when this procServ started - as string
     struct tm IOCStart_tm;      // Time when the current IOC was started
@@ -137,17 +140,17 @@ clientItem::clientItem(int socketIn, bool readonly) :
         _loggers++;
     } else {                    // Regular (user) client
         _users++;
-        ign = write( _fd, greeting1, strlen(greeting1) );
-        ign = write( _fd, greeting2, strlen(greeting2) );
+        ignore_result( write(_fd, greeting1, strlen(greeting1)) );
+        ignore_result( write(_fd, greeting2, strlen(greeting2)) );
     }
 
-    ign = write( _fd, infoMessage1, strlen(infoMessage1) );
-    ign = write( _fd, infoMessage2, strlen(infoMessage2) );
-    ign = write( _fd, buf1, strlen(buf1) );
+    ignore_result( write(_fd, infoMessage1, strlen(infoMessage1)) );
+    ignore_result( write( _fd, infoMessage2, strlen(infoMessage2)) );
+    ignore_result( write( _fd, buf1, strlen(buf1)) );
     if ( ! _readonly )
-        ign = write( _fd, buf2, strlen(buf2) );
+        ignore_result( write(_fd, buf2, strlen(buf2)) );
     if ( ! processClass::exists() )
-        ign = write( _fd, infoMessage3, strlen(infoMessage3) );
+        ignore_result( write(_fd, infoMessage3, strlen(infoMessage3)) );
 
     _telnet = telnet_init(my_telopts, telnet_eh, 0, this);
 

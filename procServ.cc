@@ -32,6 +32,10 @@
 
 #include "procServ.h"
 
+// Wrapper to ignore return values
+template<typename T>
+inline void ignore_result(T /* unused result */) {}
+
 #ifdef ALLOW_FROM_ANYWHERE
 const bool enableAllow = true;   // Enable --allow option
 #else
@@ -675,7 +679,6 @@ void SendToAll(const char * message,
     int len = 0;
     time_t now;
     struct tm now_tm;
-    ssize_t ign;
 
     time(&now);
     localtime_r(&now, &now_tm);
@@ -693,22 +696,22 @@ void SendToAll(const char * message,
                 int i = 0, j = 0;
                 for (i = 0; i < count; ++i) {
                     if (!log_stamp_sent) {
-                        ign = write(logFileFD, stamp, len);
+                        ignore_result( write(logFileFD, stamp, len) );
                         log_stamp_sent = true;
                     }
                     if (message[i] == '\n') {
-                        ign = write(logFileFD, message+j, i-j+1);
+                        ignore_result( write(logFileFD, message+j, i-j+1) );
                         j = i + 1;
                         log_stamp_sent = false;
                     }
                 }
-                ign = write(logFileFD, message+j, count-j);  // finish off rest of line with no newline at end
+                ignore_result( write(logFileFD, message+j, count-j) );  // finish off rest of line with no newline at end
             } else {
-                ign = write(logFileFD, message, count);
+                ignore_result( write(logFileFD, message, count) );
             }
             fsync(logFileFD);
         }
-        if (inFgMode == false && debugFD > 0) ign = write(debugFD, message, count);
+        if (inFgMode == false && debugFD > 0) ignore_result( write(debugFD, message, count) );
     }
 
     while (p) {
@@ -831,7 +834,6 @@ void forkAndGo()
 {
     pid_t p;
     int fh;
-    int ign;
 
     if ((p = fork()) < 0) {  // Fork failed
         perror("Could not fork daemon process");
@@ -855,7 +857,7 @@ void forkAndGo()
         fh = open(buf, O_RDWR);
         if (fh < 0) { perror(buf); exit(-1); }
         close(0); close(1); close(2);
-        ign = dup(fh); ign = dup(fh); ign = dup(fh);
+        ignore_result( dup(fh) ); ignore_result( dup(fh) ); ignore_result( dup(fh) );
         close(fh);
 
         // Make sure we are not attached to a terminal
