@@ -1,6 +1,6 @@
 // Process server for soft ioc
 // David H. Thompson 8/29/2003
-// Ralph Lange <ralph.lange@gmx.de> 2007-2016
+// Ralph Lange <ralph.lange@gmx.de> 2007-2017
 // GNU Public License (GPLv3) applies - see www.gnu.org
 
 #include <unistd.h>
@@ -77,6 +77,7 @@ clientItem::clientItem(int socketIn, bool readonly) :
     assert(socketIn>=0);
     int optval = 1;
     int i;
+    ssize_t ign;
     struct tm procServStart_tm; // Time when this procServ started
     char procServStart_buf[32]; // Time when this procServ started - as string
     struct tm IOCStart_tm;      // Time when the current IOC was started
@@ -136,17 +137,17 @@ clientItem::clientItem(int socketIn, bool readonly) :
         _loggers++;
     } else {                    // Regular (user) client
         _users++;
-        write( _fd, greeting1, strlen(greeting1) );
-        write( _fd, greeting2, strlen(greeting2) );
+        ign = write( _fd, greeting1, strlen(greeting1) );
+        ign = write( _fd, greeting2, strlen(greeting2) );
     }
 
-    write( _fd, infoMessage1, strlen(infoMessage1) );
-    write( _fd, infoMessage2, strlen(infoMessage2) );
-    write( _fd, buf1, strlen(buf1) );
+    ign = write( _fd, infoMessage1, strlen(infoMessage1) );
+    ign = write( _fd, infoMessage2, strlen(infoMessage2) );
+    ign = write( _fd, buf1, strlen(buf1) );
     if ( ! _readonly )
-        write( _fd, buf2, strlen(buf2) );
+        ign = write( _fd, buf2, strlen(buf2) );
     if ( ! processClass::exists() )
-        write( _fd, infoMessage3, strlen(infoMessage3) );
+        ign = write( _fd, infoMessage3, strlen(infoMessage3) );
 
     _telnet = telnet_init(my_telopts, telnet_eh, 0, this);
 

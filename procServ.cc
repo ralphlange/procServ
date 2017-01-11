@@ -1,6 +1,6 @@
 // Process server for soft ioc
 // David H. Thompson 8/29/2003
-// Ralph Lange <ralph.lange@gmx.de> 2007-2016
+// Ralph Lange <ralph.lange@gmx.de> 2007-2017
 // Ambroz Bizjak 02/29/2016
 // Freddie Akeroyd 2016
 // Michael Davidsaver 2017
@@ -675,6 +675,7 @@ void SendToAll(const char * message,
     int len = 0;
     time_t now;
     struct tm now_tm;
+    ssize_t ign;
 
     time(&now);
     localtime_r(&now, &now_tm);
@@ -692,22 +693,22 @@ void SendToAll(const char * message,
                 int i = 0, j = 0;
                 for (i = 0; i < count; ++i) {
                     if (!log_stamp_sent) {
-                        write(logFileFD, stamp, len);
+                        ign = write(logFileFD, stamp, len);
                         log_stamp_sent = true;
                     }
                     if (message[i] == '\n') {
-                        write(logFileFD, message+j, i-j+1);
+                        ign = write(logFileFD, message+j, i-j+1);
                         j = i + 1;
                         log_stamp_sent = false;
                     }
                 }
-                write(logFileFD, message+j, count-j);  // finish off rest of line with no newline at end
+                ign = write(logFileFD, message+j, count-j);  // finish off rest of line with no newline at end
             } else {
-                write(logFileFD, message, count);
+                ign = write(logFileFD, message, count);
             }
             fsync(logFileFD);
         }
-        if (inFgMode == false && debugFD > 0) write(debugFD, message, count);
+        if (inFgMode == false && debugFD > 0) ign = write(debugFD, message, count);
     }
 
     while (p) {
@@ -830,6 +831,7 @@ void forkAndGo()
 {
     pid_t p;
     int fh;
+    int ign;
 
     if ((p = fork()) < 0) {  // Fork failed
         perror("Could not fork daemon process");
@@ -853,7 +855,7 @@ void forkAndGo()
         fh = open(buf, O_RDWR);
         if (fh < 0) { perror(buf); exit(-1); }
         close(0); close(1); close(2);
-        dup(fh); dup(fh); dup(fh);
+        ign = dup(fh); ign = dup(fh); ign = dup(fh);
         close(fh);
 
         // Make sure we are not attached to a terminal
