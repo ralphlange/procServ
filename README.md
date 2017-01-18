@@ -53,7 +53,8 @@ the packaging extras. These are not part of the distribution tar.
 
 ### Building with the EPICS Build System
 
-1. Unpack procServ at the appropriate place within your EPICS structure.
+1. Unpack procServ at the appropriate place within your EPICS application
+   structure.
 2. Inside that directory, run `./configure --with-epics-top=TOP`
    where TOP is the relative path to the EPICS TOP directory.
    <br>
@@ -103,7 +104,7 @@ you will need to use
 
 as the configure step.
 
-The executable is also available for download on SourceForge.
+The executable is also available for download on GitHub/SourceForge.
 
 ## Using procServ
 
@@ -126,7 +127,8 @@ If you plan to control procServ from a non-localhost address,
 you will need to run it with `--allow` to allow remote access
 to the child console.
 
-To run on a non-Cygwin Windows system, procServ only needs `Cygwin1.dll`,
+The default build on Cygwin uses static linking.
+I.e. to run on a non-Cygwin Windows system, procServ only needs `Cygwin1.dll`,
 e.g. in the same directory as the executable.
 
 Using Windows style paths ('`\`' delimiter) in arguments to procServ
