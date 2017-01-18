@@ -1,4 +1,4 @@
-V 2.7.0 01/11/2017 Ralph Lange <ralph.lange@gmx.de>
+V 2.7.0 01/18/2017 Ralph Lange <ralph.lange@gmx.de>
 Add -P option allowing multiple endpoints. (by Michael Davidsaver)
 Allow UNIX domain sockets and TCP sockets bound to a specific IP:port. (by Michael Davidsaver)
 Add -I option to write info file with PID and list of endpoints. (by Michael Davidsaver)
