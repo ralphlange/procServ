@@ -1,14 +1,15 @@
+%{!?_pkgdocdir: %global _pkgdocdir %{_docdir}/%{name}-%{version}}
+
 Summary: Process server with telnet console and log access
 Name: procServ
-Version: 2.6.0
+Version: 2.6.1
 Release: 1%{?dist}
 
 License: GPLv3
 Group: Applications/System
-URL: http://sourceforge.net/projects/procserv
+URL: https://github.com/ralphlange/procServ
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
-Source0: http://sourceforge.net/projects/procserv/files/%{version}/procServ-%{version}.tar.gz
-
+Source0: https://github.com/ralphlange/procServ/releases/download/V%{version}/procServ-%{version}.tar.gz
 BuildRequires: libtelnet-devel
 
 %description
@@ -29,7 +30,7 @@ For security reasons, procServ only accepts connections from localhost.
 %setup -q
 
 %build
-%configure --docdir=%{_defaultdocdir}/%{name}-%{version}
+%configure --docdir=%{_pkgdocdir}
 make %{?_smp_mflags}
 
 %install
@@ -41,14 +42,65 @@ rm -rf $RPM_BUILD_ROOT
 
 %files
 %defattr(-,root,root,-)
-%doc AUTHORS COPYING ChangeLog NEWS README procServ.html procServ.pdf procServ.txt
+%{_pkgdocdir}/
 %{_bindir}/procServ
-%{_mandir}/man1/procServ.*
+%{_mandir}/man1/procServ.1*
 
 %changelog
-* Fri Apr 13 2012 Ralph Lange <Ralph.Lange@gmx.de> 2.6.0-1
+* Wed Sep 28 2016 Ralph Lange <ralph.lange@gmx.de> - 2.6.1-1
+- New upstream version
+- New project homepage and download page
+
+* Thu Feb 04 2016 Fedora Release Engineering <releng@fedoraproject.org> - 2.6.0-10
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_24_Mass_Rebuild
+
+* Thu Jun 18 2015 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 2.6.0-9
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
+
+* Sat May 02 2015 Kalev Lember <kalevlember@gmail.com> - 2.6.0-8
+- Rebuilt for GCC 5 C++11 ABI change
+
+* Sun Aug 17 2014 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 2.6.0-7
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_21_22_Mass_Rebuild
+
+* Sat Jun 07 2014 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 2.6.0-6
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_21_Mass_Rebuild
+
+* Tue Aug 20 2013 Ville Skyttä <ville.skytta@iki.fi> - 2.6.0-5
+- Install docs to %%{_pkgdocdir} where available (#994051).
+
+* Sun Aug 04 2013 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 2.6.0-4
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_20_Mass_Rebuild
+
+* Thu Feb 14 2013 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 2.6.0-3
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_19_Mass_Rebuild
+
+* Sat Jul 21 2012 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 2.6.0-2
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_18_Mass_Rebuild
+
+* Mon Apr 16 2012 Ralph Lange <Ralph.Lange@gmx.de> 2.6.0-1
 - New upstream version
 - Added libtelnet dependency
+
+* Sat Jan 14 2012 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 2.5.1-6
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_17_Mass_Rebuild
+
+* Wed Feb 09 2011 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 2.5.1-5
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_15_Mass_Rebuild
+
+* Wed Sep 29 2010 jkeating - 2.5.1-4
+- Rebuilt for gcc bug 634757
+
+* Thu Sep 02 2010 Ralph Lange <Ralph.Lange@bessy.de> 2.5.1-3
+- More spec clean-up suggested by Martin Gieseking:
+  Adapted Source0 URL to follow guidelines for Sourceforge.net
+  Fixed macro usage in changelog (avoid rpmlint warning)
+  Added specific man section to wildcard in %%files
+
+* Fri Jul 23 2010 Ralph Lange <Ralph.Lange@bessy.de> 2.5.1-2
+- Spec clean-up suggested by Michael Schwendt:
+  Skipped "A" from summary, replaced %%doc with the --docdir
+  directory to avoid conflict killing --docdir
 
 * Tue Mar 23 2010 Ralph Lange <Ralph.Lange@bessy.de> 2.5.1-1
 - New upstream version

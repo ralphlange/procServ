@@ -1,12 +1,12 @@
 Source: procserv
 Section: utils
 Priority: optional
-Maintainer: Ralph Lange <Ralph.Lange@gmx.de>
-Build-Depends: debhelper (>= 7.0.50~), libtelnet-dev
-Standards-Version: 3.9.3
-Vcs-Darcs: http://darcs.debian.org/darcs/collab-maint/procserv
-Vcs-Browser: http://darcs.debian.org/cgi-bin/darcsweb.cgi?r=collab-maint/procserv;a=summary
-Homepage: http://sourceforge.net/projects/procserv/
+Maintainer: Ralph Lange <ralph.lange@gmx.de>
+Build-Depends: debhelper (>= 9), libtelnet-dev
+Standards-Version: 3.9.8
+Vcs-Git: git://anonscm.debian.org/collab-maint/procserv.git
+Vcs-Browser: https://anonscm.debian.org/cgit/collab-maint/procserv.git
+Homepage: https://github.com/ralphlange/procServ
 
 Package: procserv
 Architecture: any

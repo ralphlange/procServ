@@ -1,2 +1,3 @@
 version=3
-http://sf.net/procserv/procServ-(.+)\.tar\.gz
+opts=filenamemangle=s/.+\/V?(\d\S*)\.tar\.gz/procServ-$1.tar.gz/ \
+  https://github.com/ralphlange/procServ/tags .*/V?(\d[^\s-]*)\.tar\.gz

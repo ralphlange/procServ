@@ -1,3 +1,15 @@
+procserv (2.6.1-1) unstable; urgency=medium
+
+  * new upstream version
+  * d/control, d/compat: bump debhelper compatibility level to 9
+  * d/control: bump Standards-Version to 3.9.8 with no changes
+  * d/control: update Vcs-* and Homepage links
+  * d/watch: switch to Github URL
+  * d/source/format: switch to 3.0 (quilt)
+  * d/rules: switch on hardening=+all
+
+ -- Ralph Lange <ralph.lange@gmx.de>  Thu, 22 Sep 2016 11:58:17 -0400
+
 procserv (2.6.0-1) unstable; urgency=low
   * new upstream version
   * control: bumped Standards-Version to 3.9.3 with no changes,
@@ -63,4 +75,3 @@ procserv (2.4.0-1) unstable; urgency=low
   * Initial release
 
  -- Michael Davidsaver <mdavidsaver@bnl.gov>  Fri, 28 Aug 2009 11:10:45 -0400
-
