@@ -98,8 +98,6 @@ void mLoop();
 void OnPollTimeout();
 // Daemonizes the program
 void forkAndGo();
-// Checks the command file (existence and access rights)
-int checkCommandFile(const char *command);
 void openLogFile();
 void writeInfoFile(const std::string& infofile);
 void ttySetCharNoEcho(bool save);
@@ -458,8 +456,6 @@ int main(int argc,char * argv[])
             stampFormat = timeFormat;
         }
     }
-
-    if (checkCommandFile(childExec)) exit(errno);
 
     struct sigaction sig;
     memset(&sig, 0, sizeof(sig));
@@ -865,52 +861,6 @@ void forkAndGo()
     }
 }
 
-
-// Check to see if the command is really executable:
-// Return 0 if the file is executable
-int checkCommandFile(const char * command)
-{
-    struct stat s;
-
-    PRINTF("Checking command file validity\n");
-
-    // chdir if possible (to allow relative command)
-    if (chDir && chdir(chDir)) perror(chDir);
-
-    if (stat(command,&s)) {
-        perror(command);
-        return -1;
-    }
-
-    // Back to where we came from
-    if (chdir(myDir)) perror(myDir);
-
-    if (!S_ISREG(s.st_mode)) {
-        fprintf(stderr, "%s: %s is not a regular file\n", procservName, command);
-        return -1;
-    }
-
-// On Cygwin, permission bits are meaningless
-#ifndef __CYGWIN__
-    mode_t must_perm   =         S_IXUSR        |S_IXGRP        |S_IXOTH;
-    mode_t should_perm = S_IRUSR|S_IXUSR|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH;
-    if (must_perm != (s.st_mode & must_perm)) {
-        fprintf(stderr, "%s: Error - Please change permissions on %s to at least ---x--x--x\n"
-                "procServ is not able to continue without execute permission\n",
-                procservName, command);
-        return -1;
-    }
-
-    if (should_perm != (s.st_mode & should_perm)) {
-        fprintf(stderr, "%s: Warning - Please change permissions on %s to at least -r-xr-xr-x\n"
-                "procServ may not be able to continue without read and execute permissions\n",
-                procservName, command);
-        return 0;
-    }
-#endif /* __CYGWIN__ */
-
-    return 0;
-}
 
 void openLogFile()
 {
