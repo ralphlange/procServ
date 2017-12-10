@@ -1,7 +1,5 @@
-environment:
-  PATH: "C:\\cygwin\\bin;%PATH%"
-
 build_script:
+  - set PATH=C:\\cygwin\\bin;%PATH%
   - sh autoreconf -fi
   - sh configure --disable-doc
   - make
