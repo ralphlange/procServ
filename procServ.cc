@@ -450,8 +450,8 @@ int main(int argc,char * argv[])
     }
 
     if (!stampFormat) {
-        if (stampFormat) {
-            char *tmp = (char*) calloc(strlen(timeFormat)+4, 1);
+        char *tmp = (char*) calloc(strlen(timeFormat)+4, 1);
+        if (tmp) {
             sprintf(tmp, "[%s] ", timeFormat);
             stampFormat = tmp;
         } else {
