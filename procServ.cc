@@ -29,6 +29,9 @@
 #include <sys/ioctl.h>
 #include <sys/select.h>
 #include <string.h>
+#include <string>
+
+#include <boost/circular_buffer.hpp>
 
 #ifdef __CYGWIN__
     #include <windows.h>
@@ -94,6 +97,8 @@ char   *logFile = NULL;          // File name for log
 int    logFileFD=-1;             // FD for log file
 char  *logPort;                  // address for logger connections
 int    debugFD=-1;               // FD for debug output
+
+boost::circular_buffer<std::string> logBuffer(25);
 
 #define MAX_CONNECTIONS 64
 
@@ -514,7 +519,7 @@ int main(int argc,char * argv[])
     {
         for(size_t i=0; i<ctlSpecs.size(); i++) {
             connectionItem *acceptItem = acceptFactory( ctlSpecs[i].c_str(), ctlPortLocal );
-            AddConnection(acceptItem);
+            AddConnection(acceptItem, false);
         }
     }
     catch (int error)
@@ -531,7 +536,7 @@ int main(int argc,char * argv[])
         try
         {
             connectionItem *acceptItem = acceptFactory( logPort, logPortLocal, true );
-            AddConnection(acceptItem);
+            AddConnection(acceptItem, false);
         }
         catch (int error)
         {
@@ -565,7 +570,7 @@ int main(int argc,char * argv[])
 
     if (inFgMode && !(logFile && strcmp(logFile, "-")==0)) {
         ttySetCharNoEcho(true);
-        AddConnection(clientFactory(0));
+        AddConnection(clientFactory(0), false);
     }
 
     // Record some useful data for managers 
@@ -658,7 +663,7 @@ int main(int argc,char * argv[])
                   shutdownServer = true;
                 } else {
                   npi= processFactory(childExec, childArgv);
-                  if (npi) AddConnection(npi);
+                  if (npi) AddConnection(npi, false);
                   if (firstRun) {
                   	firstRun = false;
                   }
@@ -718,6 +723,16 @@ void SendToAll(const char * message,
     strftime(stamp, sizeof(stamp)-1, stampFormat, &now_tm);
     len = strlen(stamp);
 
+    if (sender && sender->isProcess()) {
+	std::string s_message = "";
+	if (stampLog) {
+	    s_message += stamp;
+	    s_message += " ";
+	}
+	s_message += message;
+	logBuffer.push_back(s_message);
+    }
+
     // Log the traffic to file / stdout (debug)
     if (sender==NULL || sender->isProcess())
     {
@@ -730,6 +745,7 @@ void SendToAll(const char * message,
                 for (i = 0; i < count; ++i) {
                     if (!log_stamp_sent) {
                         ignore_result( write(logFileFD, stamp, len) );
+                        ignore_result( write(logFileFD, " ", 1) );
                         log_stamp_sent = true;
                     }
                     if (message[i] == '\n') {
@@ -758,6 +774,7 @@ void SendToAll(const char * message,
                     p->Send(stamp, len, message, count);
                 else
                     p->Send(message, count);
+
             }
         }
         p = p->next;
@@ -815,7 +832,7 @@ void OnPollTimeout()
 }
 
 // Call this to add the item to the list of connections
-void AddConnection(connectionItem * ci)
+void AddConnection(connectionItem * ci, bool show_log)
 {
     PRINTF("Adding connection %p to list\n", ci);
     if (connectionItem::head )
@@ -828,8 +845,13 @@ void AddConnection(connectionItem * ci)
 	ci->prev=NULL;
 	connectionItem::head=ci;
 	connectionNo++;
-}
 
+    if (show_log) {
+	for (int i=0; i < logBuffer.size(); i++) {
+	    ci->Send(logBuffer[i].c_str(), strlen(logBuffer[i].c_str()));
+	}
+    }
+}
 
 void DeleteConnection(connectionItem *ci)
 {
