@@ -93,7 +93,7 @@ int    logFileFD=-1;             // FD for log file
 char  *logPort;                  // address for logger connections
 int    debugFD=-1;               // FD for debug output
 
-boost::circular_buffer<std::string> logBuffer(25);
+boost::circular_buffer<std::string> logBuffer(0);
 
 #define MAX_CONNECTIONS 64
 
@@ -173,6 +173,7 @@ void printHelp()
            " -d --debug               debug mode (keeps child in foreground)\n"
            " -e --exec <str>          specify child executable (default: arg0 of <command>)\n"
            " -f --foreground          keep child in foreground (interactive)\n"
+           " -H --history <n>         display the last n child messages for new connections\n"
            " -h --help                print this message\n"
            "    --holdoff <n>         set holdoff time [sec] between child restarts\n"
            " -i --ignore <str>        ignore all chars in <str> (^ for ctrl)\n"
@@ -234,7 +235,8 @@ int main(int argc,char * argv[])
             {"exec",           required_argument, 0, 'e'},
             {"foreground",     no_argument,       0, 'f'},
             {"help",           no_argument,       0, 'h'},
-            {"holdoff",        required_argument, 0, 'H'},
+            {"history",        required_argument, 0, 'H'},
+            {"holdoff",        required_argument, 0, 'O'},
             {"ignore",         required_argument, 0, 'i'},
             {"info-file",      required_argument, 0, 'I'},
             {"killcmd",        required_argument, 0, 'k'},
@@ -258,7 +260,7 @@ int main(int argc,char * argv[])
         /* getopt_long stores the option index here. */
         int option_index = 0;
 
-        c = getopt_long (argc, argv, "+c:de:fhi:I:k:l:L:n:p:P:qVwx:",
+        c = getopt_long (argc, argv, "+c:de:fhH:i:I:k:l:L:n:p:P:qVwx:",
                          long_options, &option_index);
 
         /* Detect the end of the options. */
@@ -306,12 +308,17 @@ int main(int argc,char * argv[])
             if (optarg)
                 stampFormat = strdup(optarg);
             break;
+ 
+        case 'H':                                 // Size of history buffer
+            logBuffer.set_capacity( atoi( optarg ) );
+            break;
+
 
         case 'h':                                 // Help
             printHelp();
             exit(0);
 
-        case 'H':                                 // Holdoff time
+        case 'O':                                 // Holdoff time
             k = atoi( optarg );
             if ( k >= 0 ) holdoffTime = k;
             break;
