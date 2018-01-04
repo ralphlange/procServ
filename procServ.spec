@@ -10,7 +10,7 @@ Group: Applications/System
 URL: https://github.com/ralphlange/procServ
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 Source0: https://github.com/ralphlange/procServ/releases/download/V%{version}/procServ-%{version}.tar.gz
-BuildRequires: libtelnet-devel
+BuildRequires: libtelnet-devel boost-devel
 
 %description
 procServ is a wrapper that starts an arbitrary command as a child process in
