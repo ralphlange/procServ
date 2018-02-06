@@ -49,6 +49,7 @@ bool   ctlPortLocal = true;      // Restrict control connections to localhost
 bool   autoRestart = true;       // Enables instant restart of exiting child
 bool   waitForManualStart = false;  // Waits for telnet cmd to manually start child
 volatile bool shutdownServer = false;   // To keep the server from shutting down
+volatile bool onlyOnce = false;  // To run the child only once and exit the server
 bool   quiet = false;            // Suppress info output (server)
 bool   setCoreSize = false;      // Set core size for child
 bool   singleEndpointStyle = true;  // Compatibility style: first non-option is endpoint
@@ -187,6 +188,7 @@ void printHelp()
            " -V --version             print program version\n"
            " -w --wait                wait for cmd on control connection to start child\n"
            " -x --logoutcmd <str>     command to logout client connection (^ for ctrl)\n"
+           " -o --once                exit the provServ after child finishes\n"
         );
 }
 
@@ -247,13 +249,14 @@ int main(int argc,char * argv[])
             {"version",        no_argument,       0, 'V'},
             {"wait",           no_argument,       0, 'w'},
             {"logoutcmd",      required_argument, 0, 'x'},
+            {"once",           no_argument,       0, 'o'},
             {0, 0, 0, 0}
         };
 
         /* getopt_long stores the option index here. */
         int option_index = 0;
 
-        c = getopt_long (argc, argv, "+c:de:fhi:I:k:l:L:n:p:P:qVwx:",
+        c = getopt_long (argc, argv, "+c:de:fhi:I:k:l:L:n:op:P:qVwx:",
                          long_options, &option_index);
 
         /* Detect the end of the options. */
@@ -393,6 +396,10 @@ int main(int argc,char * argv[])
 
         case 'T':                                 // Toggle auto restart command
             toggleRestartChar = getOptionChar ( optarg );
+            break;
+
+        case 'o':                                 // Toggle child run only once
+            onlyOnce = true;
             break;
 
         case '?':                                 // Error
@@ -630,8 +637,13 @@ int main(int argc,char * argv[])
             // This call returns NULL if the process item lives
             if (processFactoryNeedsRestart())
             {
-                npi= processFactory(childExec, childArgv);
-                if (npi) AddConnection(npi);
+                if (onlyOnce) {
+                  PRINTF("Onlyonce is set.. exiting\n");
+                  shutdownServer = true;
+                } else {
+                  npi= processFactory(childExec, childArgv);
+                  if (npi) AddConnection(npi);
+                }
             }
         } else if (-1 == ready) {             // Error
             if (EINTR != errno) {
