@@ -208,6 +208,7 @@ int main(int argc,char * argv[])
     const size_t BUFLEN = 512;
     char buff[BUFLEN];
     std::string infofile;
+    bool firstRun;
 
     time(&procServStart);             // remember start time
     procservName = argv[0];
@@ -579,6 +580,7 @@ int main(int argc,char * argv[])
     strncat(infoMessage1, buff, INFO1LEN-strlen(infoMessage1)-1);
     snprintf(infoMessage2, INFO2LEN, "@@@ Child \"%s\" is SHUT DOWN" NL, childName);
 
+    firstRun = true;
     // Run here until something makes it die
     while ( ! shutdownServer )
     {
@@ -637,12 +639,15 @@ int main(int argc,char * argv[])
             // This call returns NULL if the process item lives
             if (processFactoryNeedsRestart())
             {
-                if (onlyOnce) {
+                if (onlyOnce && !firstRun) {
                   PRINTF("Onlyonce is set.. exiting\n");
                   shutdownServer = true;
                 } else {
                   npi= processFactory(childExec, childArgv);
                   if (npi) AddConnection(npi);
+                  if (firstRun) {
+                  	firstRun = false;
+                  }
                 }
             }
         } else if (-1 == ready) {             // Error
