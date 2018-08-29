@@ -1,6 +1,6 @@
-| Linux | EPICS Build | MacOS | Windows |
-| :---: | :---: | :---: | :---: |
-|[![CloudBees Autotools](https://openepics.ci.cloudbees.com/buildStatus/icon?job=procServ%20-%20automake%20build)](https://openepics.ci.cloudbees.com/view/procServ/job/procServ%20-%20automake%20build/)|[![CloudBees EPICS](https://openepics.ci.cloudbees.com/buildStatus/icon?job=procServ%20-%20EPICS%20build)](https://openepics.ci.cloudbees.com/view/procServ/job/procServ%20-%20EPICS%20build/)|[![Travis Build](https://travis-ci.org/ralphlange/procServ.svg?branch=master)](https://travis-ci.org/ralphlange/procServ)|[![Windows Build](https://ci.appveyor.com/api/projects/status/github/ralphlange/procserv?svg=true)](https://ci.appveyor.com/project/ralphlange/procserv)|
+| Linux / EPICS Build / MacOS | Windows |
+| :---: | :---: |
+|[![Travis Build](https://travis-ci.org/ralphlange/procServ.svg?branch=master)](https://travis-ci.org/ralphlange/procServ)|[![Windows Build](https://ci.appveyor.com/api/projects/status/github/ralphlange/procserv?svg=true)](https://ci.appveyor.com/project/ralphlange/procserv)|
 
 # procServ
 
@@ -14,7 +14,8 @@ with telnet access to stdin/stdout.
 The procServ upstream repository is on 
 [GitHub](https://github.com/ralphlange/procServ).
 
-Distribution tars are also available through 
+Distribution tars are also available through
+[GitHub releases](https://github.com/ralphlange/procServ/releases) or on
 [SourceForge](http://sourceforge.net/projects/procserv/).
 
 ### Dependencies
@@ -35,7 +36,6 @@ Distribution tars are also available through
 ### Continuous Integration
 
 Automated builds are provided by
-[CloudBees](https://openepics.ci.cloudbees.com/view/procServ/),
 [Travis](https://travis-ci.org/ralphlange/procServ) and
 [AppVeyor](https://ci.appveyor.com/project/ralphlange/procserv).
 
