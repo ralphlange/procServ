@@ -567,6 +567,15 @@ int main(int argc,char * argv[])
                  command );
     strncat(infoMessage1, buff, INFO1LEN-strlen(infoMessage1)-1);
     snprintf(infoMessage2, INFO2LEN, "@@@ Child \"%s\" is SHUT DOWN" NL, childName);
+    if ( logFile ) {
+	if ( -1 == logFileFD )
+            snprintf(buff, BUFLEN, "@@@ Child log file: unable to open log file %s" NL,
+                     logFile );
+	else
+            snprintf(buff, BUFLEN, "@@@ Child log file: %s" NL,
+                     logFile );
+        strncat(infoMessage1, buff, INFO1LEN-strlen(infoMessage1)-1);
+    }
 
     // Run here until something makes it die
     while ( ! shutdownServer )
