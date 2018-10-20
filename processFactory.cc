@@ -48,11 +48,28 @@ time_t processClass::_restartTime=0;
 bool processFactoryNeedsRestart()
 {
     time_t now = time(0);
+		PRINTF("IN %s\n", __func__);
+		PRINTF("restartTime: %ld, now: %ld\n", processClass::_restartTime, now);
+		if (processClass::_runningItem) {
+				PRINTF("running Item is True\n");
+		}
+		else {
+				PRINTF("running Item is False\n");
+		}
     if ( ( autoRestart == false && processClass::_restartTime ) || 
          processClass::_runningItem ||
          now < processClass::_restartTime ||
          waitForManualStart ) return false;
     return true;
+}
+
+bool processFactoryOneShot()
+{
+		if (!oneShot) return false;
+		if (!processClass::_runningItem && processClass::_restartTime != 0) {
+				return true;
+		}
+		return false;
 }
 
 connectionItem * processFactory(char *exe, char *argv[])

@@ -17,6 +17,7 @@ class processClass : public connectionItem
 {
 friend connectionItem * processFactory(char *exe, char *argv[]);
 friend bool processFactoryNeedsRestart();
+friend bool processFactoryOneShot();
 friend void processFactorySendSignal(int signal);
 public:
     processClass(char *exe, char *argv[]);

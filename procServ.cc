@@ -47,6 +47,7 @@ bool   inFgMode = false;         // This keeps child in the foreground, tty conn
 bool   logPortLocal;             // This restricts log port access to localhost
 bool   ctlPortLocal = true;      // Restrict control connections to localhost
 bool   autoRestart = true;       // Enables instant restart of exiting child
+bool   oneShot = false;          // Just run the child once then close this parent
 bool   waitForManualStart = false;  // Waits for telnet cmd to manually start child
 volatile bool shutdownServer = false;   // To keep the server from shutting down
 bool   quiet = false;            // Suppress info output (server)
@@ -185,6 +186,7 @@ void printHelp()
            " -V --version             print program version\n"
            " -w --wait                wait for cmd on control connection to start child\n"
            " -x --logoutcmd <str>     command to logout client connection (^ for ctrl)\n"
+					 "    --oneshot              when child closed, close this parent, too (override autorestart)\n"
         );
 }
 
@@ -245,6 +247,7 @@ int main(int argc,char * argv[])
             {"version",        no_argument,       0, 'V'},
             {"wait",           no_argument,       0, 'w'},
             {"logoutcmd",      required_argument, 0, 'x'},
+						{"oneshot",        no_argument,       0, 'O'},
             {0, 0, 0, 0}
         };
 
@@ -359,6 +362,8 @@ int main(int argc,char * argv[])
         case 'N':                                 // No restart of child
             autoRestart = false;
             break;
+				case 'O':
+						oneShot = true;                       // Just run child once then exit
 
         case 'R':                                 // Restrict log
             logPortLocal = true;
@@ -630,6 +635,11 @@ int main(int argc,char * argv[])
             // Go clean up dead connections
             OnPollTimeout();
             connectionItem * npi; 
+
+						if (processFactoryOneShot()) {
+								shutdownServer = true;
+								break;
+						}
 
             // Pick up the process item if it dies
             // This call returns NULL if the process item lives

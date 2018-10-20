@@ -35,6 +35,7 @@
 extern bool   inDebugMode;
 extern bool   logPortLocal;
 extern bool   autoRestart;
+extern bool   oneShot;
 extern bool   waitForManualStart;
 extern volatile bool shutdownServer;
 extern bool   setCoreSize;
@@ -86,6 +87,7 @@ void DeleteConnection(connectionItem *ci);
 // processFactory creates the process that we are managing
 connectionItem * processFactory(char *exe, char *argv[]);
 bool processFactoryNeedsRestart(); // Call to test status of the server process
+bool processFactoryOneShot(); // Call to test parent if could exit
 void processFactorySendSignal(int signal);
 
 // clientFactory manages an open socket connected to a user
