@@ -535,12 +535,12 @@ int main(int argc,char * argv[])
     if (false == inFgMode && false == inDebugMode)
     {
         forkAndGo();
-        writePidFile();
     }
     else
     {
         debugFD = 1;          // Enable debug messages
     }
+    writePidFile();
 
     if (!infofile.empty()) {
         writeInfoFile(infofile);
