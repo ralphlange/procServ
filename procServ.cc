@@ -71,7 +71,6 @@ time_t holdoffTime = 15;         // Holdoff time between child restarts (in seco
 
 pid_t  procservPid;              // PID of server (daemon if not in debug mode)
 char   *pidFile;                 // File name for server PID
-char   defaultpidFile[] = "pid.txt";  // default
 const char *timeFormat = "%c";       // Time format string
 char   defaulttimeFormat[] = "%c";    // default
 bool   stampLog = false;         // Prefix log lines with time stamp
@@ -116,6 +115,9 @@ void writePidFile()
 {
     int pid = getpid();
     FILE * fp;
+
+    if ( !pidFile || strlen(pidFile) == 0 )
+        return;
 
     PRINTF("Writing PID file %s\n", pidFile);
 
@@ -212,7 +214,6 @@ int main(int argc,char * argv[])
     timeFormat = defaulttimeFormat;
 
     pidFile = getenv( "PROCSERV_PID" );
-    if ( !pidFile || strlen(pidFile) == 0 ) pidFile = defaultpidFile;
     if ( getenv("PROCSERV_DEBUG") != NULL ) inDebugMode = true;
 
     const int ONE_CHAR_COMMANDS = 3;  // togglerestartcmd, killcmd, logoutcmd
@@ -666,7 +667,7 @@ int main(int argc,char * argv[])
 
     if(!infofile.empty())
         unlink(infofile.c_str());
-    if(pidFile)
+    if(pidFile && strlen(pidFile) > 0)
         unlink(pidFile);
 }
 
