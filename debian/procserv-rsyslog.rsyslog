@@ -1,0 +1,5 @@
+$template ProcServFile,"/var/log/procserv/%programname%.log"
+
+# This is matching the SyslogIdentifier set by systemd
+:programname, startswith, "procserv-"  ?ProcServFile
+:programname, startswith, "procserv-"  ~

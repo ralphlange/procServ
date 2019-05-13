@@ -55,3 +55,7 @@ procServ.pdf
 # IDE configuration
 /QtC-*
 .deps
+
+# python
+*.pyc
+*.pyo

@@ -1,0 +1,6 @@
+usr/bin/manage-procs
+usr/bin/procServ-launcher
+usr/bin/prtelnet
+lib/systemd/system-generators/systemd-procserv-generator
+usr/lib/systemd/user-generators/systemd-procserv-generator
+conserver.cf.example usr/share/doc/procserv-systemd

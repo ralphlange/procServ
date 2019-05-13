@@ -4,13 +4,35 @@
 export DEB_BUILD_MAINT_OPTIONS = hardening=+all
 
 %:
-	dh $@
+	dh $@ --with python3
+
+override_dh_auto_clean:
+	# workaround to keep lower priority 'makefile' from nuking ./configure
+	[ -f Makefile ] && dh_auto_clean -Sautoconf || true
+	dh_auto_clean -Spybuild
 
 override_dh_auto_configure:
-	dh_auto_configure -- --docdir=\$${prefix}/share/doc/procserv
+	dh_auto_configure -Sautoconf -- --docdir=\$${prefix}/share/doc/procserv
+	dh_auto_configure -Spybuild
+
+override_dh_auto_build:
+	dh_auto_build -Sautoconf
+	dh_auto_build -Spybuild
 
 override_dh_auto_install:
-	dh_auto_install
+	dh_auto_install -Sautoconf
+	dh_auto_install -Spybuild
 	# Remove extra ChangeLog and COPYING files installed by upstream make
-	rm $(CURDIR)/debian/procserv/usr/share/doc/procserv/ChangeLog
-	rm $(CURDIR)/debian/procserv/usr/share/doc/procserv/COPYING
+	rm $(CURDIR)/debian/tmp/usr/share/doc/procServ/ChangeLog
+	rm $(CURDIR)/debian/tmp/usr/share/doc/procServ/COPYING
+	# /doc dir should match package name
+	mv $(CURDIR)/debian/tmp/usr/share/doc/procServ $(CURDIR)/debian/tmp/usr/share/doc/procserv
+	install -d $(CURDIR)/debian/tmp/lib/systemd/system-generators
+	cp systemd-procserv-generator-system $(CURDIR)/debian/tmp/lib/systemd/system-generators/systemd-procserv-generator
+	install -d $(CURDIR)/debian/tmp/usr/lib/systemd/user-generators
+	cp systemd-procserv-generator-user $(CURDIR)/debian/tmp/usr/lib/systemd/user-generators/systemd-procserv-generator
+	install -d $(CURDIR)/debian/procserv-rsyslog/etc/rsyslog.d
+	cp debian/procserv-rsyslog.rsyslog $(CURDIR)/debian/procserv-rsyslog/etc/rsyslog.d/procserv-rsyslog.conf
+
+override_dh_install:
+	dh_install --fail-missing

@@ -2,16 +2,18 @@ Source: procserv
 Section: utils
 Priority: optional
 Maintainer: Ralph Lange <ralph.lange@gmx.de>
-Build-Depends: debhelper (>= 9), libtelnet-dev
+Build-Depends: debhelper (>= 9), libtelnet-dev,
+               dh-python, python3-all,
 Standards-Version: 3.9.8
 Vcs-Git: git://anonscm.debian.org/collab-maint/procserv.git
 Vcs-Browser: https://anonscm.debian.org/cgit/collab-maint/procserv.git
+X-Python3-Version: 3.4
 Homepage: https://github.com/ralphlange/procServ
 
 Package: procserv
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
-Suggests: telnet
+Depends: ${shlibs:Depends}, ${misc:Depends},
+Suggests: telnet, procserv-systemd,
 Description: Process server with telnet console and log access
  procServ is a wrapper that starts an arbitrary command as a child process in
  the background, connecting its standard input and output to a TCP port for
@@ -25,3 +27,87 @@ Description: Process server with telnet console and log access
  is done best on a higher level, using a package like conserver.
  .
  For security reasons, procServ only accepts connections from localhost.
+
+Package: procserv-systemd
+Section: admin
+Architecture: all
+Depends: ${shlibs:Depends}, ${misc:Depends},
+         procserv (>= ${source:Version}), procserv (<< ${source:Version}.1~),
+         python3-procserv (= ${source:Version}),
+         procserv-rsyslog | procserv-manual-logging,
+         telnet,
+         ${python3:Depends},
+Description: Process server with telnet console and log access
+ procServ is a wrapper that starts an arbitrary command as a child process in
+ the background, connecting its standard input and output to a TCP port for
+ telnet access. It supports logging, child restart (manual or automatic on
+ exit), and more.
+ .
+ procServ does not have the rich feature set of the screen utility,
+ but is intended to provide running a command in a system service style,
+ in a small, robust way.
+ Handling multiple users, authorization, authentication, central logging
+ is done best on a higher level, using a package like conserver.
+ .
+ This package contains support for controling procServ instances w/ systemd.
+
+Package: python3-procserv
+Section: python
+Architecture: all
+Depends: ${shlibs:Depends}, ${misc:Depends}, ${python3:Depends},
+         procserv (>= ${source:Version}), procserv (<< ${source:Version}.1~),
+Description: Process server with telnet console and log access
+ procServ is a wrapper that starts an arbitrary command as a child process in
+ the background, connecting its standard input and output to a TCP port for
+ telnet access. It supports logging, child restart (manual or automatic on
+ exit), and more.
+ .
+ procServ does not have the rich feature set of the screen utility,
+ but is intended to provide running a command in a system service style,
+ in a small, robust way.
+ Handling multiple users, authorization, authentication, central logging
+ is done best on a higher level, using a package like conserver.
+ .
+ This package contains some python support scripts
+
+Package: procserv-rsyslog
+Section: admin
+Architecture: all
+Depends: ${shlibs:Depends}, ${misc:Depends},
+         procserv-systemd (>= ${source:Version}), procserv-systemd (<< ${source:Version}.1~),
+         rsyslog, logrotate,
+Description: Process server with telnet console and log access
+ procServ is a wrapper that starts an arbitrary command as a child process in
+ the background, connecting its standard input and output to a TCP port for
+ telnet access. It supports logging, child restart (manual or automatic on
+ exit), and more.
+ .
+ procServ does not have the rich feature set of the screen utility,
+ but is intended to provide running a command in a system service style,
+ in a small, robust way.
+ Handling multiple users, authorization, authentication, central logging
+ is done best on a higher level, using a package like conserver.
+ .
+ This package contains rsyslog and logrotate configuration to pipe the
+ output of procServ controlled processes to individual log files.
+
+Package: procserv-manual-logging
+Section: admin
+Architecture: all
+Depends: ${shlibs:Depends}, ${misc:Depends},
+         procserv-systemd (>= ${source:Version}), procserv-systemd (<< ${source:Version}.1~),
+Description: Process server with telnet console and log access
+ procServ is a wrapper that starts an arbitrary command as a child process in
+ the background, connecting its standard input and output to a TCP port for
+ telnet access. It supports logging, child restart (manual or automatic on
+ exit), and more.
+ .
+ procServ does not have the rich feature set of the screen utility,
+ but is intended to provide running a command in a system service style,
+ in a small, robust way.
+ Handling multiple users, authorization, authentication, central logging
+ is done best on a higher level, using a package like conserver.
+ .
+ This package is a placeholder for use by admins who wish to provide
+ custom (or no) extra configuraiton of logging of procServ controlled
+ processes.
