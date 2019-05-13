@@ -37,6 +37,7 @@ extern bool   logPortLocal;
 extern bool   autoRestart;
 extern bool   waitForManualStart;
 extern volatile bool shutdownServer;
+extern volatile bool onlyOnce;
 extern bool   setCoreSize;
 extern char   *procservName;
 extern char   *childName;
