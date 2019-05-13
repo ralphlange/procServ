@@ -4,7 +4,9 @@
 // Ambroz Bizjak 02/29/2016
 // Freddie Akeroyd 2016
 // Michael Davidsaver 2017
+// Hinko Kocevar 2018
 // Klemen Vodopivec 2019
+
 // GNU Public License (GPLv3) applies - see www.gnu.org
 
 #include <vector>
@@ -50,7 +52,7 @@ bool   ctlPortLocal = true;      // Restrict control connections to localhost
 bool   autoRestart = true;       // Enables instant restart of exiting child
 bool   waitForManualStart = false;  // Waits for telnet cmd to manually start child
 volatile bool shutdownServer = false;   // To keep the server from shutting down
-volatile bool onlyOnce = false;  // To run the child only once and exit the server
+volatile bool oneShot = false;   // To run the child only once and exit the server
 bool   quiet = false;            // Suppress info output (server)
 bool   setCoreSize = false;      // Set core size for child
 bool   singleEndpointStyle = true;  // Compatibility style: first non-option is endpoint
@@ -181,6 +183,7 @@ void printHelp()
            "    --logstamp [<str>]    prefix log lines with timestamp [strftime format]\n"
            " -n --name <str>          set child's name (default: arg0 of <command>)\n"
            "    --noautorestart       do not restart child on exit by default\n"
+           " -o --oneshot             after child exits, exit the server\n"
            " -p --pidfile <str>       write PID file (for server PID)\n"
            " -P --port <endpoint>     allow control connections through telnet <endpoint>\n"
            " -q --quiet               suppress informational output (server)\n"
@@ -189,7 +192,6 @@ void printHelp()
            " -V --version             print program version\n"
            " -w --wait                wait for cmd on control connection to start child\n"
            " -x --logoutcmd <str>     command to logout client connection (^ for ctrl)\n"
-           " -o --once                exit the provServ after child finishes\n"
         );
 }
 
@@ -242,6 +244,7 @@ int main(int argc,char * argv[])
             {"logstamp",       optional_argument, 0, 'S'},
             {"name",           required_argument, 0, 'n'},
             {"noautorestart",  no_argument,       0, 'N'},
+            {"oneshot",        no_argument,       0, 'o'},
             {"pidfile",        required_argument, 0, 'p'},
             {"port",           required_argument, 0, 'P'},
             {"quiet",          no_argument,       0, 'q'},
@@ -250,7 +253,6 @@ int main(int argc,char * argv[])
             {"version",        no_argument,       0, 'V'},
             {"wait",           no_argument,       0, 'w'},
             {"logoutcmd",      required_argument, 0, 'x'},
-            {"once",           no_argument,       0, 'o'},
             {0, 0, 0, 0}
         };
 
@@ -366,6 +368,10 @@ int main(int argc,char * argv[])
             autoRestart = false;
             break;
 
+        case 'o':                                 // Exit server when child exits
+            oneShot = true;
+            break;
+
         case 'R':                                 // Restrict log
             logPortLocal = true;
             break;
@@ -397,10 +403,6 @@ int main(int argc,char * argv[])
 
         case 'T':                                 // Toggle auto restart command
             toggleRestartChar = getOptionChar ( optarg );
-            break;
-
-        case 'o':                                 // Toggle child run only once
-            onlyOnce = true;
             break;
 
         case '?':                                 // Error
@@ -646,8 +648,8 @@ int main(int argc,char * argv[])
             // This call returns NULL if the process item lives
             if (processFactoryNeedsRestart())
             {
-                if (onlyOnce && !firstRun) {
-                  PRINTF("Onlyonce is set.. exiting\n");
+                if (oneShot && !firstRun) {
+                  PRINTF("Option oneshot is set... exiting\n");
                   shutdownServer = true;
                 } else {
                   npi= processFactory(childExec, childArgv);
