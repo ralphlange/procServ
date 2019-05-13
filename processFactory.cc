@@ -1,6 +1,6 @@
 // Process server for soft ioc
 // David H. Thompson 8/29/2003
-// Ralph Lange <ralph.lange@gmx.de> 2007-2016
+// Ralph Lange <ralph.lange@gmx.de> 2007-2019
 // Freddie Akeroyd 2016
 // GNU Public License (GPLv3) applies - see www.gnu.org
 
@@ -48,7 +48,7 @@ time_t processClass::_restartTime=0;
 bool processFactoryNeedsRestart()
 {
     time_t now = time(0);
-    if ( ( autoRestart == false && processClass::_restartTime ) || 
+    if ( ( restartMode == norestart && processClass::_restartTime ) ||
          processClass::_runningItem ||
          now < processClass::_restartTime ||
          waitForManualStart ) return false;
@@ -101,15 +101,17 @@ processClass::~processClass()
         now_buf[NOWLEN-1] = '\0';
     }
     snprintf (goodbye, BYELEN, "@@@ Child process is shutting down, %s" NL,
-              autoRestart ? "a new one will be restarted shortly" :
-              "auto restart is disabled");
+              restartMode == restart ? "a new one will be restarted shortly" :
+              (restartMode == norestart ? "auto restart is disabled" :
+                                          "oneshot mode: server will exit"));
 
     // Update client connect message
     snprintf(infoMessage2, INFO2LEN, "@@@ Child \"%s\" is SHUT DOWN" NL, childName);
 
     SendToAll( now_buf, strlen(now_buf), this );
     SendToAll( goodbye, strlen(goodbye), this );
-    SendToAll( infoMessage3, strlen(infoMessage3), this );
+    if (restartMode != oneshot)
+        SendToAll( infoMessage3, strlen(infoMessage3), this );
 
                                 // Negative PID sends signal to all members of process group
     if ( _pid > 0 ) kill( -_pid, SIGKILL );

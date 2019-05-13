@@ -1,6 +1,6 @@
 // Process server for soft ioc
 // David H. Thompson 8/29/2003
-// Ralph Lange <ralph.lange@gmx.de> 2007-2017
+// Ralph Lange <ralph.lange@gmx.de> 2007-2019
 // GNU Public License (GPLv3) applies - see www.gnu.org
 
 #include <unistd.h>
@@ -28,6 +28,16 @@ static const telnet_telopt_t my_telopts[] = {
 //  { TELNET_TELOPT_NAOCRD,    TELNET_WILL, 0           },
   { -1, 0, 0 }
 };
+
+const char *restartModeString()
+{
+    switch (restartMode) {
+    case restart:   return "ON";
+    case norestart: return "OFF";
+    case oneshot:   return "ONESHOT";
+    }
+    return "-"; // make compiler happy
+}
 
 class clientItem : public connectionItem
 {
@@ -100,7 +110,7 @@ clientItem::clientItem(int socketIn, bool readonly) :
     } else {
         snprintf(greeting2, GREETLEN, "@@@ Kill command disabled, ");
     }
-    snprintf(buf1, BUFLEN, "auto restart is %s, ", autoRestart ? "ON" : "OFF");
+    snprintf(buf1, BUFLEN, "auto restart mode is %s, ", restartModeString());
     if ( toggleRestartChar ) {
         snprintf(buf2, BUFLEN, "use %s%c to toggle auto restart" NL, CTL_SC(toggleRestartChar));
     } else {
@@ -211,12 +221,13 @@ void clientItem::processInput(const char *buf, int len)
                 _markedForDeletion = true;
             }
             if (toggleRestartChar && buf[i] == toggleRestartChar) {
-                autoRestart = ! autoRestart;
+                if (restartMode == restart) restartMode = norestart;
+                else if (restartMode == norestart) restartMode = oneshot;
+                else restartMode = restart;
                 char msg[128] = NL;
                 PRINTF ("Got a toggleAutoRestart command\n");
                 SendToAll(msg, strlen(msg), NULL);
-                snprintf(msg, 128, "@@@ Toggled auto restart to %s" NL,
-                        autoRestart ? "ON" : "OFF");
+                snprintf(msg, 128, "@@@ Toggled auto restart mode to %s" NL, restartModeString());
                 SendToAll(msg, strlen(msg), NULL);
             }
             if (killChar && buf[i] == killChar) {

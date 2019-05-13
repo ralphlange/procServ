@@ -1,6 +1,6 @@
 // Process server for soft ioc
 // David H. Thompson 8/29/2003
-// Ralph Lange <ralph.lange@gmx.de> 2007-2016
+// Ralph Lange <ralph.lange@gmx.de> 2007-2019
 // Michael Davidsaver 2017
 // GNU Public License (GPLv3) applies - see www.gnu.org
 
@@ -32,13 +32,14 @@
 
 #define PROCSERV_VERSION_STRING PACKAGE_STRING
 
+enum RestartMode { restart, norestart, oneshot };
+
 extern bool   inDebugMode;
 extern bool   logPortLocal;
-extern bool   autoRestart;
 extern bool   waitForManualStart;
 extern volatile bool shutdownServer;
-extern volatile bool oneShot;
 extern bool   setCoreSize;
+extern RestartMode restartMode;
 extern char   *procservName;
 extern char   *childName;
 extern char   *ignChars;

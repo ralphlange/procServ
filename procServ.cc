@@ -1,6 +1,6 @@
 // Process server for soft ioc
 // David H. Thompson 8/29/2003
-// Ralph Lange <ralph.lange@gmx.de> 2007-2017
+// Ralph Lange <ralph.lange@gmx.de> 2007-2019
 // Ambroz Bizjak 02/29/2016
 // Freddie Akeroyd 2016
 // Michael Davidsaver 2017
@@ -49,13 +49,12 @@ bool   inDebugMode;              // This enables a lot of printfs
 bool   inFgMode = false;         // This keeps child in the foreground, tty connected
 bool   logPortLocal;             // This restricts log port access to localhost
 bool   ctlPortLocal = true;      // Restrict control connections to localhost
-bool   autoRestart = true;       // Enables instant restart of exiting child
 bool   waitForManualStart = false;  // Waits for telnet cmd to manually start child
 volatile bool shutdownServer = false;   // To keep the server from shutting down
-volatile bool oneShot = false;   // To run the child only once and exit the server
 bool   quiet = false;            // Suppress info output (server)
 bool   setCoreSize = false;      // Set core size for child
 bool   singleEndpointStyle = true;  // Compatibility style: first non-option is endpoint
+RestartMode restartMode = restart;  // Child restart mode (restart/norestart/oneshot)
 char   *procservName;            // The name of this beast (server)
 char   *childName;               // The name of that beast (child)
 char   *childExec;               // Exec to run as child
@@ -365,11 +364,11 @@ int main(int argc,char * argv[])
             break;
 
         case 'N':                                 // No restart of child
-            autoRestart = false;
+            restartMode = norestart;
             break;
 
         case 'o':                                 // Exit server when child exits
-            oneShot = true;
+            restartMode = oneshot;
             break;
 
         case 'R':                                 // Restrict log
@@ -648,7 +647,7 @@ int main(int argc,char * argv[])
             // This call returns NULL if the process item lives
             if (processFactoryNeedsRestart())
             {
-                if (oneShot && !firstRun) {
+                if ((restartMode == oneshot) && !firstRun) {
                   PRINTF("Option oneshot is set... exiting\n");
                   shutdownServer = true;
                 } else {
