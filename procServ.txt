@@ -68,6 +68,11 @@ or `^X` to restart the child, and `^Q` to quit the server.
 The *-w* (*\--wait*) option starts the server in this shut down mode, waiting
 for a control connection to issue a manual start command to spawn the child.
 
+To facilitate running under system daemon management (systemd/supervisord),
+the *-o* (*\--oneshot*) option will exit the procServ server after the child
+exits. In that mode, the system daemon must handle restarts (if required),
+and all clients will have to reconnect.
+
 Any connection (control or log) can be disconnected using the client's
 disconnect sequence. Control connections can also be disconnected by sending
 the logout command character that can be specified using the *-x*
@@ -197,6 +202,8 @@ OPTIONS
     increase readability.
 *\--noautorestart*::
     Do not automatically restart child process on exit.
+*-o, \--oneshot*::
+    Once the child process exits, also exit the server.
 *-P, \--port*='endpoint'::
     Provide control access to the child's console on 'endpoint'.
     See ENDPOINT SPECIFICATION above.
