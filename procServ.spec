@@ -2,21 +2,19 @@
 
 Summary: Process server with telnet console and log access
 Name: procServ
-Version: 2.6.1
-Release: 1%{?dist}
+Version: 2.7.0
+Release: 8%{?dist}
 
 License: GPLv3
-Group: Applications/System
 URL: https://github.com/ralphlange/procServ
-BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 Source0: https://github.com/ralphlange/procServ/releases/download/V%{version}/procServ-%{version}.tar.gz
-BuildRequires: libtelnet-devel
+BuildRequires: libtelnet-devel gcc-c++
 
 %description
 procServ is a wrapper that starts an arbitrary command as a child process in
-the background, connecting its standard input and output to a TCP port for
-telnet access. It supports logging, child restart (manual or automatic on
-exit), and more.
+the background, connecting its standard input and output to a Unix domain
+socket or a TCP port for telnet access.
+It supports logging, child restart (manual or automatic on exit), and more.
 
 procServ does not have the rich feature set of the screen utility,
 but is intended to provide running a command in a system service style,
@@ -37,16 +35,36 @@ make %{?_smp_mflags}
 rm -rf $RPM_BUILD_ROOT
 make install DESTDIR=$RPM_BUILD_ROOT INSTALL="install -p"
 
-%clean
-rm -rf $RPM_BUILD_ROOT
-
 %files
-%defattr(-,root,root,-)
 %{_pkgdocdir}/
 %{_bindir}/procServ
 %{_mandir}/man1/procServ.1*
 
 %changelog
+* Sat Feb 02 2019 Fedora Release Engineering <releng@fedoraproject.org> - 2.7.0-8
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_30_Mass_Rebuild
+
+* Fri Jul 13 2018 Fedora Release Engineering <releng@fedoraproject.org> - 2.7.0-7
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_29_Mass_Rebuild
+
+* Tue Feb 20 2018 Ralph Lange <ralph.lange@gmx.de> - 2.7.0-6
+- Add BR against gcc-c++
+
+* Fri Feb 09 2018 Fedora Release Engineering <releng@fedoraproject.org> - 2.7.0-5
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_28_Mass_Rebuild
+
+* Thu Aug 03 2017 Fedora Release Engineering <releng@fedoraproject.org> - 2.7.0-4
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_27_Binutils_Mass_Rebuild
+
+* Thu Jul 27 2017 Fedora Release Engineering <releng@fedoraproject.org> - 2.7.0-3
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_27_Mass_Rebuild
+
+* Sat Feb 11 2017 Fedora Release Engineering <releng@fedoraproject.org> - 2.7.0-2
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_26_Mass_Rebuild
+
+* Fri Jan 20 2017 Ralph Lange <ralph.lange@gmx.de> - 2.7.0-1
+- New upstream version
+
 * Wed Sep 28 2016 Ralph Lange <ralph.lange@gmx.de> - 2.6.1-1
 - New upstream version
 - New project homepage and download page
