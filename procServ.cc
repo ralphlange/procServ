@@ -71,6 +71,7 @@ rlim_t coreSize;                 // Max core size for child
 char   *chDir;                   // Directory to change to before starting child
 char   *myDir;                   // Directory where server was started
 time_t holdoffTime = 15;         // Holdoff time between child restarts (in seconds)
+int    childExitCode = 0;        // Child's exit code
 
 pid_t  procservPid;              // PID of server (daemon if not in debug mode)
 char   *pidFile;                 // File name for server PID
@@ -688,6 +689,8 @@ int main(int argc,char * argv[])
         unlink(infofile.c_str());
     if(pidFile && strlen(pidFile) > 0)
         unlink(pidFile);
+
+    return childExitCode;
 }
 
 // Connection items call this to send messages to others
@@ -784,6 +787,7 @@ void OnPollTimeout()
             snprintf(buf+strlen(buf), BUFLEN-strlen(buf),
                      " Normal exit status = %d",
                      WEXITSTATUS(wstatus));
+            childExitCode = WEXITSTATUS(wstatus);
         }
 
         if (WIFSIGNALED(wstatus)) {
