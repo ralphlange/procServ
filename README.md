@@ -1,6 +1,7 @@
 | Linux / EPICS Build / MacOS | Windows |
 | :---: | :---: |
-|[![Travis Build](https://travis-ci.org/ralphlange/procServ.svg?branch=master)](https://travis-ci.org/ralphlange/procServ)|[![Windows Build](https://ci.appveyor.com/api/projects/status/github/ralphlange/procserv?svg=true)](https://ci.appveyor.com/project/ralphlange/procserv)|
+|[![Travis Build](https://travis-ci.org/ralphlange/procServ.svg?branch=master)](https://travis-ci.org/ralphlange/procServ)|[![Windows Build](https://ci.appveyor.com/api/projects/status/h59hhep87tqn204u?svg=true)](https://ci.appveyor.com/project/ralphlange/procserv)
+|
 
 # procServ
 
