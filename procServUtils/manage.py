@@ -203,7 +203,7 @@ console %(name)s {
     else:
         sys.stdout.write('# systemctl reload conserver-server.service\n')
 
-def getargs():
+def getargs(args=None):
     from argparse import ArgumentParser
     P = ArgumentParser()
     P.add_argument('--user', action='store_true', default=os.geteuid()!=0,
@@ -242,14 +242,15 @@ def getargs():
     S.add_argument('-R','--reload', action='store_true', default=False)
     S.set_defaults(func=writeprocs)
 
-    A = P.parse_args()
+    A = P.parse_args(args=args)
     if not hasattr(A, 'func'):
         P.print_help()
         sys.exit(1)
     return A
 
-def main(args):
+def main(args, test=False):
     lvl = _levels[max(0, min(args.verbose, len(_levels)-1))]
-    logging.basicConfig(level=lvl)
+    if not test:
+        logging.basicConfig(level=lvl)
     conf = getconf(user=args.user)
     args.func(conf, args)

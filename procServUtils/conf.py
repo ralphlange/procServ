@@ -1,4 +1,7 @@
 
+import logging
+_log = logging.getLogger(__name__)
+
 import os
 from functools import reduce
 from glob import glob
@@ -8,14 +11,21 @@ try:
 except ImportError:
     from configparser import ConfigParser
 
+# used by unit tests to redirect config directories
+_testprefix = None
+
 def getgendir(user=False):
-    if user:
+    if _testprefix:
+        return _testprefix+'/procServ.d'
+    elif user:
         return os.path.expanduser('~/.config/procServ.d')
     else:
         return '/etc/procServ.d'
 
 def getrundir(user=False):
-    if user:
+    if _testprefix:
+        return _testprefix+'/run'
+    elif user:
         return os.environ['XDG_RUNTIME_DIR']
     else:
         return '/run'
@@ -25,16 +35,18 @@ def getconffiles(user=False):
     
     Only those which actualy exist
     """
-    if user:
-        files = map(os.path.expanduser, [
-            '~/.config/procServ.conf',
-            '~/.config/procServ.d/*.conf',
-        ])
+    if _testprefix:
+        prefix = _testprefix
+    elif user:
+        return '~/.config'
     else:
-        files = [
-            '/etc/procServ.conf',
-            '/etc/procServ.d/*.conf',
-        ]
+        return '/etc'
+
+    files = map(os.path.expanduser, [
+        prefix+'/procServ.conf',
+        prefix+'/procServ.d/*.conf',
+    ])
+    _log.debug('Config files %s', files)
 
     # glob('') -> ['',]
     # map(glob) produces a list of lists

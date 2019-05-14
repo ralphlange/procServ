@@ -1,4 +1,7 @@
 
+import logging
+_log = logging.getLogger(__name__)
+
 import sys, os, errno
 from .conf import getconf
 
@@ -55,10 +58,12 @@ def run(outdir, user=False):
 
 
     for sect in conf.sections():
+        _log.debug('Consider %s', sect)
         if not conf.getboolean(sect, 'instance'):
             continue
         service = 'procserv-%s.service'%sect
         ofile = os.path.join(outdir, service)
+        _log.debug('Write %s', service)
         with open(ofile+'.tmp', 'w') as F:
             write_service(F, conf, sect, user=user)
 
