@@ -38,9 +38,9 @@ def getconffiles(user=False):
     if _testprefix:
         prefix = _testprefix
     elif user:
-        return '~/.config'
+        prefix = os.path.expanduser('~/.config')
     else:
-        return '/etc'
+        prefix = '/etc'
 
     files = map(os.path.expanduser, [
         prefix+'/procServ.conf',

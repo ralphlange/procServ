@@ -7,7 +7,7 @@ try:
 except ImportError:
     from . import shlex
 
-procServ = '/usr/bin/procServ'
+procServ = '/usr/local/bin/procServ'
 
 def getargs():
     from argparse import ArgumentParser
@@ -57,13 +57,13 @@ def main(args):
         '--ignore','^D^C^]',
         '--chdir',chdir,
         '--info-file',os.path.join(rundir, 'procserv-%s'%name, 'info'), #/run/procserv-$NAME/info
-        '--port', 'unix:%s/procserv-%s/control'%(rundir,name),
+        '--port', port if port != "0" else 'unix:%s/procserv-%s/control'%(rundir,name),
     ]
 
     if args.debug>1:
         toexec.append('--debug')
 
-    toexec.append(port)
+    #toexec.append(port)
     toexec.extend(shlex.split(cmd))
 
     if args.debug>0:
