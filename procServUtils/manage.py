@@ -102,11 +102,11 @@ def addproc(conf, args):
     # ensure chdir is an absolute path
     args.chdir = os.path.abspath(os.path.join(os.getcwd(), args.chdir))
 
-    args.command[0] = os.path.abspath(os.path.join(args.chdir, args.command[0]))
+    args.command = os.path.abspath(os.path.join(args.chdir, args.command))
 
     opts = {
         'name':args.name,
-        'command': ' '.join(map(shlex.quote, args.command)),
+        'command':args.command + ' ' + ' '.join(map(shlex.quote, args.args)),
         'chdir':args.chdir,
     }
 
@@ -223,7 +223,7 @@ console %(name)s {
         sys.stdout.write('# systemctl reload conserver-server.service\n')
 
 def getargs(args=None):
-    from argparse import ArgumentParser
+    from argparse import ArgumentParser, REMAINDER
     P = ArgumentParser()
     P.add_argument('--user', action='store_true', default=os.geteuid()!=0,
                    help='Consider user config')
@@ -248,7 +248,8 @@ def getargs(args=None):
     S.add_argument('-A','--autostart',action='store_true', default=False,
                    help='Automatically start after adding')
     S.add_argument('name', help='Instance name')
-    S.add_argument('command', nargs='+', help='Command')
+    S.add_argument('command', help='Command')
+    S.add_argument('args', nargs=REMAINDER)
     S.set_defaults(func=addproc)
 
     S = SP.add_parser('remove', help='Remove a procServ instance')
