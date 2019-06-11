@@ -81,6 +81,7 @@ def addproc(conf, args):
 
     outdir = getgendir(user=args.user)
     cfile = os.path.join(outdir, '%s.conf'%args.name)
+    argusersys = '--user' if args.user else '--system'
 
     if os.path.exists(cfile) and not args.force:
         _log.error("Instance already exists @ %s", cfile)
@@ -125,21 +126,21 @@ chdir = %(chdir)s
 
     run(outdir, user=args.user)
     SP.check_call([systemctl,
-                   '--user' if args.user else '--system',
+                   argusersys,
                    'enable',
                    "%s/procserv-%s.service"%(outdir, args.name)])
 
     _log.info('Trigger systemd reload')
     SP.check_call([systemctl,
-                   '--user' if args.user else '--system',
+                   argusersys,
                    'daemon-reload'], shell=False)
 
     if args.autostart:
         SP.check_call([systemctl,
-                       '--user' if args.user else '--system',
+                       argusersys,
                        'start', 'procserv-%s.service'%args.name])
     else:
-        sys.stdout.write("# systemctl start procserv-%s.service\n"%args.name)
+        sys.stdout.write("# systemctl %s start procserv-%s.service\n"%(argusersys,args.name))
 
 def delproc(conf, args):
     from .conf import getconffiles, ConfigParser
