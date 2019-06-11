@@ -74,7 +74,9 @@ def status(conf, args, fp=None):
 def syslist(conf, args):
     SP.check_call([systemctl,
                     '--user' if args.user else '--system',
-                    'list-units', 'procserv-*'])
+                    'list-units',
+                    '--all' if args.all else '',
+                    'procserv-*'])
 
 def addproc(conf, args):
     from .generator import run, write_service
@@ -238,6 +240,7 @@ def getargs(args=None):
     S.set_defaults(func=status)
 
     S = SP.add_parser('list', help='List procServ instances')
+    S.add_argument('--all', action='store_true', default=False)
     S.set_defaults(func=syslist)
 
     S = SP.add_parser('add', help='Create a new procServ instance')
