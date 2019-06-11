@@ -7,8 +7,6 @@ try:
 except ImportError:
     from . import shlex
 
-procServ = '/usr/local/bin/procServ'
-
 def getargs():
     from argparse import ArgumentParser
     A = ArgumentParser()
@@ -50,7 +48,7 @@ def main(args):
     env.update(os.environ)
 
     toexec = [
-        procServ,
+        'procServ',
         '--foreground',
         '--logfile', '-',
         '--name', name,
@@ -70,5 +68,5 @@ def main(args):
         sys.stderr.write('in %s exec: %s\n'%(chdir, ' '.join(map(shlex.quote, toexec))))
 
     os.chdir(chdir)
-    os.execve(toexec[0], toexec, env)
+    os.execvpe(toexec[0], toexec, env)
     sys.exit(2) # never reached
