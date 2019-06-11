@@ -27,7 +27,7 @@ ConditionPathIsDirectory=%(chdir)s
     F.write("""
 [Service]
 Type=simple
-ExecStart=/usr/bin/procServ-launcher %(userarg)s %(name)s
+ExecStart=/usr/local/bin/procServ-launcher %(userarg)s %(name)s
 RuntimeDirectory=procserv-%(name)s
 StandardOutput=syslog
 StandardError=inherit
@@ -48,13 +48,13 @@ WantedBy=multi-user.target
 def run(outdir, user=False):
     conf = getconf(user=user)
 
-    wantsdir = os.path.join(outdir, 'multi-user.target.wants')
-    try:
-        os.makedirs(wantsdir)
-    except OSError as e:
-        if e.errno!=errno.EEXIST:
-            _log.exception('Creating directory "%s"', wantsdir)
-            raise
+    #wantsdir = os.path.join(outdir, 'multi-user.target.wants')
+    #try:
+    #    os.makedirs(wantsdir)
+    #except OSError as e:
+    #    if e.errno!=errno.EEXIST:
+    #        _log.exception('Creating directory "%s"', wantsdir)
+    #        raise
 
 
     for sect in conf.sections():
@@ -69,5 +69,5 @@ def run(outdir, user=False):
 
         os.rename(ofile+'.tmp', ofile)
         
-        os.symlink(ofile,
-                   os.path.join(wantsdir, service))
+        #os.symlink(ofile,
+        #           os.path.join(wantsdir, service))

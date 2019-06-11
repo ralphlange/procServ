@@ -77,6 +77,8 @@ def syslist(conf, args):
                     'list-units', 'procserv-*'])
 
 def addproc(conf, args):
+    from .generator import run, write_service
+
     outdir = getgendir(user=args.user)
     cfile = os.path.join(outdir, '%s.conf'%args.name)
 
@@ -120,6 +122,12 @@ chdir = %(chdir)s
         if args.port: F.write("port = %s\n"%args.port)
 
     os.rename(cfile+'.tmp', cfile)
+
+    run(outdir, user=args.user)
+    SP.check_call([systemctl,
+                   '--user' if args.user else '--system',
+                   'enable',
+                   "%s/procserv-%s.service"%(outdir, args.name)])
 
     _log.info('Trigger systemd reload')
     SP.check_call([systemctl,
@@ -170,12 +178,23 @@ def delproc(conf, args):
                 C.write(F)
             os.rename(cfile+'.tmp', cfile)
 
+    SP.check_call([systemctl,
+                   '--user' if args.user else '--system',
+                   'stop',
+                   "procserv-%s.service"%args.name])
+    SP.check_call([systemctl,
+                   '--user' if args.user else '--system',
+                   'disable',
+                   "procserv-%s.service"%args.name])
+
     _log.info('Trigger systemd reload')
     SP.check_call([systemctl,
                    '--user' if args.user else '--system',
                    'daemon-reload'], shell=False)
+    outdir = getgendir(user=args.user)
+    os.remove("%s/procserv-%s.service"%(outdir,args.name))
 
-    sys.stdout.write("# systemctl stop procserv-%s.service\n"%args.name)
+    #sys.stdout.write("# systemctl stop procserv-%s.service\n"%args.name)
 
 def writeprocs(conf, args):
     opts = {
