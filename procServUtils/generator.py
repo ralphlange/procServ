@@ -48,15 +48,6 @@ WantedBy=multi-user.target
 def run(outdir, user=False):
     conf = getconf(user=user)
 
-    #wantsdir = os.path.join(outdir, 'multi-user.target.wants')
-    #try:
-    #    os.makedirs(wantsdir)
-    #except OSError as e:
-    #    if e.errno!=errno.EEXIST:
-    #        _log.exception('Creating directory "%s"', wantsdir)
-    #        raise
-
-
     for sect in conf.sections():
         _log.debug('Consider %s', sect)
         if not conf.getboolean(sect, 'instance'):
@@ -68,6 +59,3 @@ def run(outdir, user=False):
             write_service(F, conf, sect, user=user)
 
         os.rename(ofile+'.tmp', ofile)
-        
-        #os.symlink(ofile,
-        #           os.path.join(wantsdir, service))
