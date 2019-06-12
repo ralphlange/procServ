@@ -131,12 +131,24 @@ the distribution tar.
 
 ## Using procServ
 
-### Running Applications (e.g. EPICS IOCs) as Services on Unix
+### Running Applications (e.g. EPICS IOCs) as Services on Unix/Linux
 
 Michael Davidsaver has contributed a set of utility scripts for managing
 procServ-run system service instances under systemd. These scripts generate
 the systemd unit files as well as configuration snippets for the
 [conserver](https://www.conserver.com/) tool.
+
+To build and install these tools, use the python-typical sequence of
+```sh
+   python setup.py build
+   sudo python setup.py install
+```
+
+There are two user callable scripts:
+-   `manage-procs` to add and remove procServ instances
+-   `prattach` to attach to the console of a running procServ instance
+
+The `-h` option prints a short help for both scripts.
 
 For older systems using SysV-style rc scripts, you can look at the
 [Debian package](http://epics.nsls2.bnl.gov/debian/) or
