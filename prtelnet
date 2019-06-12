@@ -1,4 +1,0 @@
-#!/usr/bin/python3
-
-from procServUtils.telnet import getargs, main
-main(getargs())

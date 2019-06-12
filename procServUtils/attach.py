@@ -12,6 +12,7 @@ _levels = [
 ]
 
 telnet = '/usr/bin/telnet'
+socat  = '/usr/bin/socat'
 
 def getargs():
     from argparse import ArgumentParser
@@ -35,21 +36,24 @@ def main(args):
     try:
         with open(info) as F:
             for L in map(str.strip, F):
-                if not L.startswith('tcp:'):
+
+                if L.startswith('tcp:') and os.path.isfile(telnet):
+                    _tcp, iface, port = L.split(':', 2)
+                    args = [telnet, iface, port]+args.extra
+                elif L.startswith('unix:') and os.path.isfile(socat):
+                    _unix, socket = L.split(':', 1)
+                    args = [socat, '-,raw,echo=0', 'unix-connect:' + socket]
+                else:
                     continue
 
-                _tcp, iface, port = L.split(':', 2)
-
-                args = [telnet, iface, port]+args.extra
                 _log.debug('exec: %s', ' '.join(args))
-
-                os.execv(telnet, args)
+                os.execv(args[0], args)
                 sys.exit(1) # never reached
 
-            sys.error('%s has no tcp control port')
+            sys.exit("No tool to connect to %s"%args.proc)
     except OSError as e:
         if e.errno==errno.ENOENT:
-            _log.error('%s is not an active %s procServ', args.name, 'user' if args.user else 'system')
+            _log.error('%s is not an active %s procServ', args.proc, 'user' if args.user else 'system')
         else:
             _log.exception("Can't open %s"%info)
 
