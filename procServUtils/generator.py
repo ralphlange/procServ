@@ -5,6 +5,12 @@ _log = logging.getLogger(__name__)
 import sys, os, errno
 from .conf import getconf
 
+def which(file):
+    for path in os.environ["PATH"].split(os.pathsep):
+        if os.path.exists(os.path.join(path, file)):
+            return os.path.join(path, file)
+    return None
+
 def write_service(F, conf, sect, user=False):
     opts = {
         'name':sect,
@@ -12,6 +18,7 @@ def write_service(F, conf, sect, user=False):
         'group':conf.get(sect, 'group'),
         'chdir':conf.get(sect, 'chdir'),
         'userarg':'--user' if user else '--system',
+        'launcher':which('procServ-launcher'),
     }
 
     F.write("""
@@ -27,7 +34,7 @@ ConditionPathIsDirectory=%(chdir)s
     F.write("""
 [Service]
 Type=simple
-ExecStart=/usr/local/bin/procServ-launcher %(userarg)s %(name)s
+ExecStart=%(launcher)s %(userarg)s %(name)s
 RuntimeDirectory=procserv-%(name)s
 StandardOutput=syslog
 StandardError=inherit

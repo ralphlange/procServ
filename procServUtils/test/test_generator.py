@@ -34,7 +34,7 @@ ConditionPathIsDirectory=/somedir
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/procServ-launcher --system blah
+ExecStart=%s --system blah
 RuntimeDirectory=procserv-blah
 StandardOutput=syslog
 StandardError=inherit
@@ -45,4 +45,4 @@ Group=controls
 
 [Install]
 WantedBy=multi-user.target
-""")
+""" % generator.which('procServ-launcher'))
