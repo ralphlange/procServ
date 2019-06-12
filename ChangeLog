@@ -1,3 +1,11 @@
+v2.8.0 12-Jun-2019 Ralph Lange <ralph.lange@gmx.de>
+Fix bug related to logic error in logging code (#18).
+Add -o (--oneshot) option to exit the server after child exits. (by Hinko Kocevar)
+Print log file path as part of console connect header. (by Klemen Vodopivec)
+Update libtelnet to current upstream version 0.23.
+Improve PID file handling. (by Klemen Vodopivec)
+Add procServUtils for managing procserv instances under systemd. (by Michael Davidsaver)
+
 V 2.7.0 01/18/2017 Ralph Lange <ralph.lange@gmx.de>
 Add -P option allowing multiple endpoints. (by Michael Davidsaver)
 Allow UNIX domain sockets and TCP sockets bound to a specific IP:port. (by Michael Davidsaver)
