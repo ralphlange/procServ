@@ -147,7 +147,7 @@ chdir = %(chdir)s
 def delproc(conf, args):
     from .conf import getconffiles, ConfigParser
     for cfile in getconffiles(user=args.user):
-        _log.debug('Process %s', cfile)
+        _log.debug('delproc processing %s', cfile)
 
         with open(cfile) as F:
             C = ConfigParser({'instance':'1'})
@@ -171,7 +171,7 @@ def delproc(conf, args):
                     sys.stdout.write('\n')
 
         if len(C.defaults())==1 and len(C.sections())==1:
-            _log.info('Removing empty file %s', cfile)
+            _log.info('Emptying and removing file %s', cfile)
             os.remove(cfile)
         else:
             C.remove_section(args.name)
@@ -181,21 +181,27 @@ def delproc(conf, args):
                 C.write(F)
             os.rename(cfile+'.tmp', cfile)
 
+    _log.info("Stopping service procserv-%s.service", args.name)
     SP.check_call([systemctl,
                    '--user' if args.user else '--system',
                    'stop',
                    "procserv-%s.service"%args.name])
+    _log.info("Disabling service procserv-%s.service", args.name)
     SP.check_call([systemctl,
                    '--user' if args.user else '--system',
                    'disable',
                    "procserv-%s.service"%args.name])
 
-    _log.info('Trigger systemd reload')
+    _log.info('Triggering systemd reload')
     SP.check_call([systemctl,
                    '--user' if args.user else '--system',
                    'daemon-reload'], shell=False)
     outdir = getgendir(user=args.user)
-    os.remove("%s/procserv-%s.service"%(outdir,args.name))
+    _log.info('Removing service file %s/procserv-%s.service', outdir, args.name)
+    try:
+        os.remove("%s/procserv-%s.service"%(outdir,args.name))
+    except OSError:
+        pass
 
     #sys.stdout.write("# systemctl stop procserv-%s.service\n"%args.name)
 
