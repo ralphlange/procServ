@@ -53,6 +53,7 @@ def main(args):
         '--logfile', '-',
         '--name', name,
         '--ignore','^D^C^]',
+        '--logoutcmd', '^D',
         '--chdir',chdir,
         '--info-file',os.path.join(rundir, 'procserv-%s'%name, 'info'), #/run/procserv-$NAME/info
         '--port', port if port != "0" else 'unix:%s/procserv-%s/control'%(rundir,name),
