@@ -1,5 +1,5 @@
-# Process Server (for soft IOCs)
-# Ralph Lange <ralph.lange@gmx.de> 04/16/2012
+# Process Server (for CLI processes like Gateways or IOCs)
+# Ralph Lange <ralph.lange@gmx.de> 2012-2019
 # GNU Public License (GPLv3) applies - see www.gnu.org
 
 bin_PROGRAMS = procServ
@@ -14,14 +14,20 @@ LDADD = $(LIBOBJS)
 DISTCLEANFILES = *~ *.orig procServ.xml docbook-xsl.css pid.txt procServ.map
 MAINTAINERCLEANFILES = procServ.pdf procServ.html procServ.1
 
+EXTRA_DIST = Makefile.Epics.in forkpty.c libtelnet.c libtelnet.h
+
+EXTRA_DIST += README.md conserver.cf.example
+# procServUtils are an add-on and not build by the regular make
+EXTRA_DIST += procServUtils
+EXTRA_DIST += manage-procs prattach procServ-launcher setup.py
+EXTRA_DIST += systemd-procserv-generator-system systemd-procserv-generator-user
+
 doc_DATA = AUTHORS COPYING ChangeLog NEWS README.md procServ.txt
 
 if INSTALL_DOC
 
 dist_man1_MANS = procServ.1
-
-doc_DATA += procServ.pdf procServ.html
-EXTRA_DIST = $(doc_DATA) Makefile.Epics.in forkpty.c libtelnet.c libtelnet.h
+dist_doc_DATA = procServ.pdf procServ.html
 
 endif # INSTALL_DOC
 
