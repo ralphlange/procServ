@@ -23,7 +23,6 @@ setup(
     scripts = [
         'manage-procs',
         'procServ-launcher',
-        'prattach',
     ],
     data_files = [
         ('lib/systemd/system-generators', ['systemd-procserv-generator-system']),

@@ -90,6 +90,10 @@ def stopproc(conf, args):
             '--user' if args.user else '--system',
             'stop', 'procserv-%s.service'%args.name])
 
+def attachproc(conf, args):
+    from .attach import attach
+    attach(args)
+
 def addproc(conf, args):
     from .generator import run, write_service
 
@@ -288,6 +292,11 @@ def getargs(args=None):
     S = SP.add_parser('stop', help='Stop a procServ instance')
     S.add_argument('name', help='Instance name')
     S.set_defaults(func=stopproc)
+
+    S = SP.add_parser('attach', help='Attach to a procServ instance')
+    S.add_argument("name", help='Instance name')
+    S.add_argument('extra', nargs=REMAINDER, help='extra args for telnet')
+    S.set_defaults(func=attachproc)
 
     A = P.parse_args(args=args)
     if not hasattr(A, 'func'):
