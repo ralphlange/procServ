@@ -43,3 +43,17 @@ procServ.html: $(srcdir)/procServ.txt
 	$(A2X) $(A2X_FLAGS) -f xhtml $(srcdir)/procServ.txt
 
 endif # BUILD_DOC
+
+if WITH_SYSTEMD_UTILS
+
+# Add setup for the Python procServUtils
+
+all-local:
+	(cd $(srcdir); $(PYTHON) setup.py build \
+	--build-base $(shell readlink -f $(builddir))/build)
+
+install-exec-local:
+	$(PYTHON) $(srcdir)/setup.py install \
+	--prefix $(DESTDIR)$(prefix)
+
+endif # WITH_SYSTEMD_UTILS

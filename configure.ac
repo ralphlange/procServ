@@ -90,6 +90,17 @@ AS_IF([test "x$with_epics_top" != xno],
       ])
 AM_CONDITIONAL([WITH_EPICS], [test x$with_epics_top != xno])
 
+# Add configure option for building and installing procServUtils (systemd support)
+AC_ARG_WITH([systemd-utils],
+              [AS_HELP_STRING([--with-systemd-utils],
+                              [include systemd support utilities])],
+              [],
+              [with_systemd_utils=no])
+AS_IF([test "x$with_systemd_utils" = xyes], [
+     AM_PATH_PYTHON()
+])
+AM_CONDITIONAL([WITH_SYSTEMD_UTILS], [test x$with_systemd_utils = xyes])
+
 AC_ARG_ENABLE([devel],
               [AS_HELP_STRING([--enable-devel],
                               [Control build type: debug (enable), release (disable), default (none)])],
