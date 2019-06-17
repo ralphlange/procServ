@@ -78,6 +78,18 @@ def syslist(conf, args):
                     '--all' if args.all else '',
                     'procserv-*'])
 
+def startproc(conf, args):
+    _log.info("Starting service procserv-%s.service", args.name)
+    SP.call([systemctl,
+            '--user' if args.user else '--system',
+            'start', 'procserv-%s.service'%args.name])
+
+def stopproc(conf, args):
+    _log.info("Stopping service procserv-%s.service", args.name)
+    SP.call([systemctl,
+            '--user' if args.user else '--system',
+            'stop', 'procserv-%s.service'%args.name])
+
 def addproc(conf, args):
     from .generator import run, write_service
 
@@ -138,11 +150,9 @@ chdir = %(chdir)s
                    'daemon-reload'], shell=False)
 
     if args.autostart:
-        SP.check_call([systemctl,
-                       argusersys,
-                       'start', 'procserv-%s.service'%args.name])
+        startproc(conf, args)
     else:
-        sys.stdout.write("# systemctl %s start procserv-%s.service\n"%(argusersys,args.name))
+        sys.stdout.write("# manage-procs %s start %s\n"%(argusersys,args.name))
 
 def delproc(conf, args):
     from .conf import getconffiles, ConfigParser
@@ -181,11 +191,8 @@ def delproc(conf, args):
                 C.write(F)
             os.rename(cfile+'.tmp', cfile)
 
-    _log.info("Stopping service procserv-%s.service", args.name)
-    SP.check_call([systemctl,
-                   '--user' if args.user else '--system',
-                   'stop',
-                   "procserv-%s.service"%args.name])
+    stopproc(conf, args)
+
     _log.info("Disabling service procserv-%s.service", args.name)
     SP.check_call([systemctl,
                    '--user' if args.user else '--system',
@@ -197,6 +204,7 @@ def delproc(conf, args):
                    '--user' if args.user else '--system',
                    'daemon-reload'], shell=False)
     outdir = getgendir(user=args.user)
+
     _log.info('Removing service file %s/procserv-%s.service', outdir, args.name)
     try:
         os.remove("%s/procserv-%s.service"%(outdir,args.name))
@@ -206,6 +214,7 @@ def delproc(conf, args):
     #sys.stdout.write("# systemctl stop procserv-%s.service\n"%args.name)
 
 def writeprocs(conf, args):
+    argusersys = '--user' if args.user else '--system'
     opts = {
         'rundir':getrundir(user=args.user),
     }
@@ -226,10 +235,10 @@ console %(name)s {
     if args.reload:
         _log.debug('Reloading conserver-server')
         SP.check_call([systemctl,
-                    '--user' if args.user else '--system',
+                    argusersys,
                     'reload', 'conserver-server.service'], shell=False)
     else:
-        sys.stdout.write('# systemctl reload conserver-server.service\n')
+        sys.stdout.write('# systemctl %s reload conserver-server.service\n'%argusersys)
 
 def getargs(args=None):
     from argparse import ArgumentParser, REMAINDER
@@ -242,7 +251,7 @@ def getargs(args=None):
 
     SP = P.add_subparsers()
 
-    S = SP.add_parser('status', help='List procServ instance state')
+    S = SP.add_parser('status', help='Report state of procServ instances')
     S.set_defaults(func=status)
 
     S = SP.add_parser('list', help='List procServ instances')
@@ -271,6 +280,14 @@ def getargs(args=None):
     S.add_argument('-f','--out',default='/etc/conserver/procs.cf') 
     S.add_argument('-R','--reload', action='store_true', default=False)
     S.set_defaults(func=writeprocs)
+
+    S = SP.add_parser('start', help='Start a procServ instance')
+    S.add_argument('name', help='Instance name')
+    S.set_defaults(func=startproc)
+
+    S = SP.add_parser('stop', help='Stop a procServ instance')
+    S.add_argument('name', help='Instance name')
+    S.set_defaults(func=stopproc)
 
     A = P.parse_args(args=args)
     if not hasattr(A, 'func'):
