@@ -13,6 +13,7 @@ LDADD = $(LIBOBJS)
 
 DISTCLEANFILES = *~ *.orig procServ.xml docbook-xsl.css pid.txt procServ.map
 MAINTAINERCLEANFILES = procServ.pdf procServ.html procServ.1
+MAINTAINERCLEANFILES += manage-procs.pdf manage-procs.html manage-procs.1
 
 EXTRA_DIST = Makefile.Epics.in forkpty.c libtelnet.c libtelnet.h
 
@@ -29,6 +30,11 @@ if INSTALL_DOC
 dist_man1_MANS = procServ.1
 dist_doc_DATA = procServ.pdf procServ.html
 
+if WITH_SYSTEMD_UTILS
+dist_man1_MANS += manage-procs.1
+dist_doc_DATA += manage-procs.pdf manage-procs.html
+endif
+
 endif # INSTALL_DOC
 
 if BUILD_DOC
@@ -41,6 +47,15 @@ procServ.pdf: $(srcdir)/procServ.txt
 	$(A2X) $(A2X_FLAGS) -f pdf $(srcdir)/procServ.txt
 procServ.html: $(srcdir)/procServ.txt
 	$(A2X) $(A2X_FLAGS) -f xhtml $(srcdir)/procServ.txt
+
+if WITH_SYSTEMD_UTILS
+manage-procs.1: $(srcdir)/manage-procs.txt
+	$(A2X) $(A2X_FLAGS) -f manpage $(srcdir)/manage-procs.txt
+manage-procs.pdf: $(srcdir)/manage-procs.txt
+	$(A2X) $(A2X_FLAGS) -f pdf $(srcdir)/manage-procs.txt
+manage-procs.html: $(srcdir)/manage-procs.txt
+	$(A2X) $(A2X_FLAGS) -f xhtml $(srcdir)/manage-procs.txt
+endif
 
 endif # BUILD_DOC
 
