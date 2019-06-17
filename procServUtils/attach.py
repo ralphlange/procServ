@@ -29,7 +29,7 @@ def attach(args):
                 os.execv(args[0], args)
                 sys.exit(1) # never reached
 
-            sys.exit("No tool to connect to %s"%args.name)
+            sys.exit("No tool to connect to %s (attach command needs telnet and/or socat)"%args.name)
     except OSError as e:
         if e.errno==errno.ENOENT:
             _log.error('%s is not an active %s procServ', args.name, 'user' if args.user else 'system')
