@@ -7,6 +7,10 @@
 A wrapper to start arbitrary interactive commands in the background,
 with telnet access to stdin/stdout.
 
+On systems that use systemd, the procServUtils set of helper/convenience
+scripts can be used to manage procServ instances using per-instance
+systemd unit files.
+
 ## Dependencies
 
 -   Posix compliant OS with a C++ compiler
@@ -27,6 +31,15 @@ with telnet access to stdin/stdout.
     It will be compiled into procServ automatically, if the library
     is not found on the system.
 
+-   Suggested: **telnet** and/or **socat** as clients to attach to
+    procServ instances.
+    The former is used to connect using TCP ports, the latter when using
+    domain sockets.
+
+-   For the procServUtils scripts on systems with systemd:
+    *   **Python** (2.7 and up) with distutils
+    *   **telnet** and/or **socat** for the attach command (see above)
+
 ## Building procServ
 
 ### Using autotools
@@ -38,6 +51,8 @@ with telnet access to stdin/stdout.
     $ ./configure
     $ make
     ```
+    Configure `--with-systemd-utils` to include the procServUtils
+    scripts in the build.
 
 ### Using the EPICS Build System
 
@@ -66,6 +81,8 @@ Optional asciidoc >= 8.4, FOP >= 0.95, xsltproc >= 1.1.24
    $ ./configure --enable-doc
    $ make
 ```
+Configure `--with-systemd-utils` to include the procServUtils
+scripts in the build.
 
 Note: When building from the repository, you must explicitly
 use `--enable-doc` or `--disable-doc`.  Omitting this
@@ -133,25 +150,21 @@ the distribution tar.
 
 ### Running Applications (e.g. EPICS IOCs) as Services on Unix/Linux
 
-Michael Davidsaver has contributed a set of utility scripts for managing
-procServ-run system service instances under systemd. These scripts generate
-the systemd unit files as well as configuration snippets for the
-[conserver](https://www.conserver.com/) tool.
+Michael Davidsaver has contributed procServUtils, a set of utility scripts
+for managing procServ-run system service instances under systemd.
+These scripts generate the systemd unit files as well as configuration
+snippets for the [conserver](https://www.conserver.com/) tool.
 
-To build and install these tools, use the python-typical sequence of
-```sh
-   python setup.py build
-   sudo python setup.py install
-```
+`manage-procs` is the script to add and remove procServ instances to
+the systemd configuration, create conserver configuration snippets,
+start and stop configured procServ instances,
+generate lists of the instances known on the current host
+and report their status.
 
-There are two user callable scripts:
--   `manage-procs` to add and remove procServ instances
--   `prattach` to attach to the console of a running procServ instance
-
-The `-h` option prints a short help for both scripts.
+For more details, check the manpage and use the script's `-h` option.
 
 For older systems using SysV-style rc scripts, you can look at the
-[Debian package](http://epics.nsls2.bnl.gov/debian/) or
+[Debian packaging](http://epics.nsls2.bnl.gov/debian/) or
 at the [upstream repository](https://github.com/epicsdeb/sysv-rc-softioc)
 of the predecessor package of these utilities.
 
