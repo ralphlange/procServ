@@ -14,7 +14,7 @@ class custom_install_data(distutils.command.install_data.install_data):
         for type in ['user', 'system']:
             file = os.path.join(dst, 'lib/systemd/%s-generators/systemd-procserv-generator-%s'%(type,type))
             self.announce('changing mode of %s to 755' % file, level=log.INFO)
-            os.chmod(file, 0755)
+            os.chmod(file, 0o755)
 
 setup(
     name='procServUtils',
