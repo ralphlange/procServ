@@ -123,8 +123,8 @@ def addproc(conf, args):
     if args.env_file:
         args.env_file = os.path.abspath(os.path.join(os.getcwd(), args.env_file))
         if not os.path.exists(args.env_file):
-            _log.exception('File not found: "%s"', args.env_file)
-            raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), args.env_file)
+            _log.error('File not found: "%s"', args.env_file)
+            sys.exit(1)
 
     args.command = os.path.abspath(os.path.join(args.chdir, args.command))
 
