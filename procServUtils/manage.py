@@ -118,8 +118,13 @@ def addproc(conf, args):
 
     _log.info("Writing: %s", cfile)
 
-    # ensure chdir is an absolute path
+    # ensure chdir and env_file are absolute paths
     args.chdir = os.path.abspath(os.path.join(os.getcwd(), args.chdir))
+    if args.env_file: 
+        args.env_file = os.path.abspath(os.path.join(os.getcwd(), args.env_file))
+        if not os.path.exists(args.env_file):
+            _log.exception('File not found: "%s"', args.env_file)
+            raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), args.env_file)
 
     args.command = os.path.abspath(os.path.join(args.chdir, args.command))
 
@@ -139,6 +144,8 @@ chdir = %(chdir)s
         if args.username: F.write("user = %s\n"%args.username)
         if args.group: F.write("group = %s\n"%args.group)
         if args.port: F.write("port = %s\n"%args.port)
+        if args.environment: F.write("environment = %s\n"%' '.join(args.environment))
+        if args.env_file: F.write("env_file = %s\n"%args.env_file)
 
     os.rename(cfile+'.tmp', cfile)
 
@@ -267,6 +274,8 @@ def getargs(args=None):
     S.add_argument('-P','--port', help='telnet port')
     S.add_argument('-U','--user', dest='username')
     S.add_argument('-G','--group')
+    S.add_argument('-e','--environment', action='append', help='Add an environment variable')
+    S.add_argument('-E','--env-file', help='Environment file path')
     S.add_argument('-f','--force', action='store_true', default=False)
     S.add_argument('-A','--autostart',action='store_true', default=False,
                    help='Automatically start after adding')
