@@ -253,6 +253,7 @@ console %(name)s {
 
 def getargs(args=None):
     from argparse import ArgumentParser, REMAINDER
+    import argcomplete
     P = ArgumentParser()
     P.add_argument('--user', action='store_true', default=os.geteuid()!=0,
                    help='Consider user config')
@@ -307,6 +308,7 @@ def getargs(args=None):
     S.add_argument('extra', nargs=REMAINDER, help='extra args for telnet')
     S.set_defaults(func=attachproc)
 
+    argcomplete.autocomplete(P)
     A = P.parse_args(args=args)
     if not hasattr(A, 'func'):
         P.print_help()
