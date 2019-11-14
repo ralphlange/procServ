@@ -251,9 +251,12 @@ console %(name)s {
     else:
         sys.stdout.write('# systemctl %s reload conserver-server.service\n'%argusersys)
 
+def instances_completer(**kwargs):
+    return getconf(user=False).sections() + getconf(user=True).sections()
+
 def getargs(args=None):
     from argparse import ArgumentParser, REMAINDER
-    import argcomplete
+    from argcomplete import autocomplete
     P = ArgumentParser()
     P.add_argument('--user', action='store_true', default=os.geteuid()!=0,
                    help='Consider user config')
@@ -287,7 +290,7 @@ def getargs(args=None):
 
     S = SP.add_parser('remove', help='Remove a procServ instance')
     S.add_argument('-f','--force', action='store_true', default=False)
-    S.add_argument('name', help='Instance name')
+    S.add_argument('name', help='Instance name').completer = instances_completer
     S.set_defaults(func=delproc)
 
     S = SP.add_parser('write-procs-cf', help='Write conserver config')
@@ -296,19 +299,19 @@ def getargs(args=None):
     S.set_defaults(func=writeprocs)
 
     S = SP.add_parser('start', help='Start a procServ instance')
-    S.add_argument('name', help='Instance name')
+    S.add_argument('name', help='Instance name').completer = instances_completer
     S.set_defaults(func=startproc)
 
     S = SP.add_parser('stop', help='Stop a procServ instance')
-    S.add_argument('name', help='Instance name')
+    S.add_argument('name', help='Instance name').completer = instances_completer
     S.set_defaults(func=stopproc)
 
     S = SP.add_parser('attach', help='Attach to a procServ instance')
-    S.add_argument("name", help='Instance name')
+    S.add_argument("name", help='Instance name').completer = instances_completer
     S.add_argument('extra', nargs=REMAINDER, help='extra args for telnet')
     S.set_defaults(func=attachproc)
 
-    argcomplete.autocomplete(P)
+    autocomplete(P)
     A = P.parse_args(args=args)
     if not hasattr(A, 'func'):
         P.print_help()
