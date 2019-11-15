@@ -252,7 +252,10 @@ console %(name)s {
         sys.stdout.write('# systemctl %s reload conserver-server.service\n'%argusersys)
 
 def instances_completer(**kwargs):
-    return getconf(user=False).sections() + getconf(user=True).sections()
+    user = True
+    if 'parsed_args' in kwargs:
+        user = kwargs['parsed_args'].user
+    return getconf(user=user).sections()
 
 def getargs(args=None):
     from argparse import ArgumentParser, REMAINDER
