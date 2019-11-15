@@ -19,6 +19,7 @@ _levels = [
 ]
 
 systemctl = '/bin/systemctl'
+journalctl = '/bin/journalctl'
 
 def status(conf, args, fp=None):
     rundir=getrundir(user=args.user)
@@ -89,6 +90,24 @@ def stopproc(conf, args):
     SP.call([systemctl,
             '--user' if args.user else '--system',
             'stop', 'procserv-%s.service'%args.name])
+
+def restartproc(conf, args):
+    _log.info("Restarting service procserv-%s.service", args.name)
+    SP.call([systemctl,
+            '--user' if args.user else '--system',
+            'restart', 'procserv-%s.service'%args.name])
+
+def showlogs(conf, args):
+    _log.info("Opening logs of service procserv-%s.service", args.name)
+    command = [journalctl,
+            '--user-unit' if args.user else '--unit',
+            'procserv-%s.service'%args.name]
+    if args.follow:
+        command.append('-f')
+    try:
+        SP.call(command)
+    except KeyboardInterrupt:
+        pass    
 
 def attachproc(conf, args):
     from .attach import attach
@@ -308,6 +327,15 @@ def getargs(args=None):
     S = SP.add_parser('stop', help='Stop a procServ instance')
     S.add_argument('name', help='Instance name').completer = instances_completer
     S.set_defaults(func=stopproc)
+
+    S = SP.add_parser('restart', help='Restart a procServ instance')
+    S.add_argument('name', help='Instance name').completer = instances_completer
+    S.set_defaults(func=restartproc)
+
+    S = SP.add_parser('logs', help='Open logs of a procServ instance')
+    S.add_argument('-f','--follow', action='store_true', default=False)
+    S.add_argument('name', help='Instance name').completer = instances_completer
+    S.set_defaults(func=showlogs)
 
     S = SP.add_parser('attach', help='Attach to a procServ instance')
     S.add_argument("name", help='Instance name').completer = instances_completer
