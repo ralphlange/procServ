@@ -144,7 +144,9 @@ chdir = %(chdir)s
         if args.username: F.write("user = %s\n"%args.username)
         if args.group: F.write("group = %s\n"%args.group)
         if args.port: F.write("port = %s\n"%args.port)
-        if args.environment: F.write("environment = %s\n"%' '.join(args.environment))
+        if args.environment:
+            env_to_string = ' '.join("\"%s\""%e for e in args.environment)
+            F.write("environment = %s\n"%env_to_string)
         if args.env_file: F.write("env_file = %s\n"%args.env_file)
 
     os.rename(cfile+'.tmp', cfile)
