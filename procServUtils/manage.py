@@ -91,6 +91,12 @@ def stopproc(conf, args):
             '--user' if args.user else '--system',
             'stop', 'procserv-%s.service'%args.name])
 
+def resetfailedproc(conf, args):
+    _log.info("Resetting service procserv-%s.service", args.name)
+    SP.call([systemctl,
+            '--user' if args.user else '--system',
+            'reset-failed', 'procserv-%s.service'%args.name])
+
 def restartproc(conf, args):
     _log.info("Restarting service procserv-%s.service", args.name)
     SP.call([systemctl,
@@ -327,6 +333,10 @@ def getargs(args=None):
     S = SP.add_parser('stop', help='Stop a procServ instance')
     S.add_argument('name', help='Instance name').completer = instances_completer
     S.set_defaults(func=stopproc)
+
+    S = SP.add_parser('reset-failed', help='Reset a failed procServ instance')
+    S.add_argument('name', help='Instance name').completer = instances_completer
+    S.set_defaults(func=resetfailedproc)
 
     S = SP.add_parser('restart', help='Restart a procServ instance')
     S.add_argument('name', help='Instance name').completer = instances_completer
