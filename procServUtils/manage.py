@@ -224,24 +224,13 @@ def delproc(conf, args):
     stopproc(conf, args)
 
     _log.info("Disabling service procserv-%s.service", args.name)
-    SP.check_call([systemctl,
+    SP.call([systemctl,
                    '--user' if args.user else '--system',
                    'disable',
                    "procserv-%s.service"%args.name])
 
     _log.info("Resetting service procserv-%s.service", args.name)
-    occurences = 0
-    check_service = SP.Popen([systemctl,
-                '--user' if args.user else '--system',
-                'list-units',
-                '--all',
-                'procserv-%s.service'%args.name], stdout=SP.PIPE)
-    output = check_service.communicate()[0].split('\n')
-    for row in output:
-        if 'loaded units listed' in row:
-            occurences = int(row[0])
-    if occurences != 0:
-        SP.check_call([systemctl,
+    SP.call([systemctl,
                     '--user' if args.user else '--system',
                     'reset-failed', 
                     'procserv-%s.service'%args.name])
