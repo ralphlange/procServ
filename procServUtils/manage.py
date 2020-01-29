@@ -91,12 +91,6 @@ def stopproc(conf, args):
             '--user' if args.user else '--system',
             'stop', 'procserv-%s.service'%args.name])
 
-def resetfailedproc(conf, args):
-    _log.info("Resetting service procserv-%s.service", args.name)
-    SP.call([systemctl,
-            '--user' if args.user else '--system',
-            'reset-failed', 'procserv-%s.service'%args.name])
-
 def restartproc(conf, args):
     _log.info("Restarting service procserv-%s.service", args.name)
     SP.call([systemctl,
@@ -235,6 +229,23 @@ def delproc(conf, args):
                    'disable',
                    "procserv-%s.service"%args.name])
 
+    _log.info("Resetting service procserv-%s.service", args.name)
+    occurences = 0
+    check_service = SP.Popen([systemctl,
+                '--user' if args.user else '--system',
+                'list-units',
+                '--all',
+                'procserv-%s.service'%args.name], stdout=SP.PIPE)
+    output = check_service.communicate()[0].split('\n')
+    for row in output:
+        if 'loaded units listed' in row:
+            occurences = int(row[0])
+    if occurences != 0:
+        SP.check_call([systemctl,
+                    '--user' if args.user else '--system',
+                    'reset-failed', 
+                    'procserv-%s.service'%args.name])
+
     _log.info('Triggering systemd reload')
     SP.check_call([systemctl,
                    '--user' if args.user else '--system',
@@ -333,10 +344,6 @@ def getargs(args=None):
     S = SP.add_parser('stop', help='Stop a procServ instance')
     S.add_argument('name', help='Instance name').completer = instances_completer
     S.set_defaults(func=stopproc)
-
-    S = SP.add_parser('reset-failed', help='Reset a failed procServ instance')
-    S.add_argument('name', help='Instance name').completer = instances_completer
-    S.set_defaults(func=resetfailedproc)
 
     S = SP.add_parser('restart', help='Restart a procServ instance')
     S.add_argument('name', help='Instance name').completer = instances_completer
