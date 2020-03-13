@@ -934,6 +934,8 @@ void setEnvVar()
     for(connectionItem *it = connectionItem::head; it; it=it->next)
         it->writeAddressEnv(env_var);
     std::string env_str = env_var.str();
+    // Remove the extra semicolon
+    env_str = env_str.substr(0, env_str.size()-1);
     setenv("PROCSERV_INFO", env_str.c_str(), 1);
 }
 
