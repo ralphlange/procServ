@@ -544,8 +544,6 @@ int main(int argc,char * argv[])
 
     procservPid=getpid();
 
-    setEnvVar();
-
     openLogFile();
 
     if (false == inFgMode && false == inDebugMode)
@@ -557,6 +555,8 @@ int main(int argc,char * argv[])
         debugFD = 1;          // Enable debug messages
     }
     writePidFile();
+
+    setEnvVar();
 
     if (!infofile.empty()) {
         writeInfoFile(infofile);
