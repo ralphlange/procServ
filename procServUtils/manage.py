@@ -240,6 +240,9 @@ def renameproc(conf, args):
     from .generator import run
 
     # copy settings from previous conf
+    if args.name not in conf.sections():
+        _log.error('Unknown process: "%s"', args.name)
+        sys.exit(1)
     items = conf.items(args.name)
     new_conf = ConfigParser()
     new_conf.add_section(args.new_name)
