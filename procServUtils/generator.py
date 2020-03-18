@@ -34,6 +34,15 @@ ConditionPathIsDirectory=%(chdir)s
     F.write("""
 [Service]
 Type=simple
+"""%opts)
+
+    if conf.has_option(sect, 'env_file'):
+        F.write('EnvironmentFile=%s\n'%conf.get(sect, 'env_file'))
+
+    if conf.has_option(sect, 'environment'):
+        F.write('Environment=%s\n'%conf.get(sect, 'environment'))
+
+    F.write("""\
 ExecStart=%(launcher)s %(userarg)s %(name)s
 RuntimeDirectory=procserv-%(name)s
 StandardOutput=syslog
