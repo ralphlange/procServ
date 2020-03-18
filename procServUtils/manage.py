@@ -4,6 +4,8 @@ _log = logging.getLogger(__name__)
 
 import sys, os, errno
 import subprocess as SP
+from tabulate import tabulate
+from termcolor import colored
 
 from .conf import getconf, getrundir, getgendir
 
@@ -25,11 +27,12 @@ def status(conf, args, fp=None):
     rundir=getrundir(user=args.user)
     fp = fp or sys.stdout
 
+    table = []
     for name in conf.sections():
         if not conf.getboolean(name, 'instance'):
             continue
-        fp.write('%s '%name)
-
+        instance = ['%s '%name]
+        
         pid = None
         ports = []
         infoname = os.path.join(rundir, 'procserv-%s'%name, 'info')
@@ -63,14 +66,18 @@ def status(conf, args, fp=None):
                     _log.debug("Can't say if PID exists or not")
                 else:
                     _log.exception("Testing PID %s", pid)
-            fp.write('Running' if running else 'Dead')
+            instance.append(colored('Running', 'green') if running else colored('Dead', attrs=['bold']))
 
             if running:
-                fp.write('\t'+' '.join(ports))
+                instance.append(' '.join(ports))
         else:
-            fp.write('Stopped')
-
-        fp.write('\n')
+            instance.append(colored('Stopped', 'red'))
+        
+        table.append(instance)
+    
+    # Print results table
+    headers = ['PROCESS', 'STATE', 'PORT']
+    fp.write(tabulate(sorted(table), headers=headers, tablefmt="github")+ '\n')
 
 def syslist(conf, args):
     SP.check_call([systemctl,
@@ -200,7 +207,7 @@ def delproc(conf, args):
 
         if not args.force and sys.stdin.isatty():
             while True:
-                sys.stdout.write("Remove section '%s' from %s ? [yN]"%(args.name, cfile))
+                sys.stdout.write("Remove section '%s' from %s ? [yN] "%(args.name, cfile))
                 sys.stdout.flush()
                 L = sys.stdin.readline().strip().upper()
                 if L=='Y':
