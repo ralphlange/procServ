@@ -2,7 +2,7 @@
 import logging
 _log = logging.getLogger(__name__)
 
-import os
+import os, sys, errno
 from functools import reduce
 from glob import glob
 
@@ -52,6 +52,28 @@ def getconffiles(user=False):
     # map(glob) produces a list of lists
     # reduce by concatination into a single list
     return reduce(list.__add__, map(glob, files), [])
+
+def addconf(name, conf, user=False, force=False):
+    outdir = getgendir(user)
+    cfile = os.path.join(outdir, '%s.conf'%name)
+
+    if os.path.exists(cfile) and not force:
+        _log.error("Instance already exists @ %s", cfile)
+        sys.exit(1)
+
+    try:
+        os.makedirs(outdir)
+    except OSError as e:
+        if e.errno!=errno.EEXIST:
+            _log.exception('Creating directory "%s"', outdir)
+            raise
+
+    _log.info("Writing: %s", cfile)
+    with open(cfile, 'w') as F:
+        conf.write(F)
+
+def delconf(name):
+    pass
 
 _defaults = {
     'user':'nobody',

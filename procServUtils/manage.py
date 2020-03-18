@@ -7,7 +7,7 @@ import subprocess as SP
 from tabulate import tabulate
 from termcolor import colored
 
-from .conf import getconf, getrundir, getgendir
+from .conf import getconf, getrundir, getgendir, ConfigParser, addconf, delconf
 
 try:
     import shlex
@@ -121,7 +121,7 @@ def attachproc(conf, args):
     attach(args)
 
 def addproc(conf, args):
-    from .generator import run, write_service
+    from .generator import run
 
     outdir = getgendir(user=args.user)
     cfile = os.path.join(outdir, '%s.conf'%args.name)
@@ -256,6 +256,41 @@ def delproc(conf, args):
 
     #sys.stdout.write("# systemctl stop procserv-%s.service\n"%args.name)
 
+def renameproc(conf, args):
+    from .generator import run
+
+    # copy settings from previous conf
+    items = conf.items(args.name)
+    new_conf = ConfigParser()
+    new_conf.add_section(args.new_name)
+    for item in items:
+        new_conf.set(args.new_name, item[0], item[1])
+
+    # create new conf file with old settings
+    addconf(args.new_name, new_conf, args.user, args.force)
+
+    # delete previous proc
+    delproc(conf, args)
+    
+    outdir = getgendir(args.user)
+    argusersys = '--user' if args.user else '--system'
+    run(outdir, user=args.user)
+    SP.check_call([systemctl,
+                   argusersys,
+                   'enable',
+                   "%s/procserv-%s.service"%(outdir, args.new_name)])
+
+    _log.info('Trigger systemd reload')
+    SP.check_call([systemctl,
+                   argusersys,
+                   'daemon-reload'], shell=False)
+
+    if args.autostart:
+        args.name = args.new_name
+        startproc(conf, args)
+    else:
+        sys.stdout.write("# manage-procs %s start %s\n"%(argusersys,args.new_name))
+
 def writeprocs(conf, args):
     argusersys = '--user' if args.user else '--system'
     opts = {
@@ -327,6 +362,14 @@ def getargs(args=None):
     S.add_argument('-f','--force', action='store_true', default=False)
     S.add_argument('name', help='Instance name').completer = instances_completer
     S.set_defaults(func=delproc)
+
+    S = SP.add_parser('rename', help='Rename a procServ instance')
+    S.add_argument('-f','--force', action='store_true', default=False)
+    S.add_argument('-A','--autostart',action='store_true', default=False,
+                   help='Automatically start after renaming')
+    S.add_argument('name', help='Current instance name').completer = instances_completer
+    S.add_argument('new_name', help='Desired instance name')
+    S.set_defaults(func=renameproc)
 
     S = SP.add_parser('write-procs-cf', help='Write conserver config')
     S.add_argument('-f','--out',default='/etc/conserver/procs.cf') 
