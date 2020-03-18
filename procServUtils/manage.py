@@ -4,6 +4,8 @@ _log = logging.getLogger(__name__)
 
 import sys, os, errno
 import subprocess as SP
+from tabulate import tabulate
+from termcolor import colored
 
 from .conf import getconf, getrundir, getgendir
 
@@ -19,16 +21,18 @@ _levels = [
 ]
 
 systemctl = '/bin/systemctl'
+journalctl = '/bin/journalctl'
 
 def status(conf, args, fp=None):
     rundir=getrundir(user=args.user)
     fp = fp or sys.stdout
 
+    table = []
     for name in conf.sections():
         if not conf.getboolean(name, 'instance'):
             continue
-        fp.write('%s '%name)
-
+        instance = ['%s '%name]
+        
         pid = None
         ports = []
         infoname = os.path.join(rundir, 'procserv-%s'%name, 'info')
@@ -62,14 +66,18 @@ def status(conf, args, fp=None):
                     _log.debug("Can't say if PID exists or not")
                 else:
                     _log.exception("Testing PID %s", pid)
-            fp.write('Running' if running else 'Dead')
+            instance.append(colored('Running', 'green') if running else colored('Dead', attrs=['bold']))
 
             if running:
-                fp.write('\t'+' '.join(ports))
+                instance.append(' '.join(ports))
         else:
-            fp.write('Stopped')
-
-        fp.write('\n')
+            instance.append(colored('Stopped', 'red'))
+        
+        table.append(instance)
+    
+    # Print results table
+    headers = ['PROCESS', 'STATE', 'PORT']
+    fp.write(tabulate(sorted(table), headers=headers, tablefmt="github")+ '\n')
 
 def syslist(conf, args):
     SP.check_call([systemctl,
@@ -89,6 +97,24 @@ def stopproc(conf, args):
     SP.call([systemctl,
             '--user' if args.user else '--system',
             'stop', 'procserv-%s.service'%args.name])
+
+def restartproc(conf, args):
+    _log.info("Restarting service procserv-%s.service", args.name)
+    SP.call([systemctl,
+            '--user' if args.user else '--system',
+            'restart', 'procserv-%s.service'%args.name])
+
+def showlogs(conf, args):
+    _log.info("Opening logs of service procserv-%s.service", args.name)
+    command = [journalctl,
+            '--user-unit' if args.user else '--unit',
+            'procserv-%s.service'%args.name]
+    if args.follow:
+        command.append('-f')
+    try:
+        SP.call(command)
+    except KeyboardInterrupt:
+        pass    
 
 def attachproc(conf, args):
     from .attach import attach
@@ -183,7 +209,7 @@ def delproc(conf, args):
 
         if not args.force and sys.stdin.isatty():
             while True:
-                sys.stdout.write("Remove section '%s' from %s ? [yN]"%(args.name, cfile))
+                sys.stdout.write("Remove section '%s' from %s ? [yN] "%(args.name, cfile))
                 sys.stdout.flush()
                 L = sys.stdin.readline().strip().upper()
                 if L=='Y':
@@ -207,10 +233,16 @@ def delproc(conf, args):
     stopproc(conf, args)
 
     _log.info("Disabling service procserv-%s.service", args.name)
-    SP.check_call([systemctl,
+    SP.call([systemctl,
                    '--user' if args.user else '--system',
                    'disable',
                    "procserv-%s.service"%args.name])
+
+    _log.info("Resetting service procserv-%s.service", args.name)
+    SP.call([systemctl,
+                    '--user' if args.user else '--system',
+                    'reset-failed', 
+                    'procserv-%s.service'%args.name])
 
     _log.info('Triggering systemd reload')
     SP.check_call([systemctl,
@@ -253,8 +285,15 @@ console %(name)s {
     else:
         sys.stdout.write('# systemctl %s reload conserver-server.service\n'%argusersys)
 
+def instances_completer(**kwargs):
+    user = True
+    if 'parsed_args' in kwargs:
+        user = kwargs['parsed_args'].user
+    return getconf(user=user).sections()
+
 def getargs(args=None):
     from argparse import ArgumentParser, REMAINDER
+    from argcomplete import autocomplete
     P = ArgumentParser()
     P.add_argument('--user', action='store_true', default=os.geteuid()!=0,
                    help='Consider user config')
@@ -288,7 +327,7 @@ def getargs(args=None):
 
     S = SP.add_parser('remove', help='Remove a procServ instance')
     S.add_argument('-f','--force', action='store_true', default=False)
-    S.add_argument('name', help='Instance name')
+    S.add_argument('name', help='Instance name').completer = instances_completer
     S.set_defaults(func=delproc)
 
     S = SP.add_parser('write-procs-cf', help='Write conserver config')
@@ -297,18 +336,28 @@ def getargs(args=None):
     S.set_defaults(func=writeprocs)
 
     S = SP.add_parser('start', help='Start a procServ instance')
-    S.add_argument('name', help='Instance name')
+    S.add_argument('name', help='Instance name').completer = instances_completer
     S.set_defaults(func=startproc)
 
     S = SP.add_parser('stop', help='Stop a procServ instance')
-    S.add_argument('name', help='Instance name')
+    S.add_argument('name', help='Instance name').completer = instances_completer
     S.set_defaults(func=stopproc)
 
+    S = SP.add_parser('restart', help='Restart a procServ instance')
+    S.add_argument('name', help='Instance name').completer = instances_completer
+    S.set_defaults(func=restartproc)
+
+    S = SP.add_parser('logs', help='Open logs of a procServ instance')
+    S.add_argument('-f','--follow', action='store_true', default=False)
+    S.add_argument('name', help='Instance name').completer = instances_completer
+    S.set_defaults(func=showlogs)
+
     S = SP.add_parser('attach', help='Attach to a procServ instance')
-    S.add_argument("name", help='Instance name')
+    S.add_argument("name", help='Instance name').completer = instances_completer
     S.add_argument('extra', nargs=REMAINDER, help='extra args for telnet')
     S.set_defaults(func=attachproc)
 
+    autocomplete(P)
     A = P.parse_args(args=args)
     if not hasattr(A, 'func'):
         P.print_help()
