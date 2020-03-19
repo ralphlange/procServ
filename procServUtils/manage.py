@@ -4,10 +4,8 @@ _log = logging.getLogger(__name__)
 
 import sys, os, errno
 import subprocess as SP
-from tabulate import tabulate
-from termcolor import colored
 
-from .conf import getconf, getrundir, getgendir
+from .conf import getconf, getrundir, getgendir, ConfigParser, addconf, delconf
 
 try:
     import shlex
@@ -23,7 +21,15 @@ _levels = [
 systemctl = '/bin/systemctl'
 journalctl = '/bin/journalctl'
 
+def check_req(conf, args):
+    if args.name not in conf.sections():
+        _log.error(' "%s" is not an active %s procServ.', args.name, 'user' if args.user else 'system')
+        sys.exit(1)
+
 def status(conf, args, fp=None):
+    from tabulate import tabulate
+    from termcolor import colored
+    
     rundir=getrundir(user=args.user)
     fp = fp or sys.stdout
 
@@ -87,24 +93,28 @@ def syslist(conf, args):
                     'procserv-*'])
 
 def startproc(conf, args):
+    check_req(conf, args)
     _log.info("Starting service procserv-%s.service", args.name)
     SP.call([systemctl,
             '--user' if args.user else '--system',
             'start', 'procserv-%s.service'%args.name])
 
 def stopproc(conf, args):
+    check_req(conf, args)
     _log.info("Stopping service procserv-%s.service", args.name)
     SP.call([systemctl,
             '--user' if args.user else '--system',
             'stop', 'procserv-%s.service'%args.name])
 
 def restartproc(conf, args):
+    check_req(conf, args)
     _log.info("Restarting service procserv-%s.service", args.name)
     SP.call([systemctl,
             '--user' if args.user else '--system',
             'restart', 'procserv-%s.service'%args.name])
 
 def showlogs(conf, args):
+    check_req(conf, args)
     _log.info("Opening logs of service procserv-%s.service", args.name)
     command = [journalctl,
             '--user-unit' if args.user else '--unit',
@@ -117,71 +127,51 @@ def showlogs(conf, args):
         pass    
 
 def attachproc(conf, args):
+    check_req(conf, args)
     from .attach import attach
     attach(args)
 
 def addproc(conf, args):
-    from .generator import run, write_service
-
-    outdir = getgendir(user=args.user)
-    cfile = os.path.join(outdir, '%s.conf'%args.name)
-    argusersys = '--user' if args.user else '--system'
-
-    if os.path.exists(cfile) and not args.force:
-        _log.error("Instance already exists @ %s", cfile)
-        sys.exit(1)
-
-    #if conf.has_section(args.name):
-    #    _log.error("Instance already exists")
-    #    sys.exit(1)
-
-    try:
-        os.makedirs(outdir)
-    except OSError as e:
-        if e.errno!=errno.EEXIST:
-            _log.exception('Creating directory "%s"', outdir)
-            raise
-
-    _log.info("Writing: %s", cfile)
+    from .generator import run
 
     # ensure chdir and env_file are absolute paths
-    args.chdir = os.path.abspath(os.path.join(os.getcwd(), args.chdir))
+    chdir = os.path.abspath(os.path.join(os.getcwd(), args.chdir))
     if args.env_file:
         args.env_file = os.path.abspath(os.path.join(os.getcwd(), args.env_file))
         if not os.path.exists(args.env_file):
             _log.error('File not found: "%s"', args.env_file)
             sys.exit(1)
 
-    args.command = os.path.abspath(os.path.join(args.chdir, args.command))
+    # command is relative to chdir
+    command = os.path.abspath(os.path.join(args.chdir, args.command))
+    command = command + ' ' + ' '.join(map(shlex.quote, args.args))
 
-    opts = {
-        'name':args.name,
-        'command':args.command + ' ' + ' '.join(map(shlex.quote, args.args)),
-        'chdir':args.chdir,
-    }
+    # set conf paramers
+    new_conf = ConfigParser()
+    conf_name = args.name
+    new_conf.add_section(conf_name)
+    new_conf.set(conf_name, "command", command)
+    new_conf.set(conf_name, "chdir", chdir)
+    if args.username: new_conf.set(conf_name, "user", args.username)
+    if args.group: new_conf.set(conf_name, "group", args.group)
+    if args.port: new_conf.set(conf_name, "port", args.port)
+    if args.environment: 
+        new_conf.set(conf_name, "environment", ' '.join("\"%s\""%e for e in args.environment))
+    if args.env_file: new_conf.set(conf_name, "env_file", args.env_file)
 
-    with open(cfile+'.tmp', 'w') as F:
-        F.write("""
-[%(name)s]
-command = %(command)s
-chdir = %(chdir)s
-"""%opts)
+    # write conf file
+    addconf(conf_name, new_conf, args.user, args.force)
 
-        if args.username: F.write("user = %s\n"%args.username)
-        if args.group: F.write("group = %s\n"%args.group)
-        if args.port: F.write("port = %s\n"%args.port)
-        if args.environment:
-            env_to_string = ' '.join("\"%s\""%e for e in args.environment)
-            F.write("environment = %s\n"%env_to_string)
-        if args.env_file: F.write("env_file = %s\n"%args.env_file)
-
-    os.rename(cfile+'.tmp', cfile)
-
+    # generate service files    
+    outdir = getgendir(args.user)
     run(outdir, user=args.user)
+
+    # register systemd service
+    argusersys = '--user' if args.user else '--system'    
     SP.check_call([systemctl,
                    argusersys,
                    'enable',
-                   "%s/procserv-%s.service"%(outdir, args.name)])
+                   "%s/procserv-%s.service"%(outdir, conf_name)])
 
     _log.info('Trigger systemd reload')
     SP.check_call([systemctl,
@@ -191,9 +181,11 @@ chdir = %(chdir)s
     if args.autostart:
         startproc(conf, args)
     else:
-        sys.stdout.write("# manage-procs %s start %s\n"%(argusersys,args.name))
+        sys.stdout.write("# manage-procs %s start %s\n"%(argusersys, conf_name))
 
 def delproc(conf, args):
+    check_req(conf, args)
+        
     from .conf import getconffiles, ConfigParser
     for cfile in getconffiles(user=args.user):
         _log.debug('delproc processing %s', cfile)
@@ -241,6 +233,7 @@ def delproc(conf, args):
     _log.info("Resetting service procserv-%s.service", args.name)
     SP.call([systemctl,
                     '--user' if args.user else '--system',
+                    '--quiet',
                     'reset-failed', 
                     'procserv-%s.service'%args.name])
 
@@ -257,6 +250,46 @@ def delproc(conf, args):
         pass
 
     #sys.stdout.write("# systemctl stop procserv-%s.service\n"%args.name)
+
+def renameproc(conf, args):
+    check_req(conf, args)
+    from .generator import run
+
+    # copy settings from previous conf
+    items = conf.items(args.name)
+    new_conf = ConfigParser()
+    new_conf.add_section(args.new_name)
+    for item in items:
+        new_conf.set(args.new_name, item[0], item[1])
+
+    # create new conf file with old settings
+    addconf(args.new_name, new_conf, args.user, args.force)
+
+    # delete previous proc
+    args.force = True
+    delproc(conf, args)
+    
+    # generate service files    
+    outdir = getgendir(args.user)
+    run(outdir, user=args.user)
+
+    # register systemd service
+    argusersys = '--user' if args.user else '--system'
+    SP.check_call([systemctl,
+                   argusersys,
+                   'enable',
+                   "%s/procserv-%s.service"%(outdir, args.new_name)])
+
+    _log.info('Trigger systemd reload')
+    SP.check_call([systemctl,
+                   argusersys,
+                   'daemon-reload'], shell=False)
+
+    if args.autostart:
+        args.name = args.new_name
+        startproc(conf, args)
+    else:
+        sys.stdout.write("# manage-procs %s start %s\n"%(argusersys,args.new_name))
 
 def writeprocs(conf, args):
     argusersys = '--user' if args.user else '--system'
@@ -329,6 +362,14 @@ def getargs(args=None):
     S.add_argument('-f','--force', action='store_true', default=False)
     S.add_argument('name', help='Instance name').completer = instances_completer
     S.set_defaults(func=delproc)
+
+    S = SP.add_parser('rename', help='Rename a procServ instance')
+    S.add_argument('-f','--force', action='store_true', default=False)
+    S.add_argument('-A','--autostart',action='store_true', default=False,
+                   help='Automatically start after renaming')
+    S.add_argument('name', help='Current instance name').completer = instances_completer
+    S.add_argument('new_name', help='Desired instance name')
+    S.set_defaults(func=renameproc)
 
     S = SP.add_parser('write-procs-cf', help='Write conserver config')
     S.add_argument('-f','--out',default='/etc/conserver/procs.cf') 
