@@ -19,10 +19,11 @@ class TestGen(unittest.TestCase):
             with open(confname, 'r') as F:
                 content = F.read()
 
-            self.assertEqual(content, """
-[instname]
+            self.assertEqual(content,
+"""[instname]
 command = /bin/sh -c blah
 chdir = /somedir
+
 """)
 
             main(getargs(['add',
@@ -37,34 +38,37 @@ chdir = /somedir
             with open(confname, 'r') as F:
                 content = F.read()
 
-            self.assertEqual(content, """
-[other]
+            self.assertEqual(content, 
+"""[other]
 command = /bin/sh -c blah
 chdir = /somedir
 user = someone
 group = controls
+
 """)
 
     def test_remove(self):
         with TestDir() as t:
             # we won't remove this config, so it should not be touched
             with open(t.dir+'/procServ.d/other.conf', 'w') as F:
-                F.write("""
-[other]
+                F.write(
+"""[other]
 command = /bin/sh -c blah
 chdir = /somedir
 user = someone
 group = controls
+
 """)
 
             confname = t.dir+'/procServ.d/blah.conf'
             with open(confname, 'w') as F:
-                F.write("""
-[blah]
+                F.write(
+"""[blah]
 command = /bin/sh -c blah
 chdir = /somedir
 user = someone
 group = controls
+
 """)
 
             main(getargs(['remove', '-f', 'blah']), test=True)
@@ -74,8 +78,8 @@ group = controls
 
             confname = t.dir+'/procServ.d/blah.conf'
             with open(confname, 'w') as F:
-                F.write("""
-[blah]
+                F.write(
+"""[blah]
 command = /bin/sh -c blah
 chdir = /somedir
 user = someone
