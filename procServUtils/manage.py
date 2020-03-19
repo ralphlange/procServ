@@ -4,8 +4,6 @@ _log = logging.getLogger(__name__)
 
 import sys, os, errno
 import subprocess as SP
-from tabulate import tabulate
-from termcolor import colored
 
 from .conf import getconf, getrundir, getgendir, ConfigParser, addconf, delconf
 
@@ -23,7 +21,15 @@ _levels = [
 systemctl = '/bin/systemctl'
 journalctl = '/bin/journalctl'
 
+def check_req(conf, args):
+    if args.name not in conf.sections():
+        _log.error(' "%s" is not an active %s procServ.', args.name, 'user' if args.user else 'system')
+        sys.exit(1)
+
 def status(conf, args, fp=None):
+    from tabulate import tabulate
+    from termcolor import colored
+    
     rundir=getrundir(user=args.user)
     fp = fp or sys.stdout
 
@@ -87,24 +93,28 @@ def syslist(conf, args):
                     'procserv-*'])
 
 def startproc(conf, args):
+    check_req(conf, args)
     _log.info("Starting service procserv-%s.service", args.name)
     SP.call([systemctl,
             '--user' if args.user else '--system',
             'start', 'procserv-%s.service'%args.name])
 
 def stopproc(conf, args):
+    check_req(conf, args)
     _log.info("Stopping service procserv-%s.service", args.name)
     SP.call([systemctl,
             '--user' if args.user else '--system',
             'stop', 'procserv-%s.service'%args.name])
 
 def restartproc(conf, args):
+    check_req(conf, args)
     _log.info("Restarting service procserv-%s.service", args.name)
     SP.call([systemctl,
             '--user' if args.user else '--system',
             'restart', 'procserv-%s.service'%args.name])
 
 def showlogs(conf, args):
+    check_req(conf, args)
     _log.info("Opening logs of service procserv-%s.service", args.name)
     command = [journalctl,
             '--user-unit' if args.user else '--unit',
@@ -117,6 +127,7 @@ def showlogs(conf, args):
         pass    
 
 def attachproc(conf, args):
+    check_req(conf, args)
     from .attach import attach
     attach(args)
 
@@ -172,6 +183,8 @@ def addproc(conf, args):
         sys.stdout.write("# manage-procs %s start %s\n"%(argusersys, conf_name))
 
 def delproc(conf, args):
+    check_req(conf, args)
+        
     from .conf import getconffiles, ConfigParser
     for cfile in getconffiles(user=args.user):
         _log.debug('delproc processing %s', cfile)
@@ -219,6 +232,7 @@ def delproc(conf, args):
     _log.info("Resetting service procserv-%s.service", args.name)
     SP.call([systemctl,
                     '--user' if args.user else '--system',
+                    '--quiet',
                     'reset-failed', 
                     'procserv-%s.service'%args.name])
 
@@ -237,12 +251,10 @@ def delproc(conf, args):
     #sys.stdout.write("# systemctl stop procserv-%s.service\n"%args.name)
 
 def renameproc(conf, args):
+    check_req(conf, args)
     from .generator import run
 
     # copy settings from previous conf
-    if args.name not in conf.sections():
-        _log.error('Unknown process: "%s"', args.name)
-        sys.exit(1)
     items = conf.items(args.name)
     new_conf = ConfigParser()
     new_conf.add_section(args.new_name)
@@ -253,11 +265,15 @@ def renameproc(conf, args):
     addconf(args.new_name, new_conf, args.user, args.force)
 
     # delete previous proc
+    args.force = True
     delproc(conf, args)
     
+    # generate service files    
     outdir = getgendir(args.user)
-    argusersys = '--user' if args.user else '--system'
     run(outdir, user=args.user)
+
+    # register systemd service
+    argusersys = '--user' if args.user else '--system'
     SP.check_call([systemctl,
                    argusersys,
                    'enable',
