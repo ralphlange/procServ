@@ -72,9 +72,6 @@ def addconf(name, conf, user=False, force=False):
     with open(cfile, 'w') as F:
         conf.write(F)
 
-def delconf(name):
-    pass
-
 _defaults = {
     'user':'nobody',
     'group':'nogroup',
