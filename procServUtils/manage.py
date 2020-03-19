@@ -82,7 +82,7 @@ def status(conf, args, fp=None):
         table.append(instance)
     
     # Print results table
-    headers = ['PROCESS', 'STATE', 'PORT']
+    headers = ['PROCESS', 'STATUS', 'PORT']
     fp.write(tabulate(sorted(table), headers=headers, tablefmt="github")+ '\n')
 
 def syslist(conf, args):
@@ -116,15 +116,13 @@ def restartproc(conf, args):
 def showlogs(conf, args):
     check_req(conf, args)
     _log.info("Opening logs of service procserv-%s.service", args.name)
-    command = [journalctl,
-            '--user-unit' if args.user else '--unit',
-            'procserv-%s.service'%args.name]
-    if args.follow:
-        command.append('-f')
     try:
-        SP.call(command)
+        SP.call([journalctl,
+                '--user-unit' if args.user else '--unit',
+                'procserv-%s.service'%args.name] +
+                (['-f'] if args.follow else []))
     except KeyboardInterrupt:
-        pass    
+        pass
 
 def attachproc(conf, args):
     check_req(conf, args)
@@ -155,19 +153,19 @@ def addproc(conf, args):
     if args.username: new_conf.set(conf_name, "user", args.username)
     if args.group: new_conf.set(conf_name, "group", args.group)
     if args.port: new_conf.set(conf_name, "port", args.port)
-    if args.environment: 
+    if args.environment:
         new_conf.set(conf_name, "environment", ' '.join("\"%s\""%e for e in args.environment))
     if args.env_file: new_conf.set(conf_name, "env_file", args.env_file)
 
     # write conf file
     addconf(conf_name, new_conf, args.user, args.force)
 
-    # generate service files    
+    # generate service files
     outdir = getgendir(args.user)
     run(outdir, user=args.user)
 
     # register systemd service
-    argusersys = '--user' if args.user else '--system'    
+    argusersys = '--user' if args.user else '--system'
     SP.check_call([systemctl,
                    argusersys,
                    'enable',
@@ -185,7 +183,7 @@ def addproc(conf, args):
 
 def delproc(conf, args):
     check_req(conf, args)
-    
+
     for cfile in getconffiles(user=args.user):
         _log.debug('delproc processing %s', cfile)
 
@@ -233,7 +231,7 @@ def delproc(conf, args):
     SP.call([systemctl,
                     '--user' if args.user else '--system',
                     '--quiet',
-                    'reset-failed', 
+                    'reset-failed',
                     'procserv-%s.service'%args.name])
 
     _log.info('Triggering systemd reload')
@@ -267,8 +265,8 @@ def renameproc(conf, args):
     # delete previous proc
     args.force = True
     delproc(conf, args)
-    
-    # generate service files    
+
+    # generate service files
     outdir = getgendir(args.user)
     run(outdir, user=args.user)
 
