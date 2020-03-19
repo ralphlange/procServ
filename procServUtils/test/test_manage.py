@@ -38,7 +38,7 @@ chdir = /somedir
             with open(confname, 'r') as F:
                 content = F.read()
 
-            self.assertEqual(content, 
+            self.assertEqual(content,
 """[other]
 command = /bin/sh -c blah
 chdir = /somedir

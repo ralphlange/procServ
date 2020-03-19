@@ -38,7 +38,7 @@ def status(conf, args, fp=None):
         if not conf.getboolean(name, 'instance'):
             continue
         instance = ['%s '%name]
-        
+
         pid = None
         ports = []
         infoname = os.path.join(rundir, 'procserv-%s'%name, 'info')
@@ -80,7 +80,7 @@ def status(conf, args, fp=None):
             instance.append(colored('Stopped', 'red'))
         
         table.append(instance)
-    
+
     # Print results table
     headers = ['PROCESS', 'STATUS', 'PORT']
     fp.write(tabulate(sorted(table), headers=headers, tablefmt="github")+ '\n')
