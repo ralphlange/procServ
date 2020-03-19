@@ -23,7 +23,7 @@ See `manage-procs --help` for all the commands.
 
 ### User or system services
 
-All the `manage-procs` support one option to specify the destination of the service:
+All the `manage-procs` commands support one option to specify the destination of the service:
 
 - `manage-procs --system` will manage system-wide services. This is the default options
 when running as root.
@@ -94,5 +94,5 @@ This will automatically open the right port for the desired service.
 ### Open service log files
 All the output of the service is saved to the systemd log files. To open them run:
 ```
-manage-procs logs  [--follow] service_name
+manage-procs logs [--follow] service_name
 ```
