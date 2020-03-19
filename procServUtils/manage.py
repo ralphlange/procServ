@@ -5,7 +5,7 @@ _log = logging.getLogger(__name__)
 import sys, os, errno
 import subprocess as SP
 
-from .conf import getconf, getrundir, getgendir, ConfigParser, addconf, delconf
+from .conf import getconf, getrundir, getgendir, ConfigParser, addconf, getconffiles
 
 try:
     import shlex
@@ -185,8 +185,7 @@ def addproc(conf, args):
 
 def delproc(conf, args):
     check_req(conf, args)
-        
-    from .conf import getconffiles, ConfigParser
+    
     for cfile in getconffiles(user=args.user):
         _log.debug('delproc processing %s', cfile)
 
