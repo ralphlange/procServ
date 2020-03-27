@@ -82,7 +82,7 @@ manage-procs remove service_name
 ```
 To rename a service:
 ```bash
-manage-procs rename service_name
+manage-procs rename service_name new_service_name
 ```
 
 ### Attach to a service
