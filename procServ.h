@@ -21,7 +21,7 @@
 #include <time.h>
 
 /* whether to enable UNIX domain sockets */
-#ifdef __unix__
+#if defined(unix) || defined(__unix__) || defined(__unix) || defined(__APPLE__)
 #include <sys/un.h>
 # define USOCKS
 #endif
