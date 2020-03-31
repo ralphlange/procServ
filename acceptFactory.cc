@@ -18,6 +18,7 @@
 #include <pwd.h>
 #include <grp.h>
 #include <string.h>
+#include <sstream>
 
 #include "procServ.h"
 
@@ -47,6 +48,18 @@ struct acceptItemTCP : public acceptItem
         buf[sizeof(buf)-1] = '\0';
         fp<<"tcp:"<<buf<<":"<<ntohs(addr.sin_port)<<"\n";
     }
+
+    virtual void writeAddressEnv(std::ostringstream& env_var) {
+        char buf[40] = "";
+        inet_ntop(addr.sin_family, &addr.sin_addr, buf, sizeof(buf));
+        buf[sizeof(buf)-1] = '\0';
+        if(_readonly) {
+            env_var<<"LOG=";
+        } else {
+            env_var<<"CTL=";
+        }
+        env_var<<"tcp:"<<buf<<":"<<ntohs(addr.sin_port)<<";";
+    }
 };
 
 #ifdef USOCKS
@@ -69,6 +82,19 @@ struct acceptItemUNIX : public acceptItem
             fp<<"unix:@"<<&addr.sun_path[1]<<"\n";
         } else {
             fp<<"unix:"<<addr.sun_path<<"\n";
+        }
+    }
+
+    virtual void writeAddressEnv(std::ostringstream& env_var) {
+        if(_readonly) {
+            env_var<<"LOG=";
+        } else {
+            env_var<<"CTL=";
+        }
+        if(abstract) {
+            env_var<<"unix:@"<<&addr.sun_path[1]<<";";
+        } else {
+            env_var<<"unix:"<<addr.sun_path<<";";
         }
     }
 };

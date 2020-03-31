@@ -128,6 +128,7 @@ public:
     virtual bool isLogger() const { return _readonly; }
 
     virtual void writeAddress(std::ostream& fp) {}
+    virtual void writeAddressEnv(std::ostringstream& env_var) {}
 protected:
     connectionItem ( int fd = -1, bool readonly = false );
     int _fd;                 // File descriptor of this connection

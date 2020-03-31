@@ -12,6 +12,7 @@
 #include <vector>
 #include <string>
 #include <fstream>
+#include <sstream>
 
 #include <stdio.h>
 #include <assert.h>
@@ -102,6 +103,7 @@ void OnPollTimeout();
 // Daemonizes the program
 void forkAndGo();
 void openLogFile();
+void setEnvVar();
 void writeInfoFile(const std::string& infofile);
 void ttySetCharNoEcho(bool save);
 
@@ -554,6 +556,8 @@ int main(int argc,char * argv[])
     }
     writePidFile();
 
+    setEnvVar();
+
     if (!infofile.empty()) {
         writeInfoFile(infofile);
     }
@@ -921,6 +925,18 @@ void writeInfoFile(const std::string& infofile)
     info<<"pid:"<<getpid()<<"\n";
     for(connectionItem *it = connectionItem::head; it; it=it->next)
         it->writeAddress(info);
+}
+
+void setEnvVar()
+{
+    std::ostringstream env_var;
+    env_var<<"PID="<<getpid()<<";";
+    for(connectionItem *it = connectionItem::head; it; it=it->next)
+        it->writeAddressEnv(env_var);
+    std::string env_str = env_var.str();
+    // Remove the extra semicolon
+    env_str = env_str.substr(0, env_str.size()-1);
+    setenv("PROCSERV_INFO", env_str.c_str(), 1);
 }
 
 void ttySetCharNoEcho(bool set) {
