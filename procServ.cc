@@ -207,6 +207,7 @@ int main(int argc,char * argv[])
     int c;
     unsigned int i, j;
     int k;
+    long l;
     std::vector<std::string> ctlSpecs;
     char *command;
     bool bailout = false;
@@ -277,9 +278,9 @@ int main(int argc,char * argv[])
             break;
 
         case 'C':                                 // Core size
-            k = atoi( optarg );
-            if ( k >= 0 ) {
-                coreSize = k;
+            l = atol( optarg );
+            if ( l >= 0 ) {
+                coreSize = l;
                 setCoreSize = true;
             }
             break;
