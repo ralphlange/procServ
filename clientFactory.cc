@@ -222,7 +222,10 @@ void clientItem::processInput(const char *buf, int len)
             }
             if (toggleRestartChar && buf[i] == toggleRestartChar) {
                 if (restartMode == restart) restartMode = norestart;
-                else if (restartMode == norestart) restartMode = oneshot;
+                else if (restartMode == norestart) {
+                    restartMode = oneshot;
+                    firstRun    = true;	// Allow process to run once AFTER selecting oneshot
+                }
                 else restartMode = restart;
                 char msg[128] = NL;
                 PRINTF ("Got a toggleAutoRestart command\n");

@@ -40,6 +40,7 @@ extern bool   waitForManualStart;
 extern volatile bool shutdownServer;
 extern bool   setCoreSize;
 extern RestartMode restartMode;
+extern bool   firstRun;
 extern char   *procservName;
 extern char   *childName;
 extern char   *ignChars;

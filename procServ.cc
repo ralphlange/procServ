@@ -56,6 +56,7 @@ bool   quiet = false;            // Suppress info output (server)
 bool   setCoreSize = false;      // Set core size for child
 bool   singleEndpointStyle = true;  // Compatibility style: first non-option is endpoint
 RestartMode restartMode = restart;  // Child restart mode (restart/norestart/oneshot)
+bool   firstRun;                 // Has process run for purposes of oneshot restart mode
 char   *procservName;            // The name of this beast (server)
 char   *childName;               // The name of that beast (child)
 char   *childExec;               // Exec to run as child
@@ -214,7 +215,6 @@ int main(int argc,char * argv[])
     const size_t BUFLEN = 512;
     char buff[BUFLEN];
     std::string infofile;
-    bool firstRun;
 
     time(&procServStart);             // remember start time
     procservName = argv[0];
