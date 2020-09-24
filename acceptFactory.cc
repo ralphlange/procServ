@@ -184,12 +184,24 @@ void acceptItemTCP::remakeConnection()
         throw errno;
     }
 
-    setsockopt(_fd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
+    int setsockoptStatus = setsockopt(_fd, SOL_SOCKET, SO_REUSEADDR, &optval,
+                                      sizeof(optval));
+    if (setsockoptStatus < 0)
+        PRINTF("Setsockopt error while trying to set SO_REUSEADDR: %s\n",
+               strerror(errno));
 #ifdef SOLARIS
-    setsockopt(_fd, SOL_SOCKET, SO_EXCLBIND, &optval, sizeof(optval));
+    int setsockoptStatus = setsockopt(_fd, SOL_SOCKET, SO_EXCLBIND, &optval,
+                                      sizeof(optval));
+    if (setsockoptStatus < 0)
+        PRINTF("Setsockopt error while trying to set SO_EXCLBIND: %s\n",
+               strerror(errno));
 #endif
 #ifdef _WIN32
-    setsockopt(_fd, SOL_SOCKET, SO_EXCLUSIVEADDRUSE, &optval, sizeof(optval));
+    int setsockoptStatus = setsockopt(_fd, SOL_SOCKET, SO_EXCLUSIVEADDRUSE,
+                                      &optval, sizeof(optval));
+    if (setsockoptStatus < 0)
+        PRINTF("Setsockopt error while trying to set SO_EXCLUSIVEADDRUSE: %s\n",
+               strerror(errno));
 #endif
 
     bindStatus = bind(_fd, (struct sockaddr *) &addr, sizeof(addr));
