@@ -38,6 +38,8 @@ extern "C" int forkpty(int*, char*, void*, void*);
 #include "procServ.h"
 #include "processClass.h"
 
+using namespace std::literals::string_literals;
+
 #define LINEBUF_LENGTH 1024
 
 static void hideWindow();
@@ -106,12 +108,12 @@ processClass::~processClass()
                                           "oneshot mode: server will exit"));
 
     // Update client connect message
-    snprintf(infoMessage2, INFO2LEN, "@@@ Child \"%s\" is SHUT DOWN" NL, childName);
+    infoMessage2 = "@@@ Child \""s + childName + "\" is SHUT DOWN" NL;
 
     SendToAll( now_buf, strlen(now_buf), this );
     SendToAll( goodbye, strlen(goodbye), this );
     if (restartMode != oneshot)
-        SendToAll( infoMessage3, strlen(infoMessage3), this );
+        SendToAll( infoMessage3.c_str(), infoMessage3.length() + 1, this );
 
                                 // Negative PID sends signal to all members of process group
     if ( _pid > 0 ) kill( -_pid, SIGKILL );
@@ -188,7 +190,7 @@ processClass::processClass(char *exe, char *argv[])
         _restartTime = holdoffTime + time(0);
 
         // Update client connect message
-        snprintf(infoMessage2, INFO2LEN, "@@@ Child \"%s\" PID: %ld" NL, childName, (long) _pid);
+        infoMessage2 = "@@@ Child \""s + childName + "\" PID: " + std::to_string(_pid) + NL;
 
         snprintf(buf, BUFLEN, "@@@ The PID of new child \"%s\" is: %ld" NL, childName, (long) _pid);
         SendToAll( buf, strlen(buf), this );

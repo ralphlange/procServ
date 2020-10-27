@@ -36,6 +36,8 @@
 
 #include "procServ.h"
 
+using namespace std::literals::string_literals;
+
 // Wrapper to ignore return values
 template<typename T>
 inline void ignore_result(T /* unused result */) {}
@@ -82,13 +84,9 @@ char   defaulttimeFormat[] = "%c";    // default
 bool   stampLog = false;         // Prefix log lines with time stamp
 const char *stampFormat;             // Log time stamp format string
 
-const size_t INFO1LEN = 512;
-const size_t INFO2LEN = 128;
-const size_t INFO3LEN = 128;
-
-char   infoMessage1[INFO1LEN];   // Sign on message: server PID, child pwd and command line
-char   infoMessage2[INFO2LEN];   // Sign on message: child PID
-char   infoMessage3[INFO3LEN];   // Sign on message: available server commands
+std::string infoMessage1; // Sign on message: server PID, child pwd and command line
+std::string infoMessage2; // Sign on message: child PID
+std::string infoMessage3; // Sign on message: available server commands
 
 char   *logFile = NULL;          // File name for log
 int    logFileFD=-1;             // FD for log file
@@ -117,6 +115,19 @@ static void OnSigHup(int);
 static volatile sig_atomic_t sigPipeSet;
 static volatile sig_atomic_t sigTermSet;
 static volatile sig_atomic_t sigHupSet;
+
+bool is_cntrl_char(const char c) {
+  return c > 0 && c < 32;
+}
+
+std::string ctl_str(const char c) {
+  if (is_cntrl_char(c)) {
+    const char human_readable_representation = c + 64;
+    return std::string("^") + human_readable_representation;
+  } else {
+    return std::string(c, 1);
+  }
+}
 
 void writePidFile()
 {
@@ -212,8 +223,6 @@ int main(int argc,char * argv[])
     std::vector<std::string> ctlSpecs;
     char *command;
     bool bailout = false;
-    const size_t BUFLEN = 512;
-    char buff[BUFLEN];
     std::string infofile;
 
     time(&procServStart);             // remember start time
@@ -440,15 +449,13 @@ int main(int argc,char * argv[])
 
     // Set up available server commands message
     PRINTF("Setting up messages\n");
-    snprintf(infoMessage3, INFO3LEN,\
-            "@@@ %s%c or %s%c restarts the child, %s%c quits the server",
-            CTL_SC(restartChar), CTL_SC(killChar), CTL_SC(quitChar));
+    infoMessage3 = "@@@ "s + ctl_str(restartChar).c_str() + " or " +
+                               ctl_str(killChar).c_str() + " restarts the child, " +
+                               ctl_str(quitChar).c_str() + " quits the server";
     if (logoutChar) {
-        snprintf(buff, BUFLEN, ", %s%c closes this connection",
-                CTL_SC(logoutChar));
-        strncat(infoMessage3, buff, INFO3LEN-strlen(infoMessage3)-1);
+        infoMessage3 += ", "s + ctl_str(logoutChar).c_str() + " closes this connection";
     }
-    strncat(infoMessage3, NL, INFO3LEN-strlen(infoMessage3)-1);
+    infoMessage3 += NL;
 
     if (singleEndpointStyle) {
         ctlSpecs.push_back(argv[optind++]);
@@ -569,29 +576,19 @@ int main(int argc,char * argv[])
     }
 
     // Record some useful data for managers 
-    snprintf(infoMessage1, INFO1LEN,
-             "@@@ procServ server PID: %ld" NL
-             "@@@ Server startup directory: %s" NL
-             "@@@ Child startup directory: %s" NL,
-             (long) getpid(),
-             myDir,
-             chDir);
+    infoMessage1 = "@@@ procServ server PID: "s + std::to_string(getpid()) + NL +
+                   "@@@ Server startup directory: " + myDir + NL +
+                   "@@@ Child startup directory: " + chDir + NL;
     if ( strcmp( childName, command ) )
-        snprintf(buff, BUFLEN, "@@@ Child \"%s\" started as: %s" NL,
-                 childName, command );
+        infoMessage1 += "@@@ Child \""s + childName + "\" started as: " + command + NL;
     else
-        snprintf(buff, BUFLEN, "@@@ Child started as: %s" NL,
-                 command );
-    strncat(infoMessage1, buff, INFO1LEN-strlen(infoMessage1)-1);
-    snprintf(infoMessage2, INFO2LEN, "@@@ Child \"%s\" is SHUT DOWN" NL, childName);
+        infoMessage1 += "@@@ Child started as: "s + command + NL;
+    infoMessage2 = "@@@ Child \""s + childName + "\" is SHUT DOWN" NL;
     if ( logFile ) {
 	if ( -1 == logFileFD )
-            snprintf(buff, BUFLEN, "@@@ Child log file: unable to open log file %s" NL,
-                     logFile );
+            infoMessage1 += "@@@ Child log file: unable to open log file "s + logFile + NL;
 	else
-            snprintf(buff, BUFLEN, "@@@ Child log file: %s" NL,
-                     logFile );
-        strncat(infoMessage1, buff, INFO1LEN-strlen(infoMessage1)-1);
+            infoMessage1 += "@@@ Child log file: "s + logFile + NL;
     }
 
     firstRun = true;

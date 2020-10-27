@@ -51,12 +51,9 @@ extern char   restartChar;
 extern char   quitChar;
 extern char   logoutChar;
 extern int    killSig;
-extern const size_t INFO1LEN;
-extern const size_t INFO2LEN;
-extern const size_t INFO3LEN;
-extern char   infoMessage1[];
-extern char   infoMessage2[];
-extern char   infoMessage3[];
+extern std::string infoMessage1;
+extern std::string infoMessage2;
+extern std::string infoMessage3;
 extern pid_t  procservPid;
 extern rlim_t coreSize;
 extern char   *chDir;
@@ -64,7 +61,7 @@ extern time_t holdoffTime;
 
 #define NL "\r\n"
 
-#define CTL_SC(c) c > 0 && c < 32 ? "^" : "", c > 0 && c < 32 ? c + 64 : c
+std::string ctl_str(const char c);
 
 class connectionItem;
 
