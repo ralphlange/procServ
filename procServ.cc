@@ -36,8 +36,6 @@
 
 #include "procServ.h"
 
-using namespace std::literals::string_literals;
-
 // Wrapper to ignore return values
 template<typename T>
 inline void ignore_result(T /* unused result */) {}
@@ -449,11 +447,12 @@ int main(int argc,char * argv[])
 
     // Set up available server commands message
     PRINTF("Setting up messages\n");
-    infoMessage3 = "@@@ "s + ctl_str(restartChar).c_str() + " or " +
+    infoMessage3 = std::string("@@@ ") + ctl_str(restartChar).c_str() + " or " +
                                ctl_str(killChar).c_str() + " restarts the child, " +
                                ctl_str(quitChar).c_str() + " quits the server";
     if (logoutChar) {
-        infoMessage3 += ", "s + ctl_str(logoutChar).c_str() + " closes this connection";
+        infoMessage3 += std::string(", ") + ctl_str(logoutChar).c_str() +
+                        " closes this connection";
     }
     infoMessage3 += NL;
 
@@ -576,19 +575,21 @@ int main(int argc,char * argv[])
     }
 
     // Record some useful data for managers 
-    infoMessage1 = "@@@ procServ server PID: "s + std::to_string(getpid()) + NL +
+    infoMessage1 = std::string("@@@ procServ server PID: ") + std::to_string(getpid()) + NL +
                    "@@@ Server startup directory: " + myDir + NL +
                    "@@@ Child startup directory: " + chDir + NL;
     if ( strcmp( childName, command ) )
-        infoMessage1 += "@@@ Child \""s + childName + "\" started as: " + command + NL;
+        infoMessage1 += std::string("@@@ Child \"") + childName + "\" started as: " +
+                        command + NL;
     else
-        infoMessage1 += "@@@ Child started as: "s + command + NL;
-    infoMessage2 = "@@@ Child \""s + childName + "\" is SHUT DOWN" NL;
+        infoMessage1 += std::string("@@@ Child started as: ") + command + NL;
+    infoMessage2 = std::string("@@@ Child \"") + childName + "\" is SHUT DOWN" NL;
     if ( logFile ) {
 	if ( -1 == logFileFD )
-            infoMessage1 += "@@@ Child log file: unable to open log file "s + logFile + NL;
+            infoMessage1 += std::string("@@@ Child log file: unable to open log file ") +
+                            logFile + NL;
 	else
-            infoMessage1 += "@@@ Child log file: "s + logFile + NL;
+            infoMessage1 += std::string("@@@ Child log file: ") + logFile + NL;
     }
 
     firstRun = true;

@@ -38,8 +38,6 @@ extern "C" int forkpty(int*, char*, void*, void*);
 #include "procServ.h"
 #include "processClass.h"
 
-using namespace std::literals::string_literals;
-
 #define LINEBUF_LENGTH 1024
 
 static void hideWindow();
@@ -108,7 +106,7 @@ processClass::~processClass()
                                           "oneshot mode: server will exit"));
 
     // Update client connect message
-    infoMessage2 = "@@@ Child \""s + childName + "\" is SHUT DOWN" NL;
+    infoMessage2 = std::string("@@@ Child \"") + childName + "\" is SHUT DOWN" NL;
 
     SendToAll( now_buf, strlen(now_buf), this );
     SendToAll( goodbye, strlen(goodbye), this );
@@ -190,7 +188,7 @@ processClass::processClass(char *exe, char *argv[])
         _restartTime = holdoffTime + time(0);
 
         // Update client connect message
-        infoMessage2 = "@@@ Child \""s + childName + "\" PID: " + std::to_string(_pid) + NL;
+        infoMessage2 = std::string("@@@ Child \"") + childName + "\" PID: " + std::to_string(_pid) + NL;
 
         snprintf(buf, BUFLEN, "@@@ The PID of new child \"%s\" is: %ld" NL, childName, (long) _pid);
         SendToAll( buf, strlen(buf), this );

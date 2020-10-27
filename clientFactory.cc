@@ -18,8 +18,6 @@
 #include "processClass.h"
 #include "libtelnet.h"
 
-using namespace std::literals::string_literals;
-
 // Wrapper to ignore return values
 template<typename T>
 inline void ignore_result(T /* unused result */) {}
@@ -109,7 +107,7 @@ clientItem::clientItem(int socketIn, bool readonly) :
     } else {
         greeting2 += "@@@ Kill command disabled, ";
     }
-    greeting2 += "auto restart mode is "s + restartModeString() + ", ";
+    greeting2 += std::string("auto restart mode is ") + restartModeString() + ", ";
     if ( toggleRestartChar ) {
         greeting2 += "use " + ctl_str(toggleRestartChar) + " to toggle auto restart" NL;
     } else {
@@ -127,10 +125,10 @@ clientItem::clientItem(int socketIn, bool readonly) :
     strftime( IOCStart_buf, sizeof(IOCStart_buf)-1,
               timeFormat, &IOCStart_tm );
 
-    std::string buf1 = "@@@ procServ server started at: "s + procServStart_buf + NL;
+    std::string buf1 = std::string("@@@ procServ server started at: ") + procServStart_buf + NL;
 
     if ( processClass::exists() ) {
-        buf1 += "@@@ Child \""s + childName + "\" started at: " + IOCStart_buf + NL;
+        buf1 += std::string("@@@ Child \"") + childName + "\" started at: " + IOCStart_buf + NL;
     }
 
     std::string buf2 = "@@@ " + std::to_string(_users) + " user(s) and " + std::to_string(_loggers) + " logger(s) connected (plus you)" NL;
