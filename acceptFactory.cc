@@ -116,7 +116,7 @@ connectionItem * acceptFactory (const char *spec, bool local, bool readonly)
         inet_addr.sin_addr.s_addr = htonl(local ? INADDR_LOOPBACK : INADDR_ANY);
         inet_addr.sin_port = htons(port);
         if(port>0xffff) {
-            fprintf( stderr, "%s: invalid control port %d (<1024)\n",
+            fprintf( stderr, "%s: invalid control port %d (must be <65536)\n",
                      procservName, port );
             exit(1);
         }
@@ -129,7 +129,7 @@ connectionItem * acceptFactory (const char *spec, bool local, bool readonly)
         inet_addr.sin_addr.s_addr = htonl(local ? INADDR_LOOPBACK : (A[0]<<24 | A[1]<<16 | A[2]<<8 | A[3]));
         inet_addr.sin_port = htons(port);
         if(port>0xffff) {
-            fprintf( stderr, "%s: invalid control port %d (<1024)\n",
+            fprintf( stderr, "%s: invalid control port %d (must be <65536)\n",
                      procservName, port );
             exit(1);
         }
