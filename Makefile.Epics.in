@@ -15,6 +15,7 @@ procServ_SRCS = procServ.cc connectionItem.cc acceptFactory.cc \
 procServ_OBJS = @LIBOBJS@
 
 USR_CXXFLAGS += @DEFS@
+USR_CXXFLAGS += @CXXFLAGS@
 procServ_SYS_LIBS += $(subst -l,,@LIBS@)
 
 include $(TOP)/configure/RULES
