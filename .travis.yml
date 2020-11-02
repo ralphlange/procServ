@@ -3,6 +3,15 @@ cache:
     directories:
         - $HOME/.cache
 
+addons:
+  apt:
+    packages:
+    - autoconf-archive
+  homebrew:
+    packages:
+    - autoconf-archive
+    update: true
+
 jobs:
     include:
         - os: linux
