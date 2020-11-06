@@ -27,9 +27,16 @@ def check_req(conf, args):
         sys.exit(1)
 
 def status(conf, args, fp=None):
-    from tabulate import tabulate
-    from termcolor import colored
+    try:
+        from tabulate import tabulate
+    except ImportError:
+        from .fallbacks import tabulate
     
+    try:
+        from termcolor import colored
+    except ImportError:
+        from .fallbacks import colored
+
     rundir=getrundir(user=args.user)
     fp = fp or sys.stdout
 
@@ -323,7 +330,7 @@ def instances_completer(**kwargs):
 
 def getargs(args=None):
     from argparse import ArgumentParser, REMAINDER
-    from argcomplete import autocomplete
+    
     P = ArgumentParser()
     P.add_argument('--user', action='store_true', default=os.geteuid()!=0,
                    help='Consider user config')
@@ -395,7 +402,12 @@ def getargs(args=None):
     S.add_argument('extra', nargs=REMAINDER, help='extra args for telnet')
     S.set_defaults(func=attachproc)
 
-    autocomplete(P)
+    try:
+        from argcomplete import autocomplete
+        autocomplete(P)
+    except ImportError:
+        pass
+
     A = P.parse_args(args=args)
     if not hasattr(A, 'func'):
         P.print_help()
