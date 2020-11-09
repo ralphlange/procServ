@@ -93,3 +93,26 @@ group = controls
 
             self.assertTrue(os.path.isfile(confname))
             self.assertTrue(os.path.isfile(t.dir+'/procServ.d/other.conf'))
+
+    def test_rename(self):
+        with TestDir() as t:
+            main(getargs(['add', '-C', '/somedir', '-U', 'foo', '-G', 'bar', \
+                          'firstname', '--', '/bin/sh', '-c', 'blah']), test=True)
+            main(getargs(['rename', 'firstname', 'secondname']), test=True)
+
+            confname = t.dir+'/procServ.d/secondname.conf'
+
+            self.assertTrue(os.path.isfile(confname))
+            with open(confname, 'r') as F:
+                content = F.read()
+
+            self.assertEqual(content,
+"""[secondname]
+user = foo
+group = bar
+chdir = /somedir
+port = 0
+instance = 1
+command = /bin/sh -c blah
+
+""")
