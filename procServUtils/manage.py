@@ -173,15 +173,15 @@ def addproc(conf, args):
 
     # register systemd service
     argusersys = '--user' if args.user else '--system'
-    SP.check_call([systemctl,
-                   argusersys,
-                   'enable',
-                   "%s/procserv-%s.service"%(outdir, conf_name)])
-
     _log.info('Trigger systemd reload')
     SP.check_call([systemctl,
                    argusersys,
                    'daemon-reload'], shell=False)
+    
+    SP.check_call([systemctl,
+                   argusersys,
+                   'enable',
+                   "%s/procserv-%s.service"%(outdir, conf_name)])
 
     if args.autostart:
         startproc(conf, args)
@@ -237,9 +237,8 @@ def delproc(conf, args):
     _log.info("Resetting service procserv-%s.service", args.name)
     SP.call([systemctl,
                     '--user' if args.user else '--system',
-                    '--quiet',
                     'reset-failed',
-                    'procserv-%s.service'%args.name])
+                    'procserv-%s.service'%args.name], stderr=SP.DEVNULL)
 
     _log.info('Triggering systemd reload')
     SP.check_call([systemctl,
@@ -279,15 +278,15 @@ def renameproc(conf, args):
 
     # register systemd service
     argusersys = '--user' if args.user else '--system'
-    SP.check_call([systemctl,
-                   argusersys,
-                   'enable',
-                   "%s/procserv-%s.service"%(outdir, args.new_name)])
-
     _log.info('Trigger systemd reload')
     SP.check_call([systemctl,
                    argusersys,
                    'daemon-reload'], shell=False)
+    
+    SP.check_call([systemctl,
+                   argusersys,
+                   'enable',
+                   "%s/procserv-%s.service"%(outdir, args.new_name)])
 
     if args.autostart:
         args.name = args.new_name
