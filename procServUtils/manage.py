@@ -229,7 +229,7 @@ def delproc(conf, args):
     stopproc(conf, args)
 
     _log.info("Disabling service procserv-%s.service", args.name)
-    SP.call([systemctl,
+    SP.check_call([systemctl,
                    '--user' if args.user else '--system',
                    'disable',
                    "procserv-%s.service"%args.name])
