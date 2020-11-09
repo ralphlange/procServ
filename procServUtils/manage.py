@@ -257,6 +257,19 @@ def delproc(conf, args):
 
 def renameproc(conf, args):
     check_req(conf, args)
+    
+    if not args.force and sys.stdin.isatty():
+        while True:
+            sys.stdout.write("This will stop the service '%s' if it's running. Continue? [yN] "%(args.name))
+            sys.stdout.flush()
+            L = sys.stdin.readline().strip().upper()
+            if L=='Y':
+                break
+            elif L in ('N',''):
+                sys.exit(1)
+            else:
+                sys.stdout.write('\n')
+
     from .generator import run
 
     # copy settings from previous conf
@@ -367,7 +380,7 @@ def getargs(args=None):
     S.add_argument('name', help='Instance name').completer = instances_completer
     S.set_defaults(func=delproc)
 
-    S = SP.add_parser('rename', help='Rename a procServ instance')
+    S = SP.add_parser('rename', help='Rename a procServ instance. The instance will be stopped.')
     S.add_argument('-f','--force', action='store_true', default=False)
     S.add_argument('-A','--autostart',action='store_true', default=False,
                    help='Automatically start after renaming')

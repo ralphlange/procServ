@@ -120,6 +120,8 @@ To rename a service:
 manage-procs rename service_name new_service_name
 ```
 
+Note that this command will stop the service if it's running.
+
 ### Attach to a service
 
 `procServ` enables the user to see the output of the inner command and, eventually, interact with it through a telent port or a domain socket.
