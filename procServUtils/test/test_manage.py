@@ -98,21 +98,20 @@ group = controls
         with TestDir() as t:
             main(getargs(['add', '-C', '/somedir', '-U', 'foo', '-G', 'bar', \
                           'firstname', '--', '/bin/sh', '-c', 'blah']), test=True)
-            main(getargs(['rename', 'firstname', 'secondname']), test=True)
+            main(getargs(['rename', '-f', 'firstname', 'secondname']), test=True)
 
             confname = t.dir+'/procServ.d/secondname.conf'
 
             self.assertTrue(os.path.isfile(confname))
             with open(confname, 'r') as F:
-                content = F.read()
+                content = F.readlines()
 
-            self.assertEqual(content,
-"""[secondname]
-user = foo
-group = bar
-chdir = /somedir
-port = 0
-instance = 1
-command = /bin/sh -c blah
-
-""")
+            self.assertIn("[secondname]\n", content)
+            self.assertIn("user = foo\n", content)
+            self.assertIn("group = bar\n", content)
+            self.assertIn("chdir = /somedir\n", content)
+            self.assertIn("port = 0\n", content)
+            self.assertIn("instance = 1\n", content)
+            self.assertIn("command = /bin/sh -c blah\n", content)
+            self.assertIn("\n", content)
+            self.assertEqual(len(content), 8)

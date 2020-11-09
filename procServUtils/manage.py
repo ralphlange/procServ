@@ -235,8 +235,8 @@ def delproc(conf, args):
                    "procserv-%s.service"%args.name])
 
     _log.info("Resetting service procserv-%s.service", args.name)
-    devnull = open(os.devnull, 'w')
-    SP.call([systemctl,
+    with open(os.devnull, 'w') as devnull:
+        SP.call([systemctl,
                     '--user' if args.user else '--system',
                     'reset-failed',
                     'procserv-%s.service'%args.name], stderr=devnull)
