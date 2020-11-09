@@ -235,10 +235,11 @@ def delproc(conf, args):
                    "procserv-%s.service"%args.name])
 
     _log.info("Resetting service procserv-%s.service", args.name)
+    devnull = open(os.devnull, 'w')
     SP.call([systemctl,
                     '--user' if args.user else '--system',
                     'reset-failed',
-                    'procserv-%s.service'%args.name], stderr=SP.DEVNULL)
+                    'procserv-%s.service'%args.name], stderr=devnull)
 
     _log.info('Triggering systemd reload')
     SP.check_call([systemctl,
