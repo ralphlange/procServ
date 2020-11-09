@@ -31,7 +31,7 @@ def status(conf, args, fp=None):
         from tabulate import tabulate
     except ImportError:
         from .fallbacks import tabulate
-    
+
     try:
         from termcolor import colored
     except ImportError:
@@ -85,7 +85,7 @@ def status(conf, args, fp=None):
                 instance.append(' '.join(ports))
         else:
             instance.append(colored('Stopped', 'red'))
-        
+
         table.append(instance)
 
     # Print results table
@@ -177,7 +177,7 @@ def addproc(conf, args):
     SP.check_call([systemctl,
                    argusersys,
                    'daemon-reload'], shell=False)
-    
+
     SP.check_call([systemctl,
                    argusersys,
                    'enable',
@@ -282,7 +282,7 @@ def renameproc(conf, args):
     SP.check_call([systemctl,
                    argusersys,
                    'daemon-reload'], shell=False)
-    
+
     SP.check_call([systemctl,
                    argusersys,
                    'enable',
@@ -329,7 +329,7 @@ def instances_completer(**kwargs):
 
 def getargs(args=None):
     from argparse import ArgumentParser, REMAINDER
-    
+
     P = ArgumentParser()
     P.add_argument('--user', action='store_true', default=os.geteuid()!=0,
                    help='Consider user config')
@@ -375,7 +375,7 @@ def getargs(args=None):
     S.set_defaults(func=renameproc)
 
     S = SP.add_parser('write-procs-cf', help='Write conserver config')
-    S.add_argument('-f','--out',default='/etc/conserver/procs.cf') 
+    S.add_argument('-f','--out',default='/etc/conserver/procs.cf')
     S.add_argument('-R','--reload', action='store_true', default=False)
     S.set_defaults(func=writeprocs)
 
