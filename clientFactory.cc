@@ -95,32 +95,26 @@ clientItem::clientItem(int socketIn, bool readonly) :
     char procServStart_buf[32]; // Time when this procServ started - as string
     struct tm IOCStart_tm;      // Time when the current IOC was started
     char IOCStart_buf[32];      // Time when the current IOC was started - as string
-#define BUFLEN 512
-    char buf1[BUFLEN], buf2[BUFLEN];
-    char greeting1[] = "@@@ Welcome to procServ (" PROCSERV_VERSION_STRING ")" NL;
-#define GREETLEN 256
-    char greeting2[GREETLEN] = "";
+    const char greeting1[] = "@@@ Welcome to procServ (" PROCSERV_VERSION_STRING ")" NL;
+    std::string greeting2 {};
     struct timeval send_timeout;
     send_timeout.tv_sec = 10;
     send_timeout.tv_usec = 0;
 
     PRINTF("New clientItem %p\n", this);
     if ( killChar ) {
-        snprintf(greeting2, GREETLEN, "@@@ Use %s%c to kill the child, ", CTL_SC(killChar));
+        greeting2 += "@@@ Use " + ctl_str(killChar) + " to kill the child, ";
     } else {
-        snprintf(greeting2, GREETLEN, "@@@ Kill command disabled, ");
+        greeting2 += "@@@ Kill command disabled, ";
     }
-    snprintf(buf1, BUFLEN, "auto restart mode is %s, ", restartModeString());
+    greeting2 += std::string("auto restart mode is ") + restartModeString() + ", ";
     if ( toggleRestartChar ) {
-        snprintf(buf2, BUFLEN, "use %s%c to toggle auto restart" NL, CTL_SC(toggleRestartChar));
+        greeting2 += "use " + ctl_str(toggleRestartChar) + " to toggle auto restart" NL;
     } else {
-        snprintf(buf2, BUFLEN, "auto restart toggle disabled" NL);
+        greeting2 += "auto restart toggle disabled" NL;
     }
-    strncat(greeting2, buf1, GREETLEN-strlen(greeting2)-1);
-    strncat(greeting2, buf2, GREETLEN-strlen(greeting2)-1);
     if (logoutChar) {
-        snprintf(buf2, BUFLEN, "@@@ Use %s%c to logout from procServ server" NL, CTL_SC(logoutChar));
-        strncat(greeting2, buf2, GREETLEN-strlen(greeting2)-1);
+        greeting2 += "@@@ Use " + ctl_str(logoutChar) + " to logout from procServ server" NL;
     }
 
     localtime_r( &procServStart, &procServStart_tm );
@@ -131,17 +125,13 @@ clientItem::clientItem(int socketIn, bool readonly) :
     strftime( IOCStart_buf, sizeof(IOCStart_buf)-1,
               timeFormat, &IOCStart_tm );
 
-    snprintf(buf1, BUFLEN, "@@@ procServ server started at: %s" NL,
-             procServStart_buf);
+    std::string buf1 = std::string("@@@ procServ server started at: ") + procServStart_buf + NL;
 
     if ( processClass::exists() ) {
-        snprintf(buf2, BUFLEN, "@@@ Child \"%s\" started at: %s" NL,
-                 childName, IOCStart_buf );
-        strncat(buf1, buf2, BUFLEN-strlen(buf1)-1);
+        buf1 += std::string("@@@ Child \"") + childName + "\" started at: " + IOCStart_buf + NL;
     }
 
-    snprintf(buf2, BUFLEN, "@@@ %d user(s) and %d logger(s) connected (plus you)" NL,
-             _users, _loggers);
+    std::string buf2 = "@@@ " + std::to_string(_users) + " user(s) and " + std::to_string(_loggers) + " logger(s) connected (plus you)" NL;
 
     setsockopt( socketIn, SOL_SOCKET, SO_KEEPALIVE, &optval, sizeof(optval) );
     setsockopt( socketIn, SOL_SOCKET, SO_SNDTIMEO, &send_timeout, sizeof(send_timeout) );
@@ -151,16 +141,16 @@ clientItem::clientItem(int socketIn, bool readonly) :
     } else {                    // Regular (user) client
         _users++;
         ignore_result( write(_fd, greeting1, strlen(greeting1)) );
-        ignore_result( write(_fd, greeting2, strlen(greeting2)) );
+        ignore_result( write(_fd, greeting2.c_str(), greeting2.length() + 1) );
     }
 
-    ignore_result( write(_fd, infoMessage1, strlen(infoMessage1)) );
-    ignore_result( write( _fd, infoMessage2, strlen(infoMessage2)) );
-    ignore_result( write( _fd, buf1, strlen(buf1)) );
+    ignore_result( write(_fd, infoMessage1.c_str(), infoMessage1.length() + 1) );
+    ignore_result( write( _fd, infoMessage2.c_str(), infoMessage2.length() + 1) );
+    ignore_result( write( _fd, buf1.c_str(), buf1.length() + 1) );
     if ( ! _readonly )
-        ignore_result( write(_fd, buf2, strlen(buf2)) );
+        ignore_result( write(_fd, buf2.c_str(), buf2.length() + 1) );
     if ( ! processClass::exists() )
-        ignore_result( write(_fd, infoMessage3, strlen(infoMessage3)) );
+        ignore_result( write(_fd, infoMessage3.c_str(), infoMessage3.length() + 1) );
 
     _telnet = telnet_init(my_telopts, telnet_eh, 0, this);
 

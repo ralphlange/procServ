@@ -44,6 +44,7 @@ AC_TYPE_MODE_T
 AC_TYPE_PID_T
 AC_C_RESTRICT
 AC_STRUCT_TM
+AX_CXX_COMPILE_STDCXX_11([noext], [mandatory])
 
 # Checks for library functions.
 AC_FUNC_FORK
