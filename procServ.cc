@@ -118,9 +118,8 @@ static volatile sig_atomic_t sigPipeSet;
 static volatile sig_atomic_t sigTermSet;
 static volatile sig_atomic_t sigHupSet;
 
-void writePidFile()
+void writePidFile(int pid)
 {
-    int pid = getpid();
     FILE * fp;
 
     if ( !pidFile || strlen(pidFile) == 0 )
@@ -554,8 +553,9 @@ int main(int argc,char * argv[])
     else
     {
         debugFD = 1;          // Enable debug messages
+        // Write pidfile in foreground mode
+        writePidFile(procservPid);
     }
-    writePidFile();
 
     setEnvVar();
 
@@ -869,11 +869,20 @@ void forkAndGo()
     pid_t p;
     int fh;
 
+    char buf[] = "/dev/null";
+    fh = open(buf, O_RDWR);
+    if (fh < 0) {
+        perror("Could not open /dev/null (for fork)");
+        exit(-1);
+    }
+
     if ((p = fork()) < 0) {  // Fork failed
         perror("Could not fork daemon process");
+        close(fh);
         exit(errno);
 
     } else if (p > 0) {      // I am the PARENT (foreground command)
+        close(fh);
         if (!quiet) {
             fprintf(stderr, "%s: spawning daemon process: %ld\n", procservName, (long) p);
             if (-1 == logFileFD) {
@@ -881,15 +890,15 @@ void forkAndGo()
                         logPort ? "" : " and no port for log connections");
             }
         }
+        // Write the pid file _on behalf of the child_ before exiting.
+        // This removes a race condition using a type=forking systemd service
+        writePidFile(p);
         exit(0);
 
     } else {                 // I am the CHILD (background daemon)
         procservPid = getpid();
 
         // Redirect stdin, stdout, stderr to /dev/null
-        char buf[] = "/dev/null";
-        fh = open(buf, O_RDWR);
-        if (fh < 0) { perror(buf); exit(-1); }
         close(0); close(1); close(2);
         ignore_result( dup(fh) ); ignore_result( dup(fh) ); ignore_result( dup(fh) );
         close(fh);
