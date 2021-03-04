@@ -161,7 +161,7 @@ start and stop configured procServ instances,
 generate lists of the instances known on the current host
 and report their status.
 
-For more details, check the manpage and use the script's `-h` option.
+For more details, see its [README](procServUtils/README.md) or check the manpage and use the script's `-h` option.
 
 For older systems using SysV-style rc scripts, you can look at the
 [Debian packaging](http://epics.nsls2.bnl.gov/debian/) or

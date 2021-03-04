@@ -19,10 +19,11 @@ class TestGen(unittest.TestCase):
             with open(confname, 'r') as F:
                 content = F.read()
 
-            self.assertEqual(content, """
-[instname]
+            self.assertEqual(content,
+"""[instname]
 command = /bin/sh -c blah
 chdir = /somedir
+
 """)
 
             main(getargs(['add',
@@ -37,34 +38,37 @@ chdir = /somedir
             with open(confname, 'r') as F:
                 content = F.read()
 
-            self.assertEqual(content, """
-[other]
+            self.assertEqual(content,
+"""[other]
 command = /bin/sh -c blah
 chdir = /somedir
 user = someone
 group = controls
+
 """)
 
     def test_remove(self):
         with TestDir() as t:
             # we won't remove this config, so it should not be touched
             with open(t.dir+'/procServ.d/other.conf', 'w') as F:
-                F.write("""
-[other]
+                F.write(
+"""[other]
 command = /bin/sh -c blah
 chdir = /somedir
 user = someone
 group = controls
+
 """)
 
             confname = t.dir+'/procServ.d/blah.conf'
             with open(confname, 'w') as F:
-                F.write("""
-[blah]
+                F.write(
+"""[blah]
 command = /bin/sh -c blah
 chdir = /somedir
 user = someone
 group = controls
+
 """)
 
             main(getargs(['remove', '-f', 'blah']), test=True)
@@ -74,8 +78,8 @@ group = controls
 
             confname = t.dir+'/procServ.d/blah.conf'
             with open(confname, 'w') as F:
-                F.write("""
-[blah]
+                F.write(
+"""[blah]
 command = /bin/sh -c blah
 chdir = /somedir
 user = someone
@@ -89,3 +93,25 @@ group = controls
 
             self.assertTrue(os.path.isfile(confname))
             self.assertTrue(os.path.isfile(t.dir+'/procServ.d/other.conf'))
+
+    def test_rename(self):
+        with TestDir() as t:
+            main(getargs(['add', '-C', '/somedir', '-U', 'foo', '-G', 'bar', \
+                          'firstname', '--', '/bin/sh', '-c', 'blah']), test=True)
+            main(getargs(['rename', '-f', 'firstname', 'secondname']), test=True)
+
+            confname = t.dir+'/procServ.d/secondname.conf'
+
+            self.assertTrue(os.path.isfile(confname))
+            with open(confname, 'r') as F:
+                content = F.readlines()
+
+            self.assertIn("[secondname]\n", content)
+            self.assertIn("user = foo\n", content)
+            self.assertIn("group = bar\n", content)
+            self.assertIn("chdir = /somedir\n", content)
+            self.assertIn("port = 0\n", content)
+            self.assertIn("instance = 1\n", content)
+            self.assertIn("command = /bin/sh -c blah\n", content)
+            self.assertIn("\n", content)
+            self.assertEqual(len(content), 8)

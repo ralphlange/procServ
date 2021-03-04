@@ -29,4 +29,5 @@ setup(
         ('lib/systemd/user-generators', ['systemd-procserv-generator-user']),
     ],
     cmdclass = { 'install_data': custom_install_data },
+    #install_requires=['argcomplete', 'tabulate', 'termcolor'],
 )
