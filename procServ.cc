@@ -657,7 +657,7 @@ int main(int argc,char * argv[])
                   PRINTF("Option oneshot is set... exiting\n");
                   shutdownServer = true;
                 } else {
-                  npi= processFactory(childExec, childArgv);
+                  npi= processFactory(childExec, childArgv, &sigset_pselect);
                   if (npi) AddConnection(npi);
                   if (firstRun) {
                   	firstRun = false;
