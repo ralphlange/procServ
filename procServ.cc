@@ -109,12 +109,10 @@ void writeInfoFile(const std::string& infofile);
 void ttySetCharNoEcho(bool save);
 
 // Signal handlers
-static void OnSigPipe(int);
 static void OnSigTerm(int);
 static void OnSigHup(int);
 
 // Flags used for communication between sig handler and main()
-static volatile sig_atomic_t sigPipeSet;
 static volatile sig_atomic_t sigTermSet;
 static volatile sig_atomic_t sigHupSet;
 
@@ -476,7 +474,7 @@ int main(int argc,char * argv[])
 
     PRINTF("Installing signal handlers\n");
 
-    // SIGPIPE, SIGTERM and SIGHUP will be handled in the main loop
+    // SIGTERM and SIGHUP will be handled in the main loop
     // with the assistance of pselect. This means that we have them
     // blocked outside of pselect call, but unblocked atomically
     // within pselect. Each time pselect returns, we safely check if
@@ -501,14 +499,11 @@ int main(int argc,char * argv[])
     }
     sigprocmask(SIG_BLOCK, &sigset_block, &sigset_child);
 
-    // enable SIGPIPE, SIGTERM and SIGHUP during pselect
+    // enable SIGTERM and SIGHUP during pselect
     sigprocmask(0, NULL, &sigset_pselect);
     sigdelset(&sigset_pselect, SIGTERM);
     sigdelset(&sigset_pselect, SIGHUP);
-    sigdelset(&sigset_pselect, SIGPIPE);
 
-    sig.sa_handler = &OnSigPipe;              // sigaction() needed for Solaris
-    sigaction(SIGPIPE, &sig, NULL);
     sig.sa_handler = &OnSigTerm;
     sigaction(SIGTERM, &sig, NULL);
     sig.sa_handler = &OnSigHup;
@@ -604,8 +599,6 @@ int main(int argc,char * argv[])
     // Run here until something makes it die
     while ( ! shutdownServer )
     {
-        const size_t BUFLEN = 100;
-        char buf[BUFLEN];
         connectionItem * p;
         fd_set fdset;              // FD stuff for select()
         int fd, nFd;
@@ -630,12 +623,6 @@ int main(int argc,char * argv[])
         ready = pselect(nFd, &fdset, NULL, NULL, &timeout, &sigset_pselect);
         
         // Handle signals for which signal handlers were called while in pselect.
-        
-        if (sigPipeSet) {
-            sigPipeSet = 0;
-            sprintf( buf, "@@@ Got a sigPipe signal: Did the child close its tty?" NL);
-            SendToAll( buf, strlen(buf), NULL );
-        }
         
         if (sigTermSet) {
             sigTermSet = 0;
@@ -852,11 +839,6 @@ void DeleteConnection(connectionItem *ci)
         delete ci;
 	connectionNo--;
 	assert(connectionNo>=0);
-}
-
-static void OnSigPipe(int)
-{
-    sigPipeSet = 1;
 }
 
 static void OnSigTerm(int)
