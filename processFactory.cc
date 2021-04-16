@@ -55,7 +55,7 @@ bool processFactoryNeedsRestart()
     return true;
 }
 
-connectionItem * processFactory(char *exe, char *argv[])
+connectionItem * processFactory(char *exe, char *argv[], sigset_t *sigset)
 {
     const size_t BUFLEN = 512;
     char buf[BUFLEN];
@@ -71,7 +71,7 @@ connectionItem * processFactory(char *exe, char *argv[])
             SendToAll( buf, strlen(buf), 0 );
         }
 
-        connectionItem *ci = new processClass(exe, argv);
+        connectionItem *ci = new processClass(exe, argv, sigset);
         PRINTF("Created new child connection (processClass %p)\n", ci);
 	return ci;
     }
@@ -126,7 +126,7 @@ processClass::~processClass()
 //    parent: sets the minimum time for the next restart
 //    child:  sets the coresize, becomes a process group leader,
 //            and does an execvp() with the command
-processClass::processClass(char *exe, char *argv[])
+processClass::processClass(char *exe, char *argv[], sigset_t *sigset)
 {
     _runningItem=this;
     struct rlimit corelimit;
@@ -208,6 +208,7 @@ processClass::processClass(char *exe, char *argv[])
             corelimit.rlim_cur = coreSize;
             setrlimit( RLIMIT_CORE, &corelimit );
         }
+        sigprocmask(SIG_SETMASK, sigset, NULL);
         if ( chDir && chdir( chDir ) ) {
             fprintf( stderr, "%s: child could not chdir to %s, %s\n",
                      procservName, chDir, strerror(errno) );

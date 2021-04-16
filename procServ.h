@@ -87,7 +87,7 @@ void DeleteConnection(connectionItem *ci);
 // constructors are public:
 
 // processFactory creates the process that we are managing
-connectionItem * processFactory(char *exe, char *argv[]);
+connectionItem * processFactory(char *exe, char *argv[], sigset_t *sigset);
 bool processFactoryNeedsRestart(); // Call to test status of the server process
 void processFactorySendSignal(int signal);
 
