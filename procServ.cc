@@ -95,6 +95,116 @@ int    logFileFD=-1;             // FD for log file
 char  *logPort;                  // address for logger connections
 int    debugFD=-1;               // FD for debug output
 
+#define SIGNALDEF(s) {s, #s},
+static struct {int sig; const char* name;} signals[] = {
+/* POSIX.1-1990 signals */
+            SIGNALDEF(SIGHUP)
+            SIGNALDEF(SIGINT)
+            SIGNALDEF(SIGQUIT)
+            SIGNALDEF(SIGILL)
+            SIGNALDEF(SIGABRT)
+            SIGNALDEF(SIGFPE)
+            SIGNALDEF(SIGKILL)
+            SIGNALDEF(SIGSEGV)
+            SIGNALDEF(SIGPIPE)
+            SIGNALDEF(SIGALRM)
+            SIGNALDEF(SIGTERM)
+            SIGNALDEF(SIGUSR1)
+            SIGNALDEF(SIGUSR2)
+            SIGNALDEF(SIGCHLD)
+            SIGNALDEF(SIGCONT)
+            SIGNALDEF(SIGSTOP)
+            SIGNALDEF(SIGTSTP)
+            SIGNALDEF(SIGTTIN)
+            SIGNALDEF(SIGTTOU)
+/* POSIX.1-2001 signals */
+#ifdef SIGBUS
+            SIGNALDEF(SIGBUS)
+            SIGNALDEF(SIGPOLL)
+            SIGNALDEF(SIGPROF)
+            SIGNALDEF(SIGSYS)
+            SIGNALDEF(SIGTRAP)
+            SIGNALDEF(SIGURG)
+            SIGNALDEF(SIGVTALRM)
+            SIGNALDEF(SIGXCPU)
+            SIGNALDEF(SIGXFSZ)
+#endif
+/* other signals */
+#ifdef SIGIOT
+            SIGNALDEF(SIGIOT)
+#endif
+#ifdef SIGEMT
+            SIGNALDEF(SIGEMT)
+#endif
+#ifdef SIGSTKFLT
+            SIGNALDEF(SIGSTKFLT)
+#endif
+#ifdef SIGIO
+            SIGNALDEF(SIGIO)
+#endif
+#ifdef SIGCLD
+            SIGNALDEF(SIGCLD)
+#endif
+#ifdef SIGPWR
+            SIGNALDEF(SIGPWR)
+#endif
+#ifdef SIGINFO
+            SIGNALDEF(SIGINFO)
+#endif
+#ifdef SIGLOST
+            SIGNALDEF(SIGLOST)
+#endif
+#ifdef SIGWINCH
+            SIGNALDEF(SIGWINCH)
+#endif
+#ifdef SIGUNUSED
+            SIGNALDEF(SIGUNUSED)
+#endif
+            {0, 0}
+};
+
+static const char* signalname(int sig)
+{
+    int i;
+    for (i = 0; signals[i].sig != 0; i++)
+        if (signals[i].sig == sig)
+            return signals[i].name;
+#ifdef SIGRTMIN
+    if (sig >= SIGRTMIN && sig <= SIGRTMAX)
+    {
+        static char name[] = "SIGRTMIN+XXXXXXXX";
+        sprintf(name+9,"%d", sig - SIGRTMIN);
+        return name;
+    }
+#endif
+    return "<INVALID SIGNAL>";
+}
+
+static int str_to_signal(const char* str)
+{
+    int i;
+    char* end;
+    long sig = 0;
+    if (!str) return -1;
+    sig = strtol(str, &end, 0);
+    if (!*end && sig > 0 && sig < NSIG) return sig;
+    if (strncasecmp(str, "SIG", 3) == 0) str+=3;
+    for (i = 0; signals[i].sig != 0; i++)
+        if (strcasecmp(str, signals[i].name+3) == 0)
+            return signals[i].sig;
+#ifdef SIGRTMIN
+    if (strncasecmp(str, "RTMIN", 5) == 0)
+        sig = SIGRTMIN;
+    else if (strncasecmp(str, "RTMAX", 5) == 0)
+        sig = SIGRTMAX;
+    else return -1;
+    sig += strtol(str+5, &end, 0);
+    if (!*end && sig >= SIGRTMIN && sig <= SIGRTMAX)
+        return sig;
+#endif
+    return -1;
+}
+
 #define MAX_CONNECTIONS 64
 
 // mLoop runs the program
@@ -179,7 +289,7 @@ void printHelp()
            " -i --ignore <str>        ignore all chars in <str> (^ for ctrl)\n"
            " -I --info-file <file>    write instance information to this file\n"
            " -k --killcmd <str>       command to kill (reboot) the child (^ for ctrl)\n"
-           "    --killsig <n>         signal to send to child when killing\n"
+           "    --killsig <n/str>     signal to send to child when killing\n"
            " -l --logport <endpoint>  allow log connections through telnet <endpoint>\n"
            " -L --logfile <file>      write log to <file>, '-' logs to stdout\n"
            "    --logstamp [<str>]    prefix log lines with timestamp [strftime format]\n"
@@ -344,13 +454,13 @@ int main(int argc,char * argv[])
             break;
 
         case 'K':                                 // Kill signal
-            i = abs( atoi( optarg ) );
-            if ( i < 32 ) {
-                killSig = i;
+            k = str_to_signal ( optarg );
+            if ( k>=0 ) {
+                killSig = k;
             } else {
                 fprintf( stderr,
-                         "%s: invalid kill signal %d (>31) - using default (%d)\n",
-                         procservName, i, killSig );
+                         "%s: invalid kill signal %s - using default (%d %s)\n",
+                         procservName, optarg, killSig, signalname(killSig));
             }
             break;
 
@@ -797,8 +907,8 @@ void OnPollTimeout()
 
         if (WIFSIGNALED(wstatus)) {
             snprintf(buf+strlen(buf), BUFLEN-strlen(buf),
-                     " The process was killed by signal %d",
-                     WTERMSIG(wstatus));
+                     " The process was killed by %s",
+                     signalname(WTERMSIG(wstatus)));
         }
         strncat(buf, NL, BUFLEN-strlen(buf)-1);
         SendToAll(buf, strlen(buf), NULL);
