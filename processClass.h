@@ -15,11 +15,11 @@
 
 class processClass : public connectionItem
 {
-friend connectionItem * processFactory(char *exe, char *argv[]);
+friend connectionItem * processFactory(char *exe, char *argv[], sigset_t *sigset);
 friend bool processFactoryNeedsRestart();
 friend void processFactorySendSignal(int signal);
 public:
-    processClass(char *exe, char *argv[]);
+    processClass(char *exe, char *argv[], sigset_t *sigset);
     void readFromFd(void);
     int Send(const char *,int);
     void markDeadIfChildIs(pid_t pid) { if (pid==_pid) _markedForDeletion=true; }

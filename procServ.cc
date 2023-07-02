@@ -109,12 +109,10 @@ void writeInfoFile(const std::string& infofile);
 void ttySetCharNoEcho(bool save);
 
 // Signal handlers
-static void OnSigPipe(int);
 static void OnSigTerm(int);
 static void OnSigHup(int);
 
 // Flags used for communication between sig handler and main()
-static volatile sig_atomic_t sigPipeSet;
 static volatile sig_atomic_t sigTermSet;
 static volatile sig_atomic_t sigHupSet;
 
@@ -475,38 +473,41 @@ int main(int argc,char * argv[])
     memset(&sig, 0, sizeof(sig));
 
     PRINTF("Installing signal handlers\n");
-    
-    // SIGPIPE, SIGTERM and SIGHUP will be handled in the main loop
+
+    // SIGTERM and SIGHUP will be handled in the main loop
     // with the assistance of pselect. This means that we have them
     // blocked outside of pselect call, but unblocked atomically
     // within pselect. Each time pselect returns, we safely check if
     // any of the signals were received.
-    
-    // Block the signals that we bill be handling in the main loop.
+
+    // Block the signals that we will be handling in the main loop
+    // and re-enable them during pselect.
     // At the same time, retrieve the original signal mask before
-    // blocking, to be passed to pselect.
+    // blocking, to be passed to the child processes.
+
     sigset_t sigset_block;
+    sigset_t sigset_child;
     sigset_t sigset_pselect;
     sigemptyset(&sigset_block);
     sigaddset(&sigset_block, SIGPIPE);
     sigaddset(&sigset_block, SIGTERM);
     sigaddset(&sigset_block, SIGHUP);
-    sigprocmask(SIG_BLOCK, &sigset_block, &sigset_pselect);
-    
-    sig.sa_handler = &OnSigPipe;              // sigaction() needed for Solaris
-    sigaction(SIGPIPE, &sig, NULL);
+    sigaddset(&sigset_block, SIGXFSZ);
+    if (inFgMode) {
+        sigaddset(&sigset_block, SIGINT);
+        sigaddset(&sigset_block, SIGQUIT);
+    }
+    sigprocmask(SIG_BLOCK, &sigset_block, &sigset_child);
+
+    // enable SIGTERM and SIGHUP during pselect
+    sigprocmask(0, NULL, &sigset_pselect);
+    sigdelset(&sigset_pselect, SIGTERM);
+    sigdelset(&sigset_pselect, SIGHUP);
+
     sig.sa_handler = &OnSigTerm;
     sigaction(SIGTERM, &sig, NULL);
     sig.sa_handler = &OnSigHup;
     sigaction(SIGHUP, &sig, NULL);
-    sig.sa_handler = SIG_IGN;
-    sigaction(SIGXFSZ, &sig, NULL);
-    if (inFgMode) {
-        sig.sa_handler = SIG_IGN;
-        sigaction(SIGINT, &sig, NULL);
-        sig.sa_handler = SIG_IGN;
-        sigaction(SIGQUIT, &sig, NULL);
-    }
 
     // Make an accept item to listen for control connections
     PRINTF("Creating control listener\n");
@@ -598,8 +599,6 @@ int main(int argc,char * argv[])
     // Run here until something makes it die
     while ( ! shutdownServer )
     {
-        const size_t BUFLEN = 100;
-        char buf[BUFLEN];
         connectionItem * p;
         fd_set fdset;              // FD stuff for select()
         int fd, nFd;
@@ -624,12 +623,6 @@ int main(int argc,char * argv[])
         ready = pselect(nFd, &fdset, NULL, NULL, &timeout, &sigset_pselect);
         
         // Handle signals for which signal handlers were called while in pselect.
-        
-        if (sigPipeSet) {
-            sigPipeSet = 0;
-            sprintf( buf, "@@@ Got a sigPipe signal: Did the child close its tty?" NL);
-            SendToAll( buf, strlen(buf), NULL );
-        }
         
         if (sigTermSet) {
             sigTermSet = 0;
@@ -657,7 +650,7 @@ int main(int argc,char * argv[])
                   PRINTF("Option oneshot is set... exiting\n");
                   shutdownServer = true;
                 } else {
-                  npi= processFactory(childExec, childArgv);
+                  npi= processFactory(childExec, childArgv, &sigset_child);
                   if (npi) AddConnection(npi);
                   if (firstRun) {
                   	firstRun = false;
@@ -846,11 +839,6 @@ void DeleteConnection(connectionItem *ci)
         delete ci;
 	connectionNo--;
 	assert(connectionNo>=0);
-}
-
-static void OnSigPipe(int)
-{
-    sigPipeSet = 1;
 }
 
 static void OnSigTerm(int)
