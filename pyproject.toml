@@ -1,0 +1,35 @@
+[build-system]
+requires = [
+	"setuptools>=68"
+]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["procServUtils"]
+
+[project]
+name = "procServUtils"
+version = "2.9.0-dev"
+authors = [
+  { name="Ralph Lange", email="ralph.lange@gmx.de" },
+  { name="William Kirstaedter", email="wk@fhi.mpg.de" },
+]
+description = "Support scripts for procServ"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: GNU GPLv3",
+    "Operating System :: Unix",
+]
+
+[project.scripts]
+manage-procs = "procServUtils.manage:entrypoint"
+procServ-launcher = "procServUtils.launch:entrypoint"
+
+[project.urls]
+"Homepage" = "https://github.com/ralphlange/procServ"
+"Bug Tracker" = "https://github.com/ralphlange/procServ/issues"
+

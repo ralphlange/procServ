@@ -60,3 +60,5 @@ procServ.pdf
 # python
 *.pyc
 *.pyo
+dist
+*.egg-info
