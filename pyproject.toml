@@ -10,8 +10,6 @@ include = ["procServUtils"]
 [project]
 name = "procServUtils"
 version = "2.9.1-dev"
-author = "Ralph Lange"
-author_email = "ralph.lange@gmx.de"
 authors = [
   { name="Ralph Lange", email="ralph.lange@gmx.de" },
   { name="William Kirstaedter", email="wk@fhi.mpg.de" },
