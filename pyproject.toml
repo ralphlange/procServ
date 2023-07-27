@@ -1,6 +1,6 @@
 [build-system]
 requires = [
-	"setuptools>=68"
+	"setuptools>=30.3.0"
 ]
 build-backend = "setuptools.build_meta"
 
@@ -10,13 +10,15 @@ include = ["procServUtils"]
 [project]
 name = "procServUtils"
 version = "2.9.1-dev"
+author = "Ralph Lange"
+author_email = "ralph.lange@gmx.de"
 authors = [
   { name="Ralph Lange", email="ralph.lange@gmx.de" },
   { name="William Kirstaedter", email="wk@fhi.mpg.de" },
 ]
 description = "Support scripts for procServ"
 readme = "README.md"
-requires-python = ">=3.7"
+requires-python = ">=3.6"
 dependencies = [
 ]
 classifiers = [
