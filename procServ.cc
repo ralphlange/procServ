@@ -657,6 +657,9 @@ int main(int argc,char * argv[])
                   PRINTF("Option oneshot is set... exiting\n");
                   shutdownServer = true;
                 } else {
+		  if (logFileFD > 0) {
+		    fcntl(logFileFD, F_SETFD, FD_CLOEXEC);
+		  }
                   npi= processFactory(childExec, childArgv);
                   if (npi) AddConnection(npi);
                   if (firstRun) {
