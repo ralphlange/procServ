@@ -67,6 +67,6 @@ all-local:
 	(cd $(srcdir); $(PYTHON) -m build)
 
 install-exec-local:
-	(cd $(srcdir); $(PYTHON) -m pip install dist/procServUtils*.whl --force-reinstall)
+	(cd $(srcdir); $(PYTHON) -m pip install dist/procServUtils*.whl --force-reinstall --break-system-packages)
 
 endif # WITH_SYSTEMD_UTILS
