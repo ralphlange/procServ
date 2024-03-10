@@ -6,7 +6,7 @@
 
 
 AC_PREREQ([2.61])
-AC_INIT([procServ Process Server], [2.9.0-dev], [tech-talk@aps.anl.gov], [procServ],
+AC_INIT([procServ Process Server], [2.9.1-dev], [tech-talk@aps.anl.gov], [procServ],
         [https://github.com/ralphlange/procServ])
 AC_SUBST([PACKAGE_DATE],[06/28/2019])
 
@@ -97,7 +97,7 @@ AC_ARG_WITH([systemd-utils],
               [],
               [with_systemd_utils=no])
 AS_IF([test "x$with_systemd_utils" = xyes], [
-     AM_PATH_PYTHON()
+     AM_PATH_PYTHON([3.6.8])
 ])
 AM_CONDITIONAL([WITH_SYSTEMD_UTILS], [test x$with_systemd_utils = xyes])
 

@@ -71,3 +71,6 @@ def main(args):
     os.chdir(chdir)
     os.execvpe(toexec[0], toexec, env)
     sys.exit(2) # never reached
+
+def entrypoint():
+    main(getargs())

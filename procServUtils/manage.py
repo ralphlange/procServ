@@ -321,3 +321,6 @@ def main(args, test=False):
         logging.basicConfig(level=lvl)
     conf = getconf(user=args.user)
     args.func(conf, args)
+
+def entrypoint():
+    main(getargs())
