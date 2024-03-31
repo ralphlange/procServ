@@ -6,8 +6,7 @@
 
 
 AC_PREREQ([2.61])
-AC_INIT([procServ Process Server], [2.9.1-dev], [tech-talk@aps.anl.gov], [procServ],
-        [https://github.com/ralphlange/procServ])
+AC_INIT([procServ Process Server],[2.9.0-dev],[tech-talk@aps.anl.gov],[procServ],[https://github.com/ralphlange/procServ])
 AC_SUBST([PACKAGE_DATE],[06/28/2019])
 
 AC_CONFIG_AUX_DIR([build-aux])
@@ -16,7 +15,7 @@ AM_INIT_AUTOMAKE([1.10 -Wall foreign])
 
 AC_CONFIG_SRCDIR([connectionItem.cc])
 # we don't need config.h for now
-#AC_CONFIG_HEADER([config.h])
+#AC_CONFIG_HEADERS([config.h])
 
 #DEBUG_TYPE="-g -O0 -fno-omit-frame-pointer" # -gcoff
 DEBUG_TYPE="-g" # -gcoff
@@ -48,7 +47,7 @@ AC_STRUCT_TM
 # Checks for library functions.
 AC_FUNC_FORK
 AC_FUNC_GETGROUPS
-AC_PROG_GCC_TRADITIONAL
+AC_PROG_CC
 AC_PROG_RANLIB
 AC_FUNC_STRFTIME
 AC_CHECK_LIB([telnet], [telnet_recv],,[AC_LIBOBJ([libtelnet])])
