@@ -1,0 +1,93 @@
+name: autoconf
+
+on: [push, pull_request, workflow_dispatch]
+
+jobs:
+    autoconf:
+        name: "${{ matrix.name }}"
+        runs-on: "ubuntu-latest"
+        strategy:
+            fail-fast: false
+            matrix:
+                include:
+                - name: "bundle libtelnet dev"
+                  configure: >
+                    --enable-devel
+                    --enable-access-from-anywhere
+                    --disable-doc
+
+                - name: "bundle libtelnet no-doc"
+                  configure: >
+                    --disable-doc
+
+                - name: "bundle libtelnet py no-doc"
+                  configure: >
+                    --disable-doc
+                    --with-systemd-utils
+                  apt: >
+                    python3-build
+
+                - name: "apt libtelnet no-doc"
+                  configure: >
+                    --disable-doc
+                  apt: >
+                    libtelnet-dev
+
+                - name: "apt libtelnet doc"
+                  configure: >
+                    --enable-doc
+                  apt: >
+                    libtelnet-dev
+                    pandoc
+                    texlive-latex-recommended
+                    groff
+
+                - name: "apt libtelnet py doc dist"
+                  configure: >
+                    --enable-doc
+                    --with-systemd-utils
+                  apt: >
+                    libtelnet-dev
+                    pandoc
+                    texlive-latex-recommended
+                    groff
+                    python3-build
+                  dist: 1
+
+        steps:
+        - uses: actions/checkout@v4
+        - name: "apt-get install"
+          if: matrix.apt
+          run: |
+            sudo apt-get update
+            sudo apt-get -y install ${{ matrix.apt }}
+        - name: autoreconf
+          run: autoreconf -ivf
+        - name: configure
+          run: |
+            ./configure --prefix="$PWD/usr" ${{ matrix.configure }}
+        - name: make
+          run: make -j2
+        - name: make
+          run: make -j2 install
+        - name: run
+          run: |
+            $PWD/usr/bin/procServ -V
+            $PWD/usr/bin/procServ -h
+
+        - name: dist
+          if: matrix.dist
+          run: make distcheck
+        - name: tar contents
+          if: matrix.dist
+          run: tar -taf procServ-*.tar.gz
+        - name: build from dist
+          if: matrix.dist
+          run: |
+            set -e -x
+            install -d scratch
+            tar --strip-components=1 -C scratch -xaf procServ-*.tar.gz
+            cd scratch
+            ./configure --prefix="$PWD/usr" --with-systemd-utils
+            make -j2 install
+            find ./usr
