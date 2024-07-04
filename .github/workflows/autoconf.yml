@@ -1,0 +1,47 @@
+name: autoconf
+
+on: [push, pull_request, workflow_dispatch]
+
+jobs:
+    autoconf:
+        name: "${{ matrix.name }}"
+        runs-on: "ubuntu-latest"
+        strategy:
+            fail-fast: false
+            matrix:
+                include:
+                - name: "bundle libtelnet dev"
+                  configure: "--enable-devel --enable-access-from-anywhere --disable-doc"
+
+                - name: "bundle libtelnet no-doc"
+                  configure: "--disable-doc"
+
+                - name: "apt libtelnet no-doc"
+                  configure: "--disable-doc"
+                  apt: "libtelnet-dev"
+
+# xsltproc validation step fails
+#                - name: "apt libtelnet doc"
+#                  configure: "--enable-doc"
+#                  apt: "libtelnet-dev asciidoc fop xsltproc"
+
+        steps:
+        - uses: actions/checkout@v4
+        - name: "apt-get install"
+          if: matrix.apt
+          run: |
+            sudo apt-get update
+            sudo apt-get -y install ${{ matrix.apt }}
+        - name: autoreconf
+          run: autoreconf -ivf
+        - name: configure
+          run: |
+            ./configure --prefix="$PWD/usr" ${{ matrix.configure }}
+        - name: make
+          run: make -j2
+        - name: make
+          run: make -j2 install
+        - name: run
+          run: |
+            $PWD/usr/bin/procServ -V
+            $PWD/usr/bin/procServ -h
