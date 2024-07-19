@@ -8,7 +8,7 @@ Release: 8%{?dist}
 License: GPLv3
 URL: https://github.com/ralphlange/procServ
 Source0: https://github.com/ralphlange/procServ/releases/download/V%{version}/procServ-%{version}.tar.gz
-BuildRequires: libtelnet-devel gcc-c++
+BuildRequires: libtelnet-devel gcc-c++ boost-devel
 
 %description
 procServ is a wrapper that starts an arbitrary command as a child process in
