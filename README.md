@@ -198,6 +198,12 @@ procServ, you should use something along the lines of
 ```
 as arguments to procServ to launch your `.bat` file.
 
+## License
+
+All copyrights reserved.
+Free use of this software is granted under the terms of the GNU General
+Public License (GPLv3 or later).
+
 ## Enjoy!
 
 <!-- Links -->
