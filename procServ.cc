@@ -802,6 +802,10 @@ void OnPollTimeout()
             snprintf(buf+strlen(buf), BUFLEN-strlen(buf),
                      " The process was killed by signal %d",
                      WTERMSIG(wstatus));
+            // In order to exit as if we were killed, by returning e.g. 137 if
+            // killed by SIGKILL.
+            // See: https://tldp.org/LDP/abs/html/exitcodes.html
+            childExitCode = 128 + WTERMSIG(wstatus);
         }
         strncat(buf, NL, BUFLEN-strlen(buf)-1);
         SendToAll(buf, strlen(buf), NULL);
