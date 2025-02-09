@@ -22,12 +22,12 @@ EXTRA_DIST += README.md conserver.cf.example
 EXTRA_DIST += procServUtils
 EXTRA_DIST += systemd-procserv-generator-system systemd-procserv-generator-user
 
-doc_DATA = AUTHORS COPYING ChangeLog NEWS README.md procServ.txt
+doc_DATA = AUTHORS COPYING ChangeLog NEWS README.md
 
 if INSTALL_DOC
 
 dist_man1_MANS = procServ.1
-dist_doc_DATA = procServ.pdf procServ.html
+dist_doc_DATA = procServ.txt procServ.pdf procServ.html
 
 if WITH_SYSTEMD_UTILS
 dist_man1_MANS += manage-procs.1
