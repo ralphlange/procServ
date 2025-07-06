@@ -19,7 +19,7 @@ EXTRA_DIST = Makefile.Epics.in forkpty.c libtelnet.c libtelnet.h
 
 EXTRA_DIST += README.md conserver.cf.example
 # procServUtils are an add-on and not build by the regular make
-EXTRA_DIST += procServUtils
+EXTRA_DIST += procServUtils setup.cfg pyproject.toml
 EXTRA_DIST += systemd-procserv-generator-system systemd-procserv-generator-user
 
 doc_DATA = AUTHORS COPYING ChangeLog NEWS README.md
@@ -31,7 +31,7 @@ dist_doc_DATA = procServ.md procServ.pdf procServ.html
 
 if WITH_SYSTEMD_UTILS
 dist_man1_MANS += manage-procs.1
-dist_doc_DATA += manage-procs.pdf manage-procs.html
+dist_doc_DATA += manage-procs.md manage-procs.pdf manage-procs.html
 endif
 
 endif # INSTALL_DOC
