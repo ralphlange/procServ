@@ -18,6 +18,7 @@ MAINTAINERCLEANFILES += manage-procs.pdf manage-procs.html manage-procs.1
 EXTRA_DIST = Makefile.Epics.in forkpty.c libtelnet.c libtelnet.h
 
 EXTRA_DIST += README.md conserver.cf.example
+EXTRA_DIST += git-tag.lua
 # procServUtils are an add-on and not build by the regular make
 EXTRA_DIST += procServUtils setup.cfg pyproject.toml
 EXTRA_DIST += systemd-procserv-generator-system systemd-procserv-generator-user
@@ -39,19 +40,19 @@ endif # INSTALL_DOC
 if BUILD_DOC
 
 procServ.1: $(srcdir)/procServ.md
-	$(PANDOC) -s -f gfm -t man $< -o $@
+	$(PANDOC) --lua-filter=$(srcdir)/git-tag.lua -s -f gfm -t man $< -o $@
 procServ.pdf: $(srcdir)/procServ.md
-	$(PANDOC) -s -f gfm -t pdf $< -o $@
+	$(PANDOC) --lua-filter=$(srcdir)/git-tag.lua -s -f gfm -t pdf $< -o $@
 procServ.html: $(srcdir)/procServ.md
-	$(PANDOC) -s -f gfm -t html $< -o $@
+	$(PANDOC) --lua-filter=$(srcdir)/git-tag.lua -s -f gfm -t html $< -o $@
 
 if WITH_SYSTEMD_UTILS
 manage-procs.1: $(srcdir)/manage-procs.md
-	$(PANDOC) -s -f gfm -t man $< -o $@
+	$(PANDOC) --lua-filter=$(srcdir)/git-tag.lua -s -f gfm -t man $< -o $@
 manage-procs.pdf: $(srcdir)/manage-procs.md
-	$(PANDOC) -s -f gfm -t pdf $< -o $@
+	$(PANDOC) --lua-filter=$(srcdir)/git-tag.lua -s -f gfm -t pdf $< -o $@
 manage-procs.html: $(srcdir)/manage-procs.md
-	$(PANDOC) -s -f gfm -t html $< -o $@
+	$(PANDOC) --lua-filter=$(srcdir)/git-tag.lua -s -f gfm -t html $< -o $@
 endif
 
 endif # BUILD_DOC
