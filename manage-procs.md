@@ -1,5 +1,5 @@
 ---
-date: 2025-07-06
+date: UNRELEASED
 title: MANAGE-PROCS(1)
 ---
 
@@ -18,8 +18,8 @@ manage-procs(1) is a helper script for creating/maintaining procServ(1)
 instances managed as systemd(1) new-style daemons.
 
 Both user and system mode of systemd are supported. Specifying the
-**\\--user** options will consider the user unit configuration, while
-the **\\--system** option will consider the system unit configuration.
+**--user** options will consider the user unit configuration, while
+the **--system** option will consider the system unit configuration.
 
 Configuration files defining procServ instances will reside in
 
@@ -46,16 +46,16 @@ unit files from these configuration blocks.
 
 # GENERAL OPTIONS
 
-**-h, \\--help**  
+**-h, --help**
 Show a help message and exit.
 
-**\\--user**  
+**--user**
 Consider user configuration.
 
-**\\--system**  
+**--system**
 Consider system configuration. (default)
 
-**-v, \\--verbose**  
+**-v, --verbose**
 Increase verbosity level. (may be specified multiple times)
 
 # COMMANDS
@@ -63,27 +63,27 @@ Increase verbosity level. (may be specified multiple times)
 **manage-procs add** \[-h\] \[-f\] \[-A\] \[-C *dir*\] \[-P *port*\] \[-U *user*\] \[-G *group*\] *name* *command*…​  
 Create a new procServ instance.
 
-**-h, \\--help**  
+**-h, --help**
 Show a help message and exit.
 
-**-f, \\--force**  
+**-f, --force**
 Overwrite an existing instance of the same name.
 
-**-A, \\--autostart**  
+**-A, --autostart**
 Start instance after creating it.
 
-**-C, \\--chdir** *dir*  
+**-C, --chdir** *dir*
 Set *dir* as run directory for instance. (default: current directory)
 
-**-P, \\--port** *port*  
+**-P, --port** *port*
 Control endpoint specification (e.g. telnet port) for instance.
-(default: unix:'rundir'/procserv-*name*/control where *rundir* is
+(default: `unix:RUNDIR/procserv-NAME/control` where *RUNDIR* is
 defined by the system, e.g. "/run" or "/run/user/UID")
 
-**-U, \\--user** *username*  
+**-U, --user** *username*
 User name for instance to run as.
 
-**-G, \\--group** *groupname*  
+**-G, --group** *groupname*
 Group name for instance to run as.
 
 **name**  
@@ -96,10 +96,10 @@ inside the procServ instance.
 **manage-procs remove** \[-h\] \[-f\] *name*  
 Remove an existing procServ instance from the configuration.
 
-**-h, \\--help**  
+**-h, --help**
 Show a help message and exit.
 
-**-f, \\--force**  
+**-f, --force**
 Remove without asking for confirmation.
 
 **name**  
@@ -108,7 +108,7 @@ Instance name.
 **manage-procs start** \[-h\] \[*pattern*\]  
 Start procServ instances.
 
-**-h, \\--help**  
+**-h, --help**
 Show a help message and exit.
 
 **pattern**  
@@ -118,7 +118,7 @@ all procServ instances)
 **manage-procs stop** \[-h\] \[*pattern*\]  
 Stop procServ instances.
 
-**-h, \\--help**  
+**-h, --help**
 Show a help message and exit.
 
 **pattern**  
@@ -134,7 +134,7 @@ connect to UNIX domain sockets.
 
 For both connection types, press `^D` to detach from the session.
 
-**-h, \\--help**  
+**-h, --help**
 Show a help message and exit.
 
 **name**  
@@ -143,16 +143,16 @@ Instance name.
 **manage-procs list** \[-h\] \[--all\]  
 List all procServ instances.
 
-**-h, \\--help**  
+**-h, --help**
 Show a help message and exit.
 
-**\\--all**  
+**--all**
 Also list inactive instances.
 
 **manage-procs status** \[-h\]  
 Report the status of all procServ instances.
 
-**-h, \\--help**  
+**-h, --help**
 Show a help message and exit.
 
 # SEE ALSO
