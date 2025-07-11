@@ -17,12 +17,12 @@ systemd unit files.
     <br/>
     Known to work on Linux, Solaris, MacOS, Cygwin.
 
--   [**asciidoc**](http://www.methods.co.nz/asciidoc/)
-    (package: asciidoc), to create documentation in different formats
+-   [**pandoc**](https://pandoc.org/MANUAL.html)
+    (package: pandoc), to create documentation in different formats
     (man, pdf, html)
     <br/>
     Note: The distribution tar contains the doc in all available formats,
-    so you don't need asciidoc to make and install procServ.
+    so you don't need pandoc to make and install procServ.
 
 -   [**libtelnet**](https://github.com/seanmiddleditch/libtelnet)
     (package: libtelnet)
@@ -73,7 +73,7 @@ systemd unit files.
 
 Requires autoconf >=2.61, automake >= 1.10
 <br/>
-Optional asciidoc >= 8.4, FOP >= 0.95, xsltproc >= 1.1.24
+Optional pandoc >= 2.17.1.1
 ```
    $ git clone https://github.com/ralphlange/procServ.git
    $ cd procserv
@@ -197,6 +197,12 @@ procServ, you should use something along the lines of
    %ComSpec% /c runIOC.bat st.cmd
 ```
 as arguments to procServ to launch your `.bat` file.
+
+## License
+
+All copyrights reserved.
+Free use of this software is granted under the terms of the GNU General
+Public License (GPLv3 or later).
 
 ## Enjoy!
 
