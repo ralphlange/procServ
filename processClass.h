@@ -29,6 +29,8 @@ public:
     static void restartOnce ();
     static bool exists() { return _runningItem ? true : false; }
     virtual ~processClass();
+    static inline
+    bool hasRunning() { return _runningItem; }
 protected:
     pid_t _pid;
     static processClass * _runningItem;
