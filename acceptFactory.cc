@@ -392,7 +392,7 @@ void acceptItem::readFromFd(void)
     newFd = accept( _fd, &addr, &len );
     if (newFd >= 0) {
         PRINTF("acceptItem: Accepted connection on handle %d\n", newFd);
-        AddConnection(clientFactory(newFd, _readonly));
+        AddConnection(clientFactory(newFd, _readonly), true);
     } else {
         PRINTF("Accept error: %s\n", strerror(errno)); // on Cygwin got error EINVAL
         remakeConnection();

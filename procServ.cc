@@ -29,6 +29,9 @@
 #include <sys/ioctl.h>
 #include <sys/select.h>
 #include <string.h>
+#include <string>
+
+#include <boost/circular_buffer.hpp>
 
 #ifdef __CYGWIN__
     #include <windows.h>
@@ -94,6 +97,8 @@ char   *logFile = NULL;          // File name for log
 int    logFileFD=-1;             // FD for log file
 char  *logPort;                  // address for logger connections
 int    debugFD=-1;               // FD for debug output
+
+boost::circular_buffer<std::string> logBuffer(0);
 
 #define MAX_CONNECTIONS 64
 
@@ -174,6 +179,7 @@ void printHelp()
            " -d --debug               debug mode (keeps child in foreground)\n"
            " -e --exec <str>          specify child executable (default: arg0 of <command>)\n"
            " -f --foreground          keep child in foreground (interactive)\n"
+           " -H --history <n>         display the last n child messages for new connections\n"
            " -h --help                print this message\n"
            "    --holdoff <n>         set holdoff time [sec] between child restarts\n"
            " -i --ignore <str>        ignore all chars in <str> (^ for ctrl)\n"
@@ -236,7 +242,8 @@ int main(int argc,char * argv[])
             {"exec",           required_argument, 0, 'e'},
             {"foreground",     no_argument,       0, 'f'},
             {"help",           no_argument,       0, 'h'},
-            {"holdoff",        required_argument, 0, 'H'},
+            {"history",        required_argument, 0, 'H'},
+            {"holdoff",        required_argument, 0, 'O'},
             {"ignore",         required_argument, 0, 'i'},
             {"info-file",      required_argument, 0, 'I'},
             {"killcmd",        required_argument, 0, 'k'},
@@ -261,7 +268,7 @@ int main(int argc,char * argv[])
         /* getopt_long stores the option index here. */
         int option_index = 0;
 
-        c = getopt_long (argc, argv, "+c:de:fhi:I:k:l:L:n:op:P:qVwx:",
+        c = getopt_long (argc, argv, "+c:de:fhH:i:I:k:l:L:n:op:P:qVwx:",
                          long_options, &option_index);
 
         /* Detect the end of the options. */
@@ -309,12 +316,17 @@ int main(int argc,char * argv[])
             if (optarg)
                 stampFormat = strdup(optarg);
             break;
+ 
+        case 'H':                                 // Size of history buffer
+            logBuffer.set_capacity( atoi( optarg ) );
+            break;
+
 
         case 'h':                                 // Help
             printHelp();
             exit(0);
 
-        case 'H':                                 // Holdoff time
+        case 'O':                                 // Holdoff time
             k = atoi( optarg );
             if ( k >= 0 ) holdoffTime = k;
             break;
@@ -514,7 +526,7 @@ int main(int argc,char * argv[])
     {
         for(size_t i=0; i<ctlSpecs.size(); i++) {
             connectionItem *acceptItem = acceptFactory( ctlSpecs[i].c_str(), ctlPortLocal );
-            AddConnection(acceptItem);
+            AddConnection(acceptItem, false);
         }
     }
     catch (int error)
@@ -531,7 +543,7 @@ int main(int argc,char * argv[])
         try
         {
             connectionItem *acceptItem = acceptFactory( logPort, logPortLocal, true );
-            AddConnection(acceptItem);
+            AddConnection(acceptItem, false);
         }
         catch (int error)
         {
@@ -565,7 +577,7 @@ int main(int argc,char * argv[])
 
     if (inFgMode && !(logFile && strcmp(logFile, "-")==0)) {
         ttySetCharNoEcho(true);
-        AddConnection(clientFactory(0));
+        AddConnection(clientFactory(0), false);
     }
 
     // Record some useful data for managers 
@@ -661,7 +673,7 @@ int main(int argc,char * argv[])
 		    fcntl(logFileFD, F_SETFD, FD_CLOEXEC);
 		  }
                   npi= processFactory(childExec, childArgv);
-                  if (npi) AddConnection(npi);
+                  if (npi) AddConnection(npi, false);
                   if (firstRun) {
                   	firstRun = false;
                   }
@@ -721,6 +733,16 @@ void SendToAll(const char * message,
     strftime(stamp, sizeof(stamp)-1, stampFormat, &now_tm);
     len = strlen(stamp);
 
+    if (sender && sender->isProcess()) {
+	std::string s_message = "";
+	if (stampLog) {
+	    s_message += stamp;
+	    s_message += " ";
+	}
+	s_message += message;
+	logBuffer.push_back(s_message);
+    }
+
     // Log the traffic to file / stdout (debug)
     if (sender==NULL || sender->isProcess())
     {
@@ -733,6 +755,7 @@ void SendToAll(const char * message,
                 for (i = 0; i < count; ++i) {
                     if (!log_stamp_sent) {
                         ignore_result( write(logFileFD, stamp, len) );
+                        ignore_result( write(logFileFD, " ", 1) );
                         log_stamp_sent = true;
                     }
                     if (message[i] == '\n') {
@@ -761,6 +784,7 @@ void SendToAll(const char * message,
                     p->Send(stamp, len, message, count);
                 else
                     p->Send(message, count);
+
             }
         }
         p = p->next;
@@ -818,7 +842,7 @@ void OnPollTimeout()
 }
 
 // Call this to add the item to the list of connections
-void AddConnection(connectionItem * ci)
+void AddConnection(connectionItem * ci, bool show_log)
 {
     PRINTF("Adding connection %p to list\n", ci);
     if (connectionItem::head )
@@ -831,8 +855,13 @@ void AddConnection(connectionItem * ci)
 	ci->prev=NULL;
 	connectionItem::head=ci;
 	connectionNo++;
-}
 
+    if (show_log) {
+	for (int i=0; i < logBuffer.size(); i++) {
+	    ci->Send(logBuffer[i].c_str(), strlen(logBuffer[i].c_str()));
+	}
+    }
+}
 
 void DeleteConnection(connectionItem *ci)
 {

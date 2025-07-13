@@ -80,7 +80,7 @@ void SendToAll(const char * message,
                const connectionItem * sender);
 
 // Call this to add the item to the list of connections
-void AddConnection(connectionItem *);
+void AddConnection(connectionItem *, bool show_log);
 void DeleteConnection(connectionItem *ci);
 
 // connectionItems are made in class factories so none of the
