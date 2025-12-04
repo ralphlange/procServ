@@ -460,6 +460,28 @@ int main(int argc,char * argv[])
         childExec = command;
     }
 
+    // reallocate argv[] storage, and expand any unexpanded arguments
+    std::vector<std::string> argvStore;
+    for(char** av = childArgv; *av; av++) {
+        if((*av)[0]=='$') { // expand command from environment
+            const char *ev = getenv(&(*av)[1]);
+            if(!ev) {
+                fprintf(stderr, "argument references %s which is not set in environment\n", *av);
+                exit(1);
+            }
+            argvStore.push_back(ev);
+
+        } else {
+            argvStore.push_back(*av);
+        }
+    }
+    std::vector<char*> argvBuf(argvStore.size()+1); // include trailing NULL
+    for(size_t i=0, N=argvStore.size(); i<N; i++) {
+        fprintf(stderr, "ARG[%zu] = %s\n", i, argvStore[i].c_str());
+        argvBuf[i] = argvStore[i].data();
+    }
+    childArgv = argvBuf.data();
+
     if (!stampFormat) {
         char *tmp = (char*) calloc(strlen(timeFormat)+4, 1);
         if (tmp) {
