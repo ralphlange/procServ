@@ -1,0 +1,36 @@
+[Unit]
+Description="Managed process %i"
+
+[Service]
+Type=simple
+
+ExecStart=/usr/bin/procServ \
+  --foreground --logfile - --name %N \
+  --info-file %t/%N/info \
+  --port 0 \
+  --port unix:%t/%N/control \
+  $PROCCMD
+
+StandardOutput=syslog
+StandardError=inherit
+SyslogIdentifier=%N
+
+# Create %t/%N
+RuntimeDirectory=%N
+
+# What, where, who
+#Environment="PROCCMD=./st.cmd"
+#WorkingDirectory=/
+#User=softioc
+#Group=softioc
+
+# Permit RT priority for non-root
+#AmbientCapabilities=cap_ipc_lock
+#LimitRTPRIO=50
+#LimitMEMLOCK=256M
+
+[Install]
+# --system
+WantedBy=multi-user.target
+# --user
+#WantedBy=default.target
