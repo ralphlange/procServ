@@ -477,7 +477,6 @@ int main(int argc,char * argv[])
     }
     std::vector<char*> argvBuf(argvStore.size()+1); // include trailing NULL
     for(size_t i=0, N=argvStore.size(); i<N; i++) {
-        fprintf(stderr, "ARG[%zu] = %s\n", i, argvStore[i].c_str());
         argvBuf[i] = argvStore[i].data();
     }
     childArgv = argvBuf.data();
