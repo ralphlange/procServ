@@ -59,8 +59,6 @@ RestartMode restartMode = restart;  // Child restart mode (restart/norestart/one
 bool   firstRun;                 // Has process run for purposes of oneshot restart mode
 char   *procservName;            // The name of this beast (server)
 char   *childName;               // The name of that beast (child)
-char   *childExec;               // Exec to run as child
-char   **childArgv;              // Argv for child process
 int    connectionNo;             // Total number of connections
 char   *ignChars = NULL;         // Characters to ignore
 char   killChar = 0x18;          // Kill command character (default: ^X)
@@ -214,6 +212,7 @@ int main(int argc,char * argv[])
     const size_t BUFLEN = 512;
     char buff[BUFLEN];
     std::string infofile;
+    char *childExec = NULL;               // Exec to run as child
 
     time(&procServStart);             // remember start time
     procservName = argv[0];
@@ -455,7 +454,7 @@ int main(int argc,char * argv[])
     command = argv[optind];
 
     if (childName == NULL) childName = command;
-    childArgv = argv + optind - 1;
+    char** childArgv = argv + optind - 1;
     if (childExec == NULL) {
         childArgv++;
         childExec = command;
