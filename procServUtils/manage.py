@@ -174,7 +174,10 @@ def delproc(conf, args):
 
         with open(cfile) as F:
             C = ConfigParser({'instance':'1'})
-            C.readfp(F)
+            if hasattr(C, 'read_file'):
+                C.read_file(F)
+            else:
+                C.readfp(F)
 
         if not C.has_section(args.name):
             continue

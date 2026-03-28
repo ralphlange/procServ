@@ -7,7 +7,7 @@ bin_PROGRAMS = procServ
 procServ_SOURCES = procServ.cc procServ.h \
                    connectionItem.cc acceptFactory.cc clientFactory.cc \
                    processFactory.cc processClass.h \
-                   procServ.md
+                   procServ.txt
 
 LDADD = $(LIBOBJS)
 
@@ -18,9 +18,8 @@ MAINTAINERCLEANFILES += manage-procs.pdf manage-procs.html manage-procs.1
 EXTRA_DIST = Makefile.Epics.in forkpty.c libtelnet.c libtelnet.h
 
 EXTRA_DIST += README.md conserver.cf.example
-EXTRA_DIST += git-tag.lua
 # procServUtils are an add-on and not build by the regular make
-EXTRA_DIST += procServUtils setup.cfg pyproject.toml
+EXTRA_DIST += procServUtils
 EXTRA_DIST += systemd-procserv-generator-system systemd-procserv-generator-user
 
 doc_DATA = AUTHORS COPYING ChangeLog NEWS README.md
@@ -28,31 +27,33 @@ doc_DATA = AUTHORS COPYING ChangeLog NEWS README.md
 if INSTALL_DOC
 
 dist_man1_MANS = procServ.1
-dist_doc_DATA = procServ.md procServ.pdf procServ.html
+dist_doc_DATA = procServ.txt procServ.pdf procServ.html
 
 if WITH_SYSTEMD_UTILS
 dist_man1_MANS += manage-procs.1
-dist_doc_DATA += manage-procs.md manage-procs.pdf manage-procs.html
+dist_doc_DATA += manage-procs.pdf manage-procs.html
 endif
 
 endif # INSTALL_DOC
 
 if BUILD_DOC
 
-procServ.1: $(srcdir)/procServ.md
-	$(PANDOC) --lua-filter=$(srcdir)/git-tag.lua -s -f gfm -t man $< -o $@
-procServ.pdf: $(srcdir)/procServ.md
-	$(PANDOC) --lua-filter=$(srcdir)/git-tag.lua -s -f gfm -t pdf $< -o $@
-procServ.html: $(srcdir)/procServ.md
-	$(PANDOC) --lua-filter=$(srcdir)/git-tag.lua -s -f gfm -t html $< -o $@
+A2X_FLAGS = -a revdate=@PACKAGE_DATE@ -a revnumber=@PACKAGE_VERSION@ -D ${builddir}
+
+procServ.1: $(srcdir)/procServ.txt
+	$(A2X) $(A2X_FLAGS) -f manpage $(srcdir)/procServ.txt
+procServ.pdf: $(srcdir)/procServ.txt
+	$(A2X) $(A2X_FLAGS) -f pdf $(srcdir)/procServ.txt
+procServ.html: $(srcdir)/procServ.txt
+	$(A2X) $(A2X_FLAGS) -f xhtml $(srcdir)/procServ.txt
 
 if WITH_SYSTEMD_UTILS
-manage-procs.1: $(srcdir)/manage-procs.md
-	$(PANDOC) --lua-filter=$(srcdir)/git-tag.lua -s -f gfm -t man $< -o $@
-manage-procs.pdf: $(srcdir)/manage-procs.md
-	$(PANDOC) --lua-filter=$(srcdir)/git-tag.lua -s -f gfm -t pdf $< -o $@
-manage-procs.html: $(srcdir)/manage-procs.md
-	$(PANDOC) --lua-filter=$(srcdir)/git-tag.lua -s -f gfm -t html $< -o $@
+manage-procs.1: $(srcdir)/manage-procs.txt
+	$(A2X) $(A2X_FLAGS) -f manpage $(srcdir)/manage-procs.txt
+manage-procs.pdf: $(srcdir)/manage-procs.txt
+	$(A2X) $(A2X_FLAGS) -f pdf $(srcdir)/manage-procs.txt
+manage-procs.html: $(srcdir)/manage-procs.txt
+	$(A2X) $(A2X_FLAGS) -f xhtml $(srcdir)/manage-procs.txt
 endif
 
 endif # BUILD_DOC
@@ -66,6 +67,6 @@ all-local:
 	(cd $(srcdir); $(PYTHON) -m build)
 
 install-exec-local:
-	(export PIP_BREAK_SYSTEM_PACKAGES=1; cd $(srcdir); $(PYTHON) -m pip install dist/proc*.whl --force-reinstall)
+	(cd $(srcdir); $(PYTHON) -m pip install dist/procServUtils*.whl --force-reinstall --break-system-packages)
 
 endif # WITH_SYSTEMD_UTILS

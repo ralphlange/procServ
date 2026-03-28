@@ -35,6 +35,7 @@
 #endif /* __CYGWIN__ */
 
 #include "procServ.h"
+#include "processClass.h"
 
 // Wrapper to ignore return values
 template<typename T>
@@ -174,6 +175,7 @@ void printHelp()
            " -d --debug               debug mode (keeps child in foreground)\n"
            " -e --exec <str>          specify child executable (default: arg0 of <command>)\n"
            " -f --foreground          keep child in foreground (interactive)\n"
+           " -G --grace-period <n>    wait <n> seconds for child to shut down\n"
            " -h --help                print this message\n"
            "    --holdoff <n>         set holdoff time [sec] between child restarts\n"
            " -i --ignore <str>        ignore all chars in <str> (^ for ctrl)\n"
@@ -214,6 +216,7 @@ int main(int argc,char * argv[])
     const size_t BUFLEN = 512;
     char buff[BUFLEN];
     std::string infofile;
+    unsigned int gracePeriod = 0;
 
     time(&procServStart);             // remember start time
     procservName = argv[0];
@@ -235,6 +238,7 @@ int main(int argc,char * argv[])
             {"debug",          no_argument,       0, 'd'},
             {"exec",           required_argument, 0, 'e'},
             {"foreground",     no_argument,       0, 'f'},
+            {"grace-period",   required_argument, 0, 'G'},
             {"help",           no_argument,       0, 'h'},
             {"holdoff",        required_argument, 0, 'H'},
             {"ignore",         required_argument, 0, 'i'},
@@ -261,7 +265,7 @@ int main(int argc,char * argv[])
         /* getopt_long stores the option index here. */
         int option_index = 0;
 
-        c = getopt_long (argc, argv, "+c:de:fhi:I:k:l:L:n:op:P:qVwx:",
+        c = getopt_long (argc, argv, "+c:de:fG:hi:I:k:l:L:n:op:P:qVwx:",
                          long_options, &option_index);
 
         /* Detect the end of the options. */
@@ -308,6 +312,14 @@ int main(int argc,char * argv[])
             stampLog = true;
             if (optarg)
                 stampFormat = strdup(optarg);
+            break;
+
+        case 'G':
+            k = atoi(optarg);
+            if (k < 0) {
+                k = 0;
+            }
+            gracePeriod = (unsigned int) k;
             break;
 
         case 'h':                                 // Help
@@ -594,6 +606,8 @@ int main(int argc,char * argv[])
         strncat(infoMessage1, buff, INFO1LEN-strlen(infoMessage1)-1);
     }
 
+    time_t stopAt = 0;
+
     firstRun = true;
     // Run here until something makes it die
     while ( ! shutdownServer )
@@ -621,8 +635,27 @@ int main(int argc,char * argv[])
         timeout.tv_sec = 0;                   // select() timeout: 0.5 sec
         timeout.tv_nsec = 500000000l;
 
+        if (stopAt != 0) {
+            time_t now = time(0);
+            if (now < stopAt) {
+                long remaining = (long)(stopAt - now);
+                if (remaining < 1) {
+                    timeout.tv_sec = 0;
+                    timeout.tv_nsec = 500000000l;
+                } else if (remaining < timeout.tv_sec || (remaining == timeout.tv_sec && 0 < timeout.tv_nsec)) {
+                    timeout.tv_sec = remaining;
+                    timeout.tv_nsec = 0;
+                }
+            } else {
+                timeout.tv_sec = 0;
+                timeout.tv_nsec = 0;
+            }
+        }
+
         ready = pselect(nFd, &fdset, NULL, NULL, &timeout, &sigset_pselect);
         
+        time_t now = time(0);
+
         // Handle signals for which signal handlers were called while in pselect.
         
         if (sigPipeSet) {
@@ -635,7 +668,14 @@ int main(int argc,char * argv[])
             sigTermSet = 0;
             PRINTF("SigTerm received\n");
             processFactorySendSignal(killSig);
-            shutdownServer = true;
+            if(killSig==SIGKILL || gracePeriod<=0) {
+                shutdownServer = true;
+
+            } else if(!stopAt) {
+                restartMode = oneshot; // prevent restart
+                stopAt = now + gracePeriod; // wait a bit for child to stop
+                PRINTF("Start child cleanup timer %u sec.\n", gracePeriod);
+            }
         }
 
         if (sigHupSet) {
@@ -651,20 +691,21 @@ int main(int argc,char * argv[])
 
             // Pick up the process item if it dies
             // This call returns NULL if the process item lives
-            if (processFactoryNeedsRestart())
+            if (stopAt==0 && processFactoryNeedsRestart())
             {
+
                 if ((restartMode == oneshot) && !firstRun) {
-                  PRINTF("Option oneshot is set... exiting\n");
-                  shutdownServer = true;
+                    PRINTF("Option oneshot is set... exiting\n");
+                    shutdownServer = true;
                 } else {
-		  if (logFileFD > 0) {
-		    fcntl(logFileFD, F_SETFD, FD_CLOEXEC);
-		  }
-                  npi= processFactory(childExec, childArgv);
-                  if (npi) AddConnection(npi);
-                  if (firstRun) {
-                  	firstRun = false;
-                  }
+                    if (logFileFD > 0) {
+                        fcntl(logFileFD, F_SETFD, FD_CLOEXEC);
+                    }
+                    npi= processFactory(childExec, childArgv);
+                    if (npi) AddConnection(npi);
+                    if (firstRun) {
+                        firstRun = false;
+                    }
                 }
             }
         } else if (-1 == ready) {             // Error
@@ -679,6 +720,18 @@ int main(int argc,char * argv[])
                 p = p->next;
             }
             OnPollTimeout();
+        }
+
+        if(stopAt!=0) {
+            if(!processClass::hasRunning()) {
+                PRINTF("child exits\n");
+                shutdownServer = true;
+
+            } else if(now >= stopAt) {
+                PRINTF("child cleanup timer expires %ld, %ld\n", stopAt, now);
+                shutdownServer = true;
+                // connectionItem dtor will KILL
+            }
         }
     }
     ttySetCharNoEcho(false);
