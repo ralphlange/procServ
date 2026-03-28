@@ -58,6 +58,7 @@ _defaults = {
     'group':'nogroup',
     'chdir':'/',
     'port':'0',
+    'grace-period':'0',
     'instance':'1',
 }
 

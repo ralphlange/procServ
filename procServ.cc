@@ -695,17 +695,17 @@ int main(int argc,char * argv[])
             {
 
                 if ((restartMode == oneshot) && !firstRun) {
-                    PRINTF("Option oneshot is set... exiting\n");
-                    shutdownServer = true;
+                  PRINTF("Option oneshot is set... exiting\n");
+                  shutdownServer = true;
                 } else {
-                    if (logFileFD > 0) {
-                        fcntl(logFileFD, F_SETFD, FD_CLOEXEC);
-                    }
-                    npi= processFactory(childExec, childArgv);
-                    if (npi) AddConnection(npi);
-                    if (firstRun) {
-                        firstRun = false;
-                    }
+		  if (logFileFD > 0) {
+		    fcntl(logFileFD, F_SETFD, FD_CLOEXEC);
+		  }
+                  npi= processFactory(childExec, childArgv);
+                  if (npi) AddConnection(npi);
+                  if (firstRun) {
+			firstRun = false;
+                  }
                 }
             }
         } else if (-1 == ready) {             // Error
