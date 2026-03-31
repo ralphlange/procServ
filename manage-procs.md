@@ -86,7 +86,12 @@ User name for instance to run as.
 **-G, --group** *groupname*
 Group name for instance to run as.
 
-**name**  
+**-g, --grace-period** *n*
+Grace period (in seconds) that procServ will wait for the child to shut
+down after receiving a termination signal. (See procServ(1) for more
+details.)
+
+**name**
 Instance name.
 
 **command…​**
