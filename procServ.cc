@@ -857,34 +857,31 @@ void OnPollTimeout()
 void AddConnection(connectionItem * ci)
 {
     PRINTF("Adding connection %p to list\n", ci);
-    if (connectionItem::head )
-	{
-	    ci->next=connectionItem::head;
-	    ci->next->prev=ci;
-	}
-	else ci->next=NULL;
-	
-	ci->prev=NULL;
-	connectionItem::head=ci;
-	connectionNo++;
+    if (connectionItem::head) {
+        ci->next = connectionItem::head;
+        ci->next->prev = ci;
+    } else
+        ci->next = NULL;
+
+    ci->prev = NULL;
+    connectionItem::head = ci;
+    connectionNo++;
 }
 
 
 void DeleteConnection(connectionItem *ci)
 {
     PRINTF("Deleting connection %p\n", ci);
-    if (ci->prev) // Not the head
-	{
-		ci->prev->next=ci->next;
-	}
-	else
-	{
-		connectionItem::head = ci->next;
-	}
-	if (ci->next) ci->next->prev=ci->prev;
+    if (ci->prev) { // Not the head
+        ci->prev->next = ci->next;
+    } else {
+        connectionItem::head = ci->next;
+    }
+    if (ci->next)
+        ci->next->prev = ci->prev;
     delete ci;
-	connectionNo--;
-	assert(connectionNo>=0);
+    connectionNo--;
+    assert(connectionNo >= 0);
 }
 
 static void OnSigPipe(int)
