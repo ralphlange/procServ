@@ -706,7 +706,7 @@ int main(int argc,char * argv[])
         }
 
         if(stopAt!=0) {
-            if(!processClass::hasRunning()) {
+            if(!processClass::exists()) {
                 PRINTF("child exits\n");
                 shutdownServer = true;
 
