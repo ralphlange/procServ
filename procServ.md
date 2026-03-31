@@ -170,6 +170,13 @@ Run *file* as executable for child. Default is *command*.
 Keep the server process in the foreground and connected to the
 controlling terminal.
 
+**-g, --grace-period**=*n*
+Use in combination with **--killsig**:
+Wait at most *n* seconds for the child process to shut down after
+receiving the termination signal. If the child does not exit within this
+period, it will be force-killed.
+(Default is 0: the server shuts down and kills the child immediately.)
+
 **-h, --help**
 Print help message.
 
