@@ -651,7 +651,7 @@ int main(int argc,char * argv[])
             sigTermSet = 0;
             PRINTF("SigTerm received\n");
             processFactorySendSignal(killSig);
-            if(killSig==SIGKILL || gracePeriod<=0) {
+            if(killSig==SIGKILL || gracePeriod==0) {
                 shutdownServer = true;
 
             } else if(!stopAt) {
@@ -867,7 +867,6 @@ void AddConnection(connectionItem * ci)
     connectionItem::head = ci;
     connectionNo++;
 }
-
 
 void DeleteConnection(connectionItem *ci)
 {
