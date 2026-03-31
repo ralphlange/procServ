@@ -60,7 +60,7 @@ Increase verbosity level. (may be specified multiple times)
 
 # COMMANDS
 
-**manage-procs add** \[-h\] \[-f\] \[-A\] \[-C *dir*\] \[-P *port*\] \[-U *user*\] \[-G *group*\] *name* *command*…​  
+**manage-procs add** \[-h\] \[-f\] \[-A\] \[-C *dir*\] \[-P *port*\] \[-U *user*\] \[-G *group*\] *name* *command*…​
 Create a new procServ instance.
 
 **-h, --help**
@@ -89,11 +89,11 @@ Group name for instance to run as.
 **name**  
 Instance name.
 
-**command…​**  
+**command…​**
 The remaining line is interpreted as the command (with arguments) to run
 inside the procServ instance.
 
-**manage-procs remove** \[-h\] \[-f\] *name*  
+**manage-procs remove** \[-h\] \[-f\] *name*
 Remove an existing procServ instance from the configuration.
 
 **-h, --help**
@@ -102,30 +102,30 @@ Show a help message and exit.
 **-f, --force**
 Remove without asking for confirmation.
 
-**name**  
+**name**
 Instance name.
 
-**manage-procs start** \[-h\] \[*pattern*\]  
+**manage-procs start** \[-h\] \[*pattern*\]
 Start procServ instances.
 
 **-h, --help**
 Show a help message and exit.
 
-**pattern**  
+**pattern**
 Pattern to match existing instance names against. (default: "\*" = start
 all procServ instances)
 
-**manage-procs stop** \[-h\] \[*pattern*\]  
+**manage-procs stop** \[-h\] \[*pattern*\]
 Stop procServ instances.
 
 **-h, --help**
 Show a help message and exit.
 
-**pattern**  
+**pattern**
 Pattern to match existing instance names against. (default: "\*" = stop
 all procServ instances)
 
-**manage-procs attach** \[-h\] *name*  
+**manage-procs attach** \[-h\] *name*
 Attach to the control port of a running procServ instance.
 
 For this, manage-procs is using one of two existing CLI client
@@ -137,10 +137,10 @@ For both connection types, press `^D` to detach from the session.
 **-h, --help**
 Show a help message and exit.
 
-**name**  
+**name**
 Instance name.
 
-**manage-procs list** \[-h\] \[--all\]  
+**manage-procs list** \[-h\] \[--all\]
 List all procServ instances.
 
 **-h, --help**
@@ -149,7 +149,7 @@ Show a help message and exit.
 **--all**
 Also list inactive instances.
 
-**manage-procs status** \[-h\]  
+**manage-procs status** \[-h\]
 Report the status of all procServ instances.
 
 **-h, --help**

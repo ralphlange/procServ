@@ -18,13 +18,13 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <errno.h>
-#include <sys/types.h> 
+#include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <getopt.h>
-#include <sys/wait.h> 
+#include <sys/wait.h>
 #include <signal.h>
-#include <unistd.h> 
+#include <unistd.h>
 #include <termios.h>
 #include <sys/ioctl.h>
 #include <sys/select.h>
@@ -140,7 +140,7 @@ void writePidFile(int pid)
     fclose(fp);
 }
 
-char getOptionChar ( const char* buf ) 
+char getOptionChar ( const char* buf )
 {
     if ( buf == NULL || buf[0] == 0 ) return 0;
     if ( buf[0] == '^' && buf[1] == '^' ) {
@@ -196,7 +196,7 @@ void printHelp()
            " -V --version             print program version\n"
            " -w --wait                wait for cmd on control connection to start child\n"
            " -x --logoutcmd <str>     command to logout client connection (^ for ctrl)\n"
-        );
+           );
 }
 
 void printVersion()
@@ -487,13 +487,13 @@ int main(int argc,char * argv[])
     memset(&sig, 0, sizeof(sig));
 
     PRINTF("Installing signal handlers\n");
-    
+
     // SIGPIPE, SIGTERM and SIGHUP will be handled in the main loop
     // with the assistance of pselect. This means that we have them
     // blocked outside of pselect call, but unblocked atomically
     // within pselect. Each time pselect returns, we safely check if
     // any of the signals were received.
-    
+
     // Block the signals that we bill be handling in the main loop.
     // At the same time, retrieve the original signal mask before
     // blocking, to be passed to pselect.
@@ -504,7 +504,7 @@ int main(int argc,char * argv[])
     sigaddset(&sigset_block, SIGTERM);
     sigaddset(&sigset_block, SIGHUP);
     sigprocmask(SIG_BLOCK, &sigset_block, &sigset_pselect);
-    
+
     sig.sa_handler = &OnSigPipe;              // sigaction() needed for Solaris
     sigaction(SIGPIPE, &sig, NULL);
     sig.sa_handler = &OnSigTerm;
@@ -580,7 +580,7 @@ int main(int argc,char * argv[])
         AddConnection(clientFactory(0));
     }
 
-    // Record some useful data for managers 
+    // Record some useful data for managers
     snprintf(infoMessage1, INFO1LEN,
              "@@@ procServ server PID: %ld" NL
              "@@@ Server startup directory: %s" NL
@@ -597,10 +597,10 @@ int main(int argc,char * argv[])
     strncat(infoMessage1, buff, INFO1LEN-strlen(infoMessage1)-1);
     snprintf(infoMessage2, INFO2LEN, "@@@ Child \"%s\" is SHUT DOWN" NL, childName);
     if ( logFile ) {
-	if ( -1 == logFileFD )
+        if ( -1 == logFileFD )
             snprintf(buff, BUFLEN, "@@@ Child log file: unable to open log file %s" NL,
                      logFile );
-	else
+        else
             snprintf(buff, BUFLEN, "@@@ Child log file: %s" NL,
                      logFile );
         strncat(infoMessage1, buff, INFO1LEN-strlen(infoMessage1)-1);
@@ -636,17 +636,17 @@ int main(int argc,char * argv[])
         timeout.tv_nsec = 500000000l;
 
         ready = pselect(nFd, &fdset, NULL, NULL, &timeout, &sigset_pselect);
-        
+
         time_t now = time(0);
 
         // Handle signals for which signal handlers were called while in pselect.
-        
+
         if (sigPipeSet) {
             sigPipeSet = 0;
             sprintf( buf, "@@@ Got a sigPipe signal: Did the child close its tty?" NL);
             SendToAll( buf, strlen(buf), NULL );
         }
-        
+
         if (sigTermSet) {
             sigTermSet = 0;
             PRINTF("SigTerm received\n");
@@ -666,11 +666,11 @@ int main(int argc,char * argv[])
             PRINTF("SigHup received\n");
             openLogFile();
         }
-        
+
         if (0 == ready) {                     // Timeout
             // Go clean up dead connections
             OnPollTimeout();
-            connectionItem * npi; 
+            connectionItem * npi;
 
             // Pick up the process item if it dies
             // This call returns NULL if the process item lives
@@ -882,7 +882,7 @@ void DeleteConnection(connectionItem *ci)
 		connectionItem::head = ci->next;
 	}
 	if (ci->next) ci->next->prev=ci->prev;
-        delete ci;
+    delete ci;
 	connectionNo--;
 	assert(connectionNo>=0);
 }

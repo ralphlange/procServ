@@ -292,7 +292,7 @@ def getargs(args=None):
     S.set_defaults(func=delproc)
 
     S = SP.add_parser('write-procs-cf', help='Write conserver config')
-    S.add_argument('-f','--out',default='/etc/conserver/procs.cf') 
+    S.add_argument('-f','--out',default='/etc/conserver/procs.cf')
     S.add_argument('-R','--reload', action='store_true', default=False)
     S.set_defaults(func=writeprocs)
 
