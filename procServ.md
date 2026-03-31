@@ -75,6 +75,13 @@ procServ server after the child exits. In that mode, the system daemon
 must handle restarts (if required), and all clients will have to
 reconnect.
 
+When receiving a termination signal, the server will by default shut
+down immediately and kill the child process. Using the **-G**
+(**--grace-period**) option, the server can be made to wait up to a
+specified number of seconds for the child process to shut down
+gracefully before the server itself exits and kills the child. In this
+mode, the server will stop restarting the child.
+
 Any connection (control or log) can be disconnected using the client’s
 disconnect sequence. Control connections can also be disconnected by
 sending the logout command character that can be specified using the
@@ -169,6 +176,12 @@ Run *file* as executable for child. Default is *command*.
 **-f, --foreground**
 Keep the server process in the foreground and connected to the
 controlling terminal.
+
+**-G, --grace-period**=*n*
+Wait at most *n* seconds for the child process to shut down after
+receiving a termination signal. If the child does not exit within this
+period, it will be killed. (Default is 0: the server shuts down and
+kills the child immediately.)
 
 **-h, --help**
 Print help message.
