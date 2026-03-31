@@ -175,6 +175,7 @@ void printHelp()
            " -d --debug               debug mode (keeps child in foreground)\n"
            " -e --exec <str>          specify child executable (default: arg0 of <command>)\n"
            " -f --foreground          keep child in foreground (interactive)\n"
+           " -G --grace-period <n>    wait <n> seconds for child to shut down\n"
            " -h --help                print this message\n"
            "    --holdoff <n>         set holdoff time [sec] between child restarts\n"
            " -i --ignore <str>        ignore all chars in <str> (^ for ctrl)\n"
@@ -264,7 +265,7 @@ int main(int argc,char * argv[])
         /* getopt_long stores the option index here. */
         int option_index = 0;
 
-        c = getopt_long (argc, argv, "+c:de:fhi:I:k:l:L:n:op:P:qVwx:",
+        c = getopt_long (argc, argv, "+c:de:fG:hi:I:k:l:L:n:op:P:qVwx:",
                          long_options, &option_index);
 
         /* Detect the end of the options. */
@@ -314,14 +315,11 @@ int main(int argc,char * argv[])
             break;
 
         case 'G':
-            gracePeriod = atoi(optarg);
-            if (gracePeriod < 0) {
-                gracePeriod = 0;
-
-            } else if(gracePeriod < 1) {
-                // granularity below 2x pselect() timeout periods
-                gracePeriod = 1;
+            k = atoi(optarg);
+            if (k < 0) {
+                k = 0;
             }
+            gracePeriod = (unsigned int) k;
             break;
 
         case 'h':                                 // Help
