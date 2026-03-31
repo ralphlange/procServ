@@ -175,7 +175,7 @@ void printHelp()
            " -d --debug               debug mode (keeps child in foreground)\n"
            " -e --exec <str>          specify child executable (default: arg0 of <command>)\n"
            " -f --foreground          keep child in foreground (interactive)\n"
-           " -G --grace-period <n>    wait <n> seconds for child to shut down\n"
+           " -g --grace-period <n>    wait <n> seconds for child to shut down\n"
            " -h --help                print this message\n"
            "    --holdoff <n>         set holdoff time [sec] between child restarts\n"
            " -i --ignore <str>        ignore all chars in <str> (^ for ctrl)\n"
@@ -238,7 +238,7 @@ int main(int argc,char * argv[])
             {"debug",          no_argument,       0, 'd'},
             {"exec",           required_argument, 0, 'e'},
             {"foreground",     no_argument,       0, 'f'},
-            {"grace-period",   required_argument, 0, 'G'},
+            {"grace-period",   required_argument, 0, 'g'},
             {"help",           no_argument,       0, 'h'},
             {"holdoff",        required_argument, 0, 'H'},
             {"ignore",         required_argument, 0, 'i'},
@@ -265,8 +265,8 @@ int main(int argc,char * argv[])
         /* getopt_long stores the option index here. */
         int option_index = 0;
 
-        c = getopt_long (argc, argv, "+c:de:fG:hi:I:k:l:L:n:op:P:qVwx:",
-                         long_options, &option_index);
+        c = getopt_long(argc, argv, "+c:de:fg:hi:I:k:l:L:n:op:P:qVwx:",
+                        long_options, &option_index);
 
         /* Detect the end of the options. */
         if (c == -1) break;
@@ -314,7 +314,7 @@ int main(int argc,char * argv[])
                 stampFormat = strdup(optarg);
             break;
 
-        case 'G':
+        case 'g':
             k = atoi(optarg);
             if (k < 0) {
                 k = 0;
