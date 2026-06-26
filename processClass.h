@@ -27,7 +27,7 @@ public:
     virtual bool isProcess() const { return true; }
     virtual bool isLogger() const { return false; }
     static void restartOnce ();
-    static bool exists() { return _runningItem ? true : false; }
+    static inline bool exists() { return _runningItem; }
     virtual ~processClass();
 protected:
     pid_t _pid;

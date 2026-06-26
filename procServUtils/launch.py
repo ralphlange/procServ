@@ -38,6 +38,7 @@ def main(args):
     chdir = conf.get(name, 'chdir')
     cmd   = conf.get(name, 'command')
     port  = conf.get(name, 'port')
+    grace = conf.get(name, 'grace-period')
 
     rundir = getrundir(user=user)
 
@@ -57,6 +58,7 @@ def main(args):
         '--chdir',chdir,
         '--info-file',os.path.join(rundir, 'procserv-%s'%name, 'info'), #/run/procserv-$NAME/info
         '--port', port if port != "0" else 'unix:%s/procserv-%s/control'%(rundir,name),
+        '--grace-period', grace,
     ]
 
     if args.debug>1:

@@ -100,25 +100,25 @@ plus additional debug messages to stdout.
 Both control and log endpoints may be bound to either TCP or UNIX
 sockets (where supported). Allowed endpoint specifications are:
 
-**\<port\>**  
+**\<port\>**
 Bind to either 0.0.0.0:*\<port\>* (any) or 127.0.0.1:*\<port\>*
 (localhost) depending on the type of endpoint and the setting of **-r**
 (**--restrict**) and **--allow** options.
 
-**\<ifaceaddr\>:\<port\>**  
+**\<ifaceaddr\>:\<port\>**
 Bind to the specified interface address and *\<port\>*. The interface IP
 address *\<ifaceaddr\>* must be given in numeric form. Uses 127.0.0.1
 (localhost) for security reasons unless the **--allow** option is also
 used.
 
-**unix:\</path/to/socket\>**  
+**unix:\</path/to/socket\>**
 Bind to a named unix domain socket that will be created at the specified
 absolute or relative path. The server process must have permission to
 create files in the enclosing directory. The socket file will be owned
 by the uid and primary gid of the procServ server process with
 permissions 0666 (equivalent to a TCP socket bound to localhost).
 
-**unix:\<user\>:\<group\>:\<perm\>:\</path/to/socket\>**  
+**unix:\<user\>:\<group\>:\<perm\>:\</path/to/socket\>**
 Bind to a named unix domain socket that will be created at the specified
 absolute or relative path. The server process must have permission to
 create files in the enclosing directory. The socket file will be owned
@@ -128,7 +128,7 @@ Any of *\<user\>*, *\<group\>*, and/or *\<perm\>* may be omitted. E.g.
 socket with 0660 permissions and allow the "grp" group connect to it.
 This requires that procServ be run as root or a member of "grp".
 
-**unix:@\</path/to/socket\>**  
+**unix:@\</path/to/socket\>**
 Bind to an abstract unix domain socket (Linux specific). Abstract
 sockets do not exist on the filesystem, and have no permissions checks.
 They are functionally similar to a TCP socket bound to localhost, but
@@ -169,6 +169,13 @@ Run *file* as executable for child. Default is *command*.
 **-f, --foreground**
 Keep the server process in the foreground and connected to the
 controlling terminal.
+
+**-g, --grace-period**=*n*
+Use in combination with **--killsig**:
+Wait at most *n* seconds for the child process to shut down after
+receiving the termination signal. If the child does not exit within this
+period, it will be force-killed.
+(Default is 0: the server shuts down and kills the child immediately.)
 
 **-h, --help**
 Print help message.
@@ -303,11 +310,11 @@ file or through a console access and logging facility (such as
 
 # ENVIRONMENT VARIABLES
 
-**PROCSERV_PID**  
+**PROCSERV_PID**
 Sets the file name to write the PID of the server process into. (See
 **-p** option.)
 
-**PROCSERV_DEBUG**  
+**PROCSERV_DEBUG**
 If set, procServ starts in debug mode. (See **-d** option.)
 
 # KNOWN PROBLEMS

@@ -18,13 +18,13 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <errno.h>
-#include <sys/types.h> 
+#include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <getopt.h>
-#include <sys/wait.h> 
+#include <sys/wait.h>
 #include <signal.h>
-#include <unistd.h> 
+#include <unistd.h>
 #include <termios.h>
 #include <sys/ioctl.h>
 #include <sys/select.h>
@@ -35,6 +35,7 @@
 #endif /* __CYGWIN__ */
 
 #include "procServ.h"
+#include "processClass.h"
 
 // Wrapper to ignore return values
 template<typename T>
@@ -139,7 +140,7 @@ void writePidFile(int pid)
     fclose(fp);
 }
 
-char getOptionChar ( const char* buf ) 
+char getOptionChar ( const char* buf )
 {
     if ( buf == NULL || buf[0] == 0 ) return 0;
     if ( buf[0] == '^' && buf[1] == '^' ) {
@@ -174,6 +175,7 @@ void printHelp()
            " -d --debug               debug mode (keeps child in foreground)\n"
            " -e --exec <str>          specify child executable (default: arg0 of <command>)\n"
            " -f --foreground          keep child in foreground (interactive)\n"
+           " -g --grace-period <n>    wait <n> seconds for child to shut down\n"
            " -h --help                print this message\n"
            "    --holdoff <n>         set holdoff time [sec] between child restarts\n"
            " -i --ignore <str>        ignore all chars in <str> (^ for ctrl)\n"
@@ -194,7 +196,7 @@ void printHelp()
            " -V --version             print program version\n"
            " -w --wait                wait for cmd on control connection to start child\n"
            " -x --logoutcmd <str>     command to logout client connection (^ for ctrl)\n"
-        );
+           );
 }
 
 void printVersion()
@@ -214,6 +216,7 @@ int main(int argc,char * argv[])
     const size_t BUFLEN = 512;
     char buff[BUFLEN];
     std::string infofile;
+    unsigned int gracePeriod = 0;
 
     time(&procServStart);             // remember start time
     procservName = argv[0];
@@ -235,6 +238,7 @@ int main(int argc,char * argv[])
             {"debug",          no_argument,       0, 'd'},
             {"exec",           required_argument, 0, 'e'},
             {"foreground",     no_argument,       0, 'f'},
+            {"grace-period",   required_argument, 0, 'g'},
             {"help",           no_argument,       0, 'h'},
             {"holdoff",        required_argument, 0, 'H'},
             {"ignore",         required_argument, 0, 'i'},
@@ -261,8 +265,8 @@ int main(int argc,char * argv[])
         /* getopt_long stores the option index here. */
         int option_index = 0;
 
-        c = getopt_long (argc, argv, "+c:de:fhi:I:k:l:L:n:op:P:qVwx:",
-                         long_options, &option_index);
+        c = getopt_long(argc, argv, "+c:de:fg:hi:I:k:l:L:n:op:P:qVwx:",
+                        long_options, &option_index);
 
         /* Detect the end of the options. */
         if (c == -1) break;
@@ -308,6 +312,14 @@ int main(int argc,char * argv[])
             stampLog = true;
             if (optarg)
                 stampFormat = strdup(optarg);
+            break;
+
+        case 'g':
+            k = atoi(optarg);
+            if (k < 0) {
+                k = 0;
+            }
+            gracePeriod = (unsigned int) k;
             break;
 
         case 'h':                                 // Help
@@ -475,13 +487,13 @@ int main(int argc,char * argv[])
     memset(&sig, 0, sizeof(sig));
 
     PRINTF("Installing signal handlers\n");
-    
+
     // SIGPIPE, SIGTERM and SIGHUP will be handled in the main loop
     // with the assistance of pselect. This means that we have them
     // blocked outside of pselect call, but unblocked atomically
     // within pselect. Each time pselect returns, we safely check if
     // any of the signals were received.
-    
+
     // Block the signals that we bill be handling in the main loop.
     // At the same time, retrieve the original signal mask before
     // blocking, to be passed to pselect.
@@ -492,7 +504,7 @@ int main(int argc,char * argv[])
     sigaddset(&sigset_block, SIGTERM);
     sigaddset(&sigset_block, SIGHUP);
     sigprocmask(SIG_BLOCK, &sigset_block, &sigset_pselect);
-    
+
     sig.sa_handler = &OnSigPipe;              // sigaction() needed for Solaris
     sigaction(SIGPIPE, &sig, NULL);
     sig.sa_handler = &OnSigTerm;
@@ -568,7 +580,7 @@ int main(int argc,char * argv[])
         AddConnection(clientFactory(0));
     }
 
-    // Record some useful data for managers 
+    // Record some useful data for managers
     snprintf(infoMessage1, INFO1LEN,
              "@@@ procServ server PID: %ld" NL
              "@@@ Server startup directory: %s" NL
@@ -585,14 +597,16 @@ int main(int argc,char * argv[])
     strncat(infoMessage1, buff, INFO1LEN-strlen(infoMessage1)-1);
     snprintf(infoMessage2, INFO2LEN, "@@@ Child \"%s\" is SHUT DOWN" NL, childName);
     if ( logFile ) {
-	if ( -1 == logFileFD )
+        if ( -1 == logFileFD )
             snprintf(buff, BUFLEN, "@@@ Child log file: unable to open log file %s" NL,
                      logFile );
-	else
+        else
             snprintf(buff, BUFLEN, "@@@ Child log file: %s" NL,
                      logFile );
         strncat(infoMessage1, buff, INFO1LEN-strlen(infoMessage1)-1);
     }
+
+    time_t stopAt = 0;
 
     firstRun = true;
     // Run here until something makes it die
@@ -622,20 +636,29 @@ int main(int argc,char * argv[])
         timeout.tv_nsec = 500000000l;
 
         ready = pselect(nFd, &fdset, NULL, NULL, &timeout, &sigset_pselect);
-        
+
+        time_t now = time(0);
+
         // Handle signals for which signal handlers were called while in pselect.
-        
+
         if (sigPipeSet) {
             sigPipeSet = 0;
             sprintf( buf, "@@@ Got a sigPipe signal: Did the child close its tty?" NL);
             SendToAll( buf, strlen(buf), NULL );
         }
-        
+
         if (sigTermSet) {
             sigTermSet = 0;
             PRINTF("SigTerm received\n");
             processFactorySendSignal(killSig);
-            shutdownServer = true;
+            if(killSig==SIGKILL || gracePeriod==0) {
+                shutdownServer = true;
+
+            } else if(!stopAt) {
+                restartMode = oneshot; // prevent restart
+                stopAt = now + gracePeriod; // wait a bit for child to stop
+                PRINTF("Start child cleanup timer %u sec.\n", gracePeriod);
+            }
         }
 
         if (sigHupSet) {
@@ -643,28 +666,29 @@ int main(int argc,char * argv[])
             PRINTF("SigHup received\n");
             openLogFile();
         }
-        
+
         if (0 == ready) {                     // Timeout
             // Go clean up dead connections
             OnPollTimeout();
-            connectionItem * npi; 
+            connectionItem * npi;
 
             // Pick up the process item if it dies
             // This call returns NULL if the process item lives
-            if (processFactoryNeedsRestart())
+            if (stopAt==0 && processFactoryNeedsRestart())
             {
+
                 if ((restartMode == oneshot) && !firstRun) {
-                  PRINTF("Option oneshot is set... exiting\n");
-                  shutdownServer = true;
+                    PRINTF("Option oneshot is set... exiting\n");
+                    shutdownServer = true;
                 } else {
-		  if (logFileFD > 0) {
-		    fcntl(logFileFD, F_SETFD, FD_CLOEXEC);
-		  }
-                  npi= processFactory(childExec, childArgv);
-                  if (npi) AddConnection(npi);
-                  if (firstRun) {
-                  	firstRun = false;
-                  }
+                    if (logFileFD > 0) {
+                        fcntl(logFileFD, F_SETFD, FD_CLOEXEC);
+                    }
+                    npi= processFactory(childExec, childArgv);
+                    if (npi) AddConnection(npi);
+                    if (firstRun) {
+                        firstRun = false;
+                    }
                 }
             }
         } else if (-1 == ready) {             // Error
@@ -679,6 +703,18 @@ int main(int argc,char * argv[])
                 p = p->next;
             }
             OnPollTimeout();
+        }
+
+        if(stopAt!=0) {
+            if(!processClass::exists()) {
+                PRINTF("child exits\n");
+                shutdownServer = true;
+
+            } else if(now >= stopAt) {
+                PRINTF("child cleanup timer expires %ld, %ld\n", stopAt, now);
+                shutdownServer = true;
+                // connectionItem dtor will KILL
+            }
         }
     }
     ttySetCharNoEcho(false);
@@ -821,34 +857,30 @@ void OnPollTimeout()
 void AddConnection(connectionItem * ci)
 {
     PRINTF("Adding connection %p to list\n", ci);
-    if (connectionItem::head )
-	{
-	    ci->next=connectionItem::head;
-	    ci->next->prev=ci;
-	}
-	else ci->next=NULL;
-	
-	ci->prev=NULL;
-	connectionItem::head=ci;
-	connectionNo++;
-}
+    if (connectionItem::head) {
+        ci->next = connectionItem::head;
+        ci->next->prev = ci;
+    } else
+        ci->next = NULL;
 
+    ci->prev = NULL;
+    connectionItem::head = ci;
+    connectionNo++;
+}
 
 void DeleteConnection(connectionItem *ci)
 {
     PRINTF("Deleting connection %p\n", ci);
-    if (ci->prev) // Not the head
-	{
-		ci->prev->next=ci->next;
-	}
-	else
-	{
-		connectionItem::head = ci->next;
-	}
-	if (ci->next) ci->next->prev=ci->prev;
-        delete ci;
-	connectionNo--;
-	assert(connectionNo>=0);
+    if (ci->prev) { // Not the head
+        ci->prev->next = ci->next;
+    } else {
+        connectionItem::head = ci->next;
+    }
+    if (ci->next)
+        ci->next->prev = ci->prev;
+    delete ci;
+    connectionNo--;
+    assert(connectionNo >= 0);
 }
 
 static void OnSigPipe(int)
